@@ -2,6 +2,8 @@
 
 **Open source DYI hardware box for offline cryptographic tools**
 
+![Lethe Kit](lethekit.jpg)
+
 Lethe Kit is…
 
 ## Origin, Authors, Copyright & Licenses
