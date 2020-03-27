@@ -289,6 +289,11 @@ void seedless_menu() {
         yy += H_FSB9 + 2*YM_FSB9;
         g_display.setCursor(xx, yy);
         g_display.println("C - Restore SLIP39");
+
+        xx = xoff + 20;
+        yy += 2*(H_FSB9 + 2*YM_FSB9);
+        g_display.setCursor(xx, yy);
+        g_display.println("- Lethe Kit -");
     }
     while (g_display.nextPage());
 
@@ -433,6 +438,11 @@ void seedy_menu() {
         yy += H_FSB9 + 2*YM_FSB9;
         g_display.setCursor(xx, yy);
         g_display.println("C - Wipe Seed");
+
+        xx = xoff + 20;
+        yy += 2*(H_FSB9 + 2*YM_FSB9);
+        g_display.setCursor(xx, yy);
+        g_display.println("- Lethe Kit -");
     }
     while (g_display.nextPage());
 

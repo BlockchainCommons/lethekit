@@ -26,7 +26,7 @@ These are other projects that work with or leverage Lethe Kit:
 
 This Lethe Kit project was inspired by:
 
-- [Bitcoin 2019 Conference Tutorial](https://github.com/arcbtc/bitcoin2019conf) — Which provided a fully functional starting point using similar hardware, by [Ben Arc](https://github.com/arcbtc)
+- [Bitcoin 2019 Conference Tutorial](https://github.com/arcbtc/bitcoin2019conf) — Which provided a fully functional starting point using similar hardware, by [Ben Arc](https://github.com/arcbtc).
 
 ### Dependencies
 
