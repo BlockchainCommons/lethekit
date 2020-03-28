@@ -83,8 +83,12 @@ an unused (not-connected) pin we can commandeer.
 
 1. Gently screw the display in place in the case.  DO NOT OVERTIGHTEN
    SCREWS. There are two sets of display holes to support an alternate
-   display, use the set which align the display with the display case
-   cutout.
+   display, use the set which align the display in it's cutout when
+   viewed from the other side of the case.
+   
+2. It's helpful to dress the display wires towards the bottom of the
+   case as they leave the display connector; we'll need to clear an
+   LED inserted through the hole.
    
 ![Attach Display](images/attach-display.jpg)
    
@@ -113,10 +117,12 @@ an unused (not-connected) pin we can commandeer.
 1. Snap the switch into place in the case.  Orient the switch so the
    "1" side is towards the top of the case.
    
+![LEDs](images/switch-attach.jpg)
+
 2. Connect the white and black switch leads to the SAMD51 module as
    shown.
    
-![LEDs](images/switch-attach.jpg)
+![LEDs](images/switch-samd51.jpg)
 
 
 #### Insert Battery
