@@ -2,7 +2,15 @@
 
 **Open source DYI hardware box for offline cryptographic tools**
 
+![Lethe Kit](lethekit.jpg)
+
 Lethe Kit is…
+
+The [Parts List](doc/parts-list.md) describes all needed parts.
+
+The [Case](case/README.md) case can be 3D printed.
+
+The [Assembly Instructions](doc/assembly.md) show how to put it together.
 
 ## Origin, Authors, Copyright & Licenses
 
@@ -24,9 +32,9 @@ These are other projects that work with or leverage Lethe Kit:
 
 ### Derived from…
 
-This Lethe Kit project is either derived from or was inspired by:
+This Lethe Kit project was inspired by:
 
-- [community/repo-name/](https://github.com/community/repo-name) — Repo that does what, by [developer](https://github.com/developer)  or from  [community](https://community.com).
+- [Bitcoin 2019 Conference Tutorial](https://github.com/arcbtc/bitcoin2019conf) — Which provided a fully functional starting point using similar hardware, by [Ben Arc](https://github.com/arcbtc).
 
 ### Dependencies
 
@@ -45,7 +53,7 @@ The following people directly contributed to this repository. You can add your n
 | Name              | Role                | Github                                            | Email                                 | GPG Fingerprint                                    |
 | ----------------- | ------------------- | ------------------------------------------------- | ------------------------------------- | -------------------------------------------------- |
 | Christopher Allen | Principal Architect | [@ChristopherA](https://github.com/@ChristopherA) | \<ChristopherA@LifeWithAlacrity.com\> | FDFE 14A5 4ECB 30FC 5D22  74EF F8D3 6C91 3574 05ED |
-| Ken Sedgwick      | Project Lead        | [@ksedgwic](https://github.com/ksedgwic)          | \<ken@banzai.com\>                  | 4695 E5B8 F781 BF85 4326 9639 BBFC E515 8602 5550  |
+| Ken Sedgwick      | Project Lead        | [@ksedgwic](https://github.com/ksedgwic)          | \<ken@bonsai.com\>                  | 4695 E5B8 F781 BF85 4326 9639 BBFC E515 8602 5550  |
 
 ## Responsible Disclosure
 
