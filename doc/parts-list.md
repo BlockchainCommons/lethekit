@@ -1,4 +1,4 @@
-Lightning PoS Parts List
+Lethe Kit Parts List
 ================================================================
 
 | Description | Quantity | Price |

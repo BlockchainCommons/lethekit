@@ -8,7 +8,7 @@ Lethe Kit is…
 
 The [Parts List](doc/parts-list.md) describes all needed parts.
 
-The [Case](doc/parts-list.md) case can be 3D printed.
+The [Case](case/README.md) case can be 3D printed.
 
 The [Assembly Instructions](doc/assembly.md) show how to put it together.
 
