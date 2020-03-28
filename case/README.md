@@ -9,3 +9,7 @@ this directory.  One print of each of the following is required:
 * [cover.stl](cover.stl) The cover for the Lethe kit.
 
 * [shield.stl](shield.stl) Internal component which protects the battery.
+
+The case is designed with [Blender](https://www.blender.org):
+
+* [case.blend](case.blend)
