@@ -70,6 +70,12 @@ extern "C" {
 }
 #endif
 
+#if __has_include("gitrevision.h")
+#include "gitrevision.h"
+#else
+#error GITREVISION.H MISSING
+#endif
+
 // LEDS
 #if defined(ESP32)
 #define BLUE_LED	25
@@ -172,7 +178,13 @@ void setup() {
 #if defined(ESP32)
     while (!Serial);	// wait for serial to come online
 #endif
-    
+
+    // You need to delay in order to get the serial connection
+    // working when debugging w/ the IDE.
+    //
+    // delay(5000);
+    // Serial.println(__cplusplus);	// "201103"
+
     // Make sure everything works.
     self_test();
 
@@ -298,10 +310,10 @@ void seedless_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Restore SLIP39");
 
-        xx = xoff + 20;
+        xx = xoff + 10;
         yy += 2*(H_FSB9 + 2*YM_FSB9);
         g_display.setCursor(xx, yy);
-        g_display.println("- Lethe Kit -");
+        display_printf("%s (%s)", GIT_LATEST_TAG, GIT_SHORT_HASH);
     }
     while (g_display.nextPage());
 
@@ -441,10 +453,10 @@ void seedy_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Wipe Seed");
 
-        xx = xoff + 20;
+        xx = xoff + 10;
         yy += 2*(H_FSB9 + 2*YM_FSB9);
         g_display.setCursor(xx, yy);
-        g_display.println("- Lethe Kit -");
+        display_printf("%s (%s)", GIT_LATEST_TAG, GIT_SHORT_HASH);
     }
     while (g_display.nextPage());
 

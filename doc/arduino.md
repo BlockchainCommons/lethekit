@@ -1,3 +1,8 @@
+## Git Hook Setup
+
+```
+git config core.hooksPath seedtool/.githooks
+```
 
 ## Arduino Setup Directions
 
