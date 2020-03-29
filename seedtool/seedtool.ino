@@ -70,11 +70,7 @@ extern "C" {
 }
 #endif
 
-#if __has_include("gitrevision.h")
 #include "gitrevision.h"
-#else
-#error GITREVISION.H MISSING
-#endif
 
 // LEDS
 #if defined(ESP32)
