@@ -4,7 +4,7 @@
 
 ![Lethe Kit](lethekit.jpg)
 
-Lethe Kit is…
+The Lethe Kit is a DIY platform for performing various sensitive cryptographic operations on an offline/airgapped device with no WiFi or Bluetooth to leak information, the external USB only charges the battery, and there is no local storage, so when you turn it off it forgets any sensitive data stored in RAM. Thus the name Lethe ("lee-thee") from the [mythological river](https://en.wikipedia.org/wiki/Lethe) of forgetfulness and oblivion.
 
 The [Parts List](doc/parts-list.md) describes all needed parts.
 
