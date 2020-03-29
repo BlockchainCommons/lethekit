@@ -1,3 +1,4 @@
+* Need better diagnsotics for BIP39 and SLIP39 restore operations.
 
 * Arduino SDK setup instructions (installing dependencies, config).
 

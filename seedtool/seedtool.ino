@@ -1514,14 +1514,23 @@ void test_failed(char *format, ...) {
 
 void self_test() {
     serial_printf("self_test starting\n");
-    reset_state();
-    test_generate_seed();
-    test_generate_bip39();
-    reset_state();
-    test_restore_bip39();
-    test_generate_slip39();
-    reset_state();
-    test_restore_slip39();
+    {
+        // Order important here.
+        reset_state();
+        test_generate_seed();
+        test_generate_bip39();
+    }
+    {
+        // Order important here.
+        reset_state();
+        test_restore_bip39();
+        test_generate_slip39();
+    }
+    {
+        // Order important here.
+        reset_state();
+        test_restore_slip39();
+    }
     reset_state();
     serial_printf("self_test finished\n");
 }
