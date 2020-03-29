@@ -1,8 +1,8 @@
 ## Git Hook Setup
 
-```
-git config core.hooksPath seedtool/.githooks
-```
+
+    ./enable-gitrevision-hooks.sh
+    
 
 ## Arduino Setup Directions
 

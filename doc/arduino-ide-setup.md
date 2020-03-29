@@ -13,12 +13,14 @@ FIXME - Figure out which libraries we are dependent on.
 ```
 cd ~/Arduino/libraries
 
+# Install bc-bip39
+git clone git@github.com:BlockchainCommons/bc-bip39.git
+
 # Install bc-crypto-base
-git clone --recurse-submodules \
-    git@github.com:BlockchainCommons/bc-crypto-base.git
+git clone git@github.com:BlockchainCommons/bc-crypto-base.git
 
 # Install bc-shamir
-git clone --recurse-submodules git@github.com:BlockchainCommons/bc-shamir.git
+git clone git@github.com:BlockchainCommons/bc-shamir.git
 
 # Install bc-slip39
 git clone --recurse-submodules git@github.com:BlockchainCommons/bc-slip39.git

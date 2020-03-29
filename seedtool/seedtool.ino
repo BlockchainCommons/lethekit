@@ -306,10 +306,10 @@ void seedless_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Restore SLIP39");
 
-        xx = xoff + 10;
         yy += 2*(H_FSB9 + 2*YM_FSB9);
         g_display.setCursor(xx, yy);
-        display_printf("%s (%s)", GIT_LATEST_TAG, GIT_SHORT_HASH);
+        display_printf("%s+%s (%s)",
+                       GIT_LATEST_TAG, GIT_REV_COUNT, GIT_SHORT_HASH);
     }
     while (g_display.nextPage());
 
@@ -449,10 +449,10 @@ void seedy_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Wipe Seed");
 
-        xx = xoff + 10;
         yy += 2*(H_FSB9 + 2*YM_FSB9);
         g_display.setCursor(xx, yy);
-        display_printf("%s (%s)", GIT_LATEST_TAG, GIT_SHORT_HASH);
+        display_printf("%s+%s (%s)",
+                       GIT_LATEST_TAG, GIT_REV_COUNT, GIT_SHORT_HASH);
     }
     while (g_display.nextPage());
 
