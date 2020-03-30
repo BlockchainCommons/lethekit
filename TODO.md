@@ -1,12 +1,6 @@
 * Need better diagnsotics for BIP39 and SLIP39 restore operations.
 
-* Arduino SDK setup instructions (installing dependencies, config).
-
-* Update to bc_bip32.
-
-* Display git short hash.
-
-* Purge all Arduino libraries, fault dependencies back in, note LICENSES.
+* Update to bc_bip32 (waiting for Wolf).
 
 * Remove the ESP32 code from lethe.ino?
 

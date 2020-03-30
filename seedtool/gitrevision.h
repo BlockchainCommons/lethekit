@@ -15,7 +15,7 @@
 
 #define GIT_BRANCH "------"
 #define GIT_SHORT_HASH "-------"
-#define GIT_REV_COUNT "---"
 #define GIT_LATEST_TAG "------"
+#define GIT_REV_COUNT "---"
 
 #endif // GITREVISION_H
