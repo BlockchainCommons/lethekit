@@ -12,6 +12,8 @@ The [Case](case) can be 3D printed.
 
 The [Assembly Instructions](doc/assembly.md) show how to put it together.
 
+The [Lethe Kit Installation Instructions](doc/intallation.md) show how to install Lethe Kit in your Arduino development environment.
+
 The [Seedtool Application Instructions](seedtool/README.md) show how to build
 and run a sample application.
 

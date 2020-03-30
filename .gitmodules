@@ -1,0 +1,15 @@
+[submodule "deps/Cryptosuite"]
+	path = deps/Cryptosuite
+	url = git@github.com:ksedgwic/Cryptosuite.git
+[submodule "deps/bip39"]
+	path = deps/bip39
+	url = git@github.com:ksedgwic/bip39.git
+[submodule "deps/bc-crypto-base"]
+	path = deps/bc-crypto-base
+	url = git@github.com:BlockchainCommons/bc-crypto-base.git
+[submodule "deps/bc-shamir"]
+	path = deps/bc-shamir
+	url = git@github.com:BlockchainCommons/bc-shamir.git
+[submodule "deps/bc-slip39"]
+	path = deps/bc-slip39
+	url = git@github.com:BlockchainCommons/bc-slip39.git

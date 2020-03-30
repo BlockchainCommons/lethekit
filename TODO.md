@@ -12,3 +12,5 @@
 
 * Give faster feedback on SLIP39 generate, clear the screen first,
   then generate.
+
+* Find a new supplier for keypads, costs $150 to ship $20 worth ...
