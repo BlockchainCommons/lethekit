@@ -15,7 +15,7 @@ be done once, but is safe to do anytime you like.
 
 ### Add Libraries
 
-Restart the Arduino IDE.
+Restart the Arduino IDE:
 
 From the Arduino IDE, menu "Sketch" -> "Include Library"
 * Select Cryptosuite
@@ -23,3 +23,14 @@ From the Arduino IDE, menu "Sketch" -> "Include Library"
 * Select bc-crypto-base
 * Select bc-shamir
 * Select bc-slip39
+
+### Build seedtool
+
+Connect a Lethe Kit hardware device to an appropriate USB port
+and start the Arduino IDE in the seedtool subdirectory:
+
+    cd $LETHEKIT_ROOT/seedtool
+    arduno ./
+
+Press the "Upload" button. The `seedtool` application should be built
+and uploaded to your device.
