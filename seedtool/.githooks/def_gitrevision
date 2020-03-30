@@ -25,7 +25,7 @@ cat << EOF > $FILENAME
 #define GIT_BRANCH "------"
 #define GIT_SHORT_HASH "-------"
 #define GIT_LATEST_TAG "------"
-#define GIT_REV_COUNT "---"
+#define GIT_REVS_SINCE 0
 
 #endif // GITREVISION_H
 EOF
