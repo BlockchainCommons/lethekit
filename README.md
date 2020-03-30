@@ -1,6 +1,6 @@
 # Blockchain Commons Lethe Kit
 
-**Open source DYI hardware box for offline cryptographic tools**
+**Open source DIY hardware box for offline cryptographic tools**
 
 ![Lethe Kit](lethekit.jpg)
 
