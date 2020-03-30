@@ -56,7 +56,7 @@ the `--uninstall` option:
     # FIXME - implement this!
     $LK_ROOT/scripts/install-lethekit --uninstall $LK_ROOT $ARDUINO_ROOT
 
-It's safe to move your Arduino sketchCbook at any time, Lethe Kit
+It's safe to move your Arduino sketchbook at any time, Lethe Kit
 should remain installed.
 
 If you upgrade Lethe Kit in the future use the `--upgrade` option to
