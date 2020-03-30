@@ -1,8 +1,8 @@
 Lethe Kit Parts List
 ================================================================
 
-| Supplier | Description | Quantity | Price |
-|-------------|---------:|------:|
+| Supplier   | Description | Quantity | Price |
+|------------|-------------|---------:|------:|
 | Waveshare  | [Waveshare 200x200, 1.54inch E-Ink display module](https://www.waveshare.com/1.54inch-e-paper-module.htm) | 1 | $15.99 |
 | AliExpress | [16 Key Membrane Switch Keypad](https://www.aliexpress.com/item/32874565775.html)                         | 1 |  $0.60 |
 | SparkFun   | [SparkFun Thing Plus - SAMD51](https://www.sparkfun.com/products/14713)                                   | 1 | $19.95 |
