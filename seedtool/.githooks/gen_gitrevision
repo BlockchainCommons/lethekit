@@ -12,8 +12,7 @@ latesttag=`git describe --tags --abbrev=0 --always`
 # revcount=`git log --oneline | wc -l`
 
 # Compute number of revisions since last tag.
-lasttagver=`git rev-list --tags --no-walk --max-count=1`
-revcount=`git rev-list $lasttagver..HEAD --count`
+revssince=`git rev-list $latesttag..HEAD --count`
 
 cat << EOF > $FILENAME
 // ---------------- IMPORTANT - GENERATED FILE ----------------
@@ -36,7 +35,7 @@ EOF
 echo "#define GIT_BRANCH \"$branch\"" >> $FILENAME
 echo "#define GIT_SHORT_HASH \"$shorthash\"" >> $FILENAME
 echo "#define GIT_LATEST_TAG \"$latesttag\"" >> $FILENAME
-echo "#define GIT_REV_COUNT \"$revcount\"" >> $FILENAME
+echo "#define GIT_REVS_SINCE $revssince" >> $FILENAME
 
 cat << EOF >> $FILENAME
 

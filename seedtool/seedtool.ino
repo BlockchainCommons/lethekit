@@ -308,8 +308,8 @@ void seedless_menu() {
 
         yy += 2*(H_FSB9 + 2*YM_FSB9);
         g_display.setCursor(xx, yy);
-        display_printf("%s+%s (%s)",
-                       GIT_LATEST_TAG, GIT_REV_COUNT, GIT_SHORT_HASH);
+        display_printf("%s+%d (%s)",
+                       GIT_LATEST_TAG, GIT_REVS_SINCE, GIT_SHORT_HASH);
     }
     while (g_display.nextPage());
 
@@ -451,8 +451,8 @@ void seedy_menu() {
 
         yy += 2*(H_FSB9 + 2*YM_FSB9);
         g_display.setCursor(xx, yy);
-        display_printf("%s+%s (%s)",
-                       GIT_LATEST_TAG, GIT_REV_COUNT, GIT_SHORT_HASH);
+        display_printf("%s+%d (%s)",
+                       GIT_LATEST_TAG, GIT_REVS_SINCE, GIT_SHORT_HASH);
     }
     while (g_display.nextPage());
 

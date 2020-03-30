@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# usage: install-lethkit <lethkit-root> <arduino-sketchbook>
+
+function usage {
+    echo "usage: $0 <lethkit-root> <arduino-sketchbook>"
+    echo "  example:"
+    echo "   $0 ~/src/bc-lethe-kit ~/Arduino"
+}
+
+function usage_error {
+    echo "error: " $1
+    usage
+}
+
+# https://medium.com/@Drew_Stokes/bash-argument-parsing-54f3b81a6a8f
+args=( )
+while (( "$#" )); do
+  case "$1" in
+    -f|--help)
+      shift 1
+      usage
+      exit 0
+      ;;
+    --) # end argument parsing
+      shift
+      break
+      ;;
+    -*|--*=) # unsupported flags
+      echo "Error: Unsupported flag $1" >&2
+      exit 1
+      ;;
+    *) # preserve positional arguments
+      args+=($1)
+      shift
+      ;;
+  esac
+done
+
+if [ ${#args[@]} -ne 2 ]
+then
+    usage_error "must be 2 arguments"
+fi
+
+lkroot=${args[0]}
+aroot=${args[1]}
+
+libpath="${aroot}/libraries"
+
+declare -a libs=(Cryptosuite  bc-crypto-base  bc-shamir	bc-slip39  bip39)
+
+for lib in "${libs[@]}"
+do
+    ln -s ${lkroot}/deps/${lib} ${aroot}/libraries/
+done
+
+# FIXME - remove this when we fix how this is done ...
+( cd ${lkroot}/deps/bc-slip39/src && \
+      ln -fs ../../bc-crypto-base/src bc-crypto-base && \
+      ln -fs ../../bc-shamir/src bc-shamir )
