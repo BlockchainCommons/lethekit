@@ -46,6 +46,7 @@
  *  ]
  */
 
+#include <assert.h>
 #include <stdarg.h>
 
 #include <bip39.h>
@@ -59,8 +60,8 @@
 #include <Fonts/FreeMonoBold12pt7b.h>
 
 extern "C" {
-#include <slip39.h>
-#include <slip39_wordlist.h>
+#include <bc-slip39.h>
+#include <wordlist-english.h>
 }
 
 #if defined(SAMD51)
@@ -68,6 +69,8 @@ extern "C" {
 #include "trngFunctions.h"
 }
 #endif
+
+#include "gitrevision.h"
 
 // LEDS
 #if defined(ESP32)
@@ -124,24 +127,28 @@ enum UIState {
     DISPLAY_SLIP39,
 };
 
+#define BIP39_WORD_COUNT	12
+
 // This will be 256 when we support multiple levels.
 #define MAX_SLIP39_SHARES	16
+
+#define SLIP39_WORDS_IN_EACH_SHARE	20
 
 UIState g_uistate;
 String g_rolls;
 bool g_submitted;
-uint8_t g_master_secret[16];
-Bip39 g_bip39;
-int g_slip39_thresh;
-int g_slip39_nshares;
-char** g_slip39_shares = NULL;
-char* g_restore_shares[MAX_SLIP39_SHARES];
-int g_num_restore_shares = 0;
-int g_selected_share;
 
-// FIXME - these should be removed
-int g_wordndx[20] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
+uint8_t g_master_secret[16];
+
+Bip39 g_bip39;
+
+int g_generate_slip39_thresh;
+int g_generate_slip39_nshares;
+char** g_generate_slip39_shares = NULL;
+
+char* g_restore_slip39_shares[MAX_SLIP39_SHARES];
+int g_restore_slip39_nshares = 0;
+int g_restore_slip39_selected;
 
 int g_ndx = 0;		// index of "selected" word
 int g_pos = 0;		// char position of cursor
@@ -159,16 +166,25 @@ void setup() {
 
     Serial.begin(115200);
 
+#if defined(SAMD51)
+    trngInit();
+#endif
+
     // Only wait on the ESP32, the SAMD51 gets hung w/o serial here
 #if defined(ESP32)
     while (!Serial);	// wait for serial to come online
 #endif
 
-    Serial.println("seedtool starting");
+    // You need to delay in order to get the serial connection
+    // working when debugging w/ the IDE.
+    //
+    // delay(5000);
+    // Serial.println(__cplusplus);	// "201103"
 
-#if defined(SAMD51)
-    trngInit();
-#endif
+    // Make sure everything works.
+    self_test();
+
+    Serial.println("seedtool starting");
 
     reset_state();
 }
@@ -234,7 +250,7 @@ void reset_state() {
     g_bip39.setPayloadBytes(sizeof(g_master_secret));
     g_bip39.setPayload(sizeof(g_master_secret), (uint8_t *) g_master_secret);
 
-    free_slip39_shares();
+    free_slip39_generate_shares();
     
     // Clear the restore shares
     free_restore_shares();
@@ -290,10 +306,10 @@ void seedless_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Restore SLIP39");
 
-        xx = xoff + 20;
         yy += 2*(H_FSB9 + 2*YM_FSB9);
         g_display.setCursor(xx, yy);
-        g_display.println("- Lethe Kit -");
+        display_printf("%s+%s (%s)",
+                       GIT_LATEST_TAG, GIT_REV_COUNT, GIT_SHORT_HASH);
     }
     while (g_display.nextPage());
 
@@ -402,13 +418,7 @@ void seed_from_rolls() {
     }
     memcpy(g_master_secret, sha256.result(), sizeof(g_master_secret));
 
-    generate_bip39();
-}
-
-void generate_bip39() {
-    // Generate the BIP39 mnemonic for this secret.
-    g_bip39.setPayloadBytes(sizeof(g_master_secret));
-    g_bip39.setPayload(sizeof(g_master_secret), (uint8_t *)g_master_secret);
+    generate_bip39_words();
 }
 
 void seedy_menu() {
@@ -439,10 +449,10 @@ void seedy_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Wipe Seed");
 
-        xx = xoff + 20;
         yy += 2*(H_FSB9 + 2*YM_FSB9);
         g_display.setCursor(xx, yy);
-        g_display.println("- Lethe Kit -");
+        display_printf("%s+%s (%s)",
+                       GIT_LATEST_TAG, GIT_REV_COUNT, GIT_SHORT_HASH);
     }
     while (g_display.nextPage());
 
@@ -471,7 +481,7 @@ void seedy_menu() {
 }
 
 void display_bip39() {
-    int const nwords = 12;
+    int const nwords = BIP39_WORD_COUNT;
     int scroll = 0;
     
     while (true) {
@@ -667,9 +677,9 @@ void config_slip39() {
                     thresh_done = false;
                     break;
                 }
-                g_slip39_thresh = threshstr.toInt();
-                g_slip39_nshares = nsharestr.toInt();
-                generate_slip39_shares();
+                g_generate_slip39_thresh = threshstr.toInt();
+                g_generate_slip39_nshares = nsharestr.toInt();
+                generate_slip39_shares(random_buffer);
                 g_uistate = DISPLAY_SLIP39;
                 return;
             }
@@ -679,30 +689,106 @@ void config_slip39() {
     }
 }
 
-void free_slip39_shares() {
-    if (g_slip39_shares) {
-        for (int ndx = 0; g_slip39_shares[ndx]; ++ndx)
-            free(g_slip39_shares[ndx]);
-        free(g_slip39_shares);
-        g_slip39_shares = NULL;
+void free_slip39_generate_shares() {
+    if (g_generate_slip39_shares) {
+        for (int ndx = 0; g_generate_slip39_shares[ndx]; ++ndx)
+            free(g_generate_slip39_shares[ndx]);
+        free(g_generate_slip39_shares);
+        g_generate_slip39_shares = NULL;
     }
 }
 
-void generate_slip39_shares() {
-    int nshares = g_slip39_nshares;
+void generate_bip39_words() {
+    // Generate the BIP39 mnemonic for this secret.
+    g_bip39.setPayloadBytes(sizeof(g_master_secret));
+    g_bip39.setPayload(sizeof(g_master_secret), (uint8_t *)g_master_secret);
+}
+
+int restore_bip39_words(uint16_t* words, size_t nwords) {
+    for (int ii = 0; ii < nwords; ++ii)
+        g_bip39.setWord(ii, words[ii]);
+    if (g_bip39.verifyChecksum()) {
+        memcpy(g_master_secret, g_bip39.getPayload(), 16);
+        return 0;
+    }
+    return 1;
+}
+
+void generate_slip39_shares(void(*randgen)(uint8_t *, size_t)) {
+    int nshares = g_generate_slip39_nshares;
 
     // If there are already shares, free them.
-    free_slip39_shares();
-    
-    // Allocate space for new shares
-    g_slip39_shares = (char **) malloc(sizeof(char *) * (nshares+1));
-    for (int ndx = 0; ndx < nshares; ++ndx)
-        g_slip39_shares[ndx] = (char *)malloc(MNEMONIC_LIST_LEN);
-    g_slip39_shares[nshares] = NULL; // sentinel
+    free_slip39_generate_shares();
 
-    generate_mnemonics(g_slip39_thresh, g_slip39_nshares,
-                       g_master_secret, sizeof(g_master_secret),
-                       NULL, 0, 0, g_slip39_shares);
+    char* password = "";
+
+    uint8_t group_threshold = 1;
+    uint8_t group_count = 1;
+    group_descriptor group =
+        { g_generate_slip39_thresh, g_generate_slip39_nshares, NULL };
+    group_descriptor groups[] = { group };
+
+    uint8_t iteration_exponent = 0;
+
+    uint32_t words_in_each_share = 0;
+    size_t shares_buffer_size = 1024;
+    uint16_t shares_buffer[shares_buffer_size];
+
+    int rv = slip39_generate(group_threshold,
+                             groups,
+                             group_count,
+                             g_master_secret,
+                             sizeof(g_master_secret),
+                             password,
+                             iteration_exponent,
+                             &words_in_each_share,
+                             shares_buffer,
+                             shares_buffer_size,
+                             randgen);
+    assert(rv == g_generate_slip39_nshares);
+    assert(words_in_each_share == SLIP39_WORDS_IN_EACH_SHARE);
+
+    g_generate_slip39_shares =
+        (char **) malloc(sizeof(char *) * (g_generate_slip39_nshares+1));
+    for (int ndx = 0; ndx < g_generate_slip39_nshares; ++ndx) {
+        uint16_t* words = shares_buffer + (ndx * words_in_each_share);
+        g_generate_slip39_shares[ndx] =
+            slip39_strings_for_words(words, words_in_each_share);
+    }
+    g_generate_slip39_shares[g_generate_slip39_nshares] = NULL; // sentinel
+}
+
+int combine_slip39_shares(uint8_t* master_secret, size_t master_secret_len) {
+    char* password = "";
+    uint32_t words_in_each_share = SLIP39_WORDS_IN_EACH_SHARE;
+    size_t selected_shares_len = g_restore_slip39_nshares;
+    uint16_t* selected_shares_words[selected_shares_len];
+
+    for (int ii = 0; ii < selected_shares_len; ++ii) {
+        uint16_t* words_buf = (uint16_t *)
+            malloc(sizeof(uint16_t) * words_in_each_share);
+        for (int jj = 0; jj < words_in_each_share; ++jj)
+            words_buf[jj] = 0;
+        selected_shares_words[ii] = words_buf;
+        char* string = g_restore_slip39_shares[ii];
+        slip39_words_for_strings(string, words_buf, words_in_each_share);
+    }
+
+    int rv = slip39_combine(
+                            (const uint16_t **) selected_shares_words,
+                            words_in_each_share,
+                            selected_shares_len,
+                            password,
+                            NULL,
+                            master_secret,
+                            master_secret_len
+                            );
+
+    for(int ii = 0; ii < selected_shares_len; ii++) {
+        free(selected_shares_words[ii]);
+    }
+
+    return rv;
 }
 
 // Extract the indicted word from the wordlist.
@@ -729,7 +815,7 @@ String slip39_select(char* wordlist, int wordndx) {
 }
 
 void display_slip39() {
-    int const nwords = 20;
+    int const nwords = SLIP39_WORDS_IN_EACH_SHARE;
     int sharendx = 0;
     int scroll = 0;
     
@@ -749,7 +835,8 @@ void display_slip39() {
             int yy = yoff + (H_FSB9 + YM_FSB9);
             g_display.setFont(&FreeSansBold9pt7b);
             g_display.setCursor(xx, yy);
-            display_printf("SLIP39 %d/%d", sharendx+1, g_slip39_nshares);
+            display_printf("SLIP39 %d/%d",
+                           sharendx+1, g_generate_slip39_nshares);
             yy += H_FSB9 + YM_FSB9;
             
             yy += 8;
@@ -757,7 +844,8 @@ void display_slip39() {
             g_display.setFont(&FreeMonoBold12pt7b);
             for (int rr = 0; rr < nrows; ++rr) {
                 int wndx = scroll + rr;
-                String word = slip39_select(g_slip39_shares[sharendx], wndx);
+                String word =
+                    slip39_select(g_generate_slip39_shares[sharendx], wndx);
                 g_display.setCursor(xx, yy);
                 display_printf("%2d %s", wndx+1, word.c_str());
                 yy += H_FMB12 + YM_FMB12;
@@ -768,7 +856,7 @@ void display_slip39() {
             yy = Y_MAX - (H_FSB9) + 2;
             g_display.setFont(&FreeSansBold9pt7b);
             g_display.setCursor(xx, yy);
-            if (sharendx < (g_slip39_nshares-1))
+            if (sharendx < (g_generate_slip39_nshares-1))
                 g_display.println("1,7-Up,Down #-Next");
             else
                 g_display.println("1,7-Up,Down #-Done");
@@ -796,7 +884,7 @@ void display_slip39() {
             }
             break;
         case '#':	// next / done
-            if (sharendx < (g_slip39_nshares-1)) {
+            if (sharendx < (g_generate_slip39_nshares-1)) {
                 ++sharendx;
                 scroll = 0;
             } else {
@@ -811,11 +899,11 @@ void display_slip39() {
 }
 
 void free_restore_shares() {
-    for (int ndx = 0; ndx < g_num_restore_shares; ++ndx) {
-        free(g_restore_shares[ndx]);
-        g_restore_shares[ndx] = NULL;
+    for (int ndx = 0; ndx < g_restore_slip39_nshares; ++ndx) {
+        free(g_restore_slip39_shares[ndx]);
+        g_restore_slip39_shares[ndx] = NULL;
     }
-    g_num_restore_shares = 0;
+    g_restore_slip39_nshares = 0;
 }
 
 struct WordListState {
@@ -968,7 +1056,9 @@ struct WordListState {
 
 struct SLIP39WordlistState : WordListState {
     SLIP39WordlistState(int i_nwords) : WordListState(i_nwords, 1024) {}
-    virtual char const * refword(int ndx) { return slip39_wordlist[ndx]; }
+    virtual char const * refword(int ndx) {
+        return slip39_string_for_word(ndx);
+    }
 };
 
 struct BIP39WordlistState : WordListState {
@@ -981,7 +1071,7 @@ struct BIP39WordlistState : WordListState {
 };
 
 void restore_bip39() {
-    BIP39WordlistState state(g_bip39, 12);
+    BIP39WordlistState state(g_bip39, BIP39_WORD_COUNT);
     state.set_words(NULL);
 
     while (true) {
@@ -1092,16 +1182,19 @@ void restore_bip39() {
             state.word_up();
             break;
         case '#':	// done
-            for (int ii = 0; ii < state.nwords; ++ii)
-                g_bip39.setWord(ii, state.wordndx[ii]);
-            if (g_bip39.verifyChecksum()) {
-                memcpy(g_master_secret, g_bip39.getPayload(), 16);
-                log_master_secret();
-                digitalWrite(GREEN_LED, HIGH);		// turn on green LED
-                g_uistate = SEEDY_MENU;
-                return;
+            {
+                uint16_t bip39_words[BIP39_WORD_COUNT];
+                for (int ii = 0; ii < BIP39_WORD_COUNT; ++ii)
+                    bip39_words[ii] = state.wordndx[ii];
+                int rv = restore_bip39_words(bip39_words, BIP39_WORD_COUNT);
+                if (rv == 0) {
+                    log_master_secret();
+                    digitalWrite(GREEN_LED, HIGH);		// turn on green LED
+                    g_uistate = SEEDY_MENU;
+                    return;
+                }
+                // FIXME - need diagnostic here
             }
-            // FIXME - need diagnostic here
             break;
         default:
             break;
@@ -1112,7 +1205,7 @@ void restore_bip39() {
 
 void restore_slip39() {
     int scroll = 0;
-    int selected = g_num_restore_shares;	// selects "add" initially
+    int selected = g_restore_slip39_nshares;	// selects "add" initially
     
     while (true) {
         int const xoff = 12;
@@ -1120,18 +1213,18 @@ void restore_slip39() {
         int const nrows = 4;
     
         // Are we showing the restore action?
-        int showrestore = g_num_restore_shares > 0 ? 1 : 0;
+        int showrestore = g_restore_slip39_nshares > 0 ? 1 : 0;
 
         // How many rows displayed?
-        int disprows = g_num_restore_shares + 1 + showrestore;
+        int disprows = g_restore_slip39_nshares + 1 + showrestore;
         if (disprows > nrows)
             disprows = nrows;
             
         // Adjust the scroll to center the selection.
         if (selected < 2)
             scroll = 0;
-        else if (selected > g_num_restore_shares)
-            scroll = g_num_restore_shares + 2 - disprows;
+        else if (selected > g_restore_slip39_nshares)
+            scroll = g_restore_slip39_nshares + 2 - disprows;
         else
             scroll = selected - 2;
         serial_printf("scroll = %d\n", scroll);
@@ -1157,9 +1250,9 @@ void restore_slip39() {
             for (int rr = 0; rr < disprows; ++rr) {
                 int sharendx = scroll + rr;
                 char buffer[32];
-                if (sharendx < g_num_restore_shares) {
+                if (sharendx < g_restore_slip39_nshares) {
                     sprintf(buffer, "Share %d", sharendx+1);
-                } else if (sharendx == g_num_restore_shares) {
+                } else if (sharendx == g_restore_slip39_nshares) {
                     sprintf(buffer, "Add Share");
                 } else {
                     sprintf(buffer, "Restore");
@@ -1202,44 +1295,40 @@ void restore_slip39() {
                 selected -= 1;
             break;
         case '7':
-            if (selected < g_num_restore_shares + 1 + showrestore - 1)
+            if (selected < g_restore_slip39_nshares + 1 + showrestore - 1)
                 selected += 1;
             break;
         case '*':
             g_uistate = SEEDLESS_MENU;
             return;
         case '#':
-            if (selected < g_num_restore_shares) {
+            if (selected < g_restore_slip39_nshares) {
                 // Edit existing share
-                g_selected_share = selected;
+                g_restore_slip39_selected = selected;
                 g_uistate = ENTER_SHARE;
                 return;
-            } else if (selected == g_num_restore_shares) {
+            } else if (selected == g_restore_slip39_nshares) {
                 // Add new share
-                g_selected_share = g_num_restore_shares;
-                g_restore_shares[g_selected_share] = NULL;
-                g_num_restore_shares += 1;
+                g_restore_slip39_selected = g_restore_slip39_nshares;
+                g_restore_slip39_shares[g_restore_slip39_selected] = NULL;
+                g_restore_slip39_nshares += 1;
                 g_uistate = ENTER_SHARE;
                 return;
             } else {
                 // Attempt restoration
                 uint8_t ms[16];
-                int msl = sizeof(ms);
-                for (int ii = 0; ii < g_num_restore_shares; ++ii)
-                    serial_printf("%d %s\n", ii+1, g_restore_shares[ii]);
-                int rv = combine_mnemonics(g_num_restore_shares,
-                                           g_restore_shares,
-                                           NULL, 0,
-                                           ms, &msl);
-                if (rv != 0) {
+                for (int ii = 0; ii < g_restore_slip39_nshares; ++ii)
+                    serial_printf("%d %s\n", ii+1, g_restore_slip39_shares[ii]);
+                int rv = combine_slip39_shares(ms, sizeof(ms));
+                if (rv < 0) {
                     // Something went wrong
                     serial_printf("combine_mnemonics failed: %d\n", rv);
                     g_uistate = RESTORE_SLIP39;
                     return;
                 } else {
-                    memcpy(g_master_secret, ms, msl);
+                    memcpy(g_master_secret, ms, sizeof(ms));
                     log_master_secret();
-                    generate_bip39();
+                    generate_bip39_words();
                     digitalWrite(GREEN_LED, HIGH);		// turn on green LED
                     g_uistate = DISPLAY_BIP39;
                     return;
@@ -1253,8 +1342,8 @@ void restore_slip39() {
 }
 
 void enter_share() {
-    SLIP39WordlistState state(20);
-    state.set_words(g_restore_shares[g_selected_share]);
+    SLIP39WordlistState state(SLIP39_WORDS_IN_EACH_SHARE);
+    state.set_words(g_restore_slip39_shares[g_restore_slip39_selected]);
 
     while (true) {
         int const xoff = 12;
@@ -1273,7 +1362,7 @@ void enter_share() {
             int yy = yoff + (H_FSB9 + YM_FSB9);
             g_display.setFont(&FreeSansBold9pt7b);
             g_display.setCursor(xx, yy);
-            display_printf("SLIP39 Share %d", g_selected_share+1);
+            display_printf("SLIP39 Share %d", g_restore_slip39_selected+1);
             yy += H_FSB9 + YM_FSB9;
 
             g_display.setFont(&FreeMonoBold12pt7b);
@@ -1364,9 +1453,10 @@ void enter_share() {
             state.word_up();
             break;
         case '#':	// done
-            if (g_restore_shares[g_selected_share])
-                free(g_restore_shares[g_selected_share]);
-            g_restore_shares[g_selected_share] = state.word_list_string();
+            if (g_restore_slip39_shares[g_restore_slip39_selected])
+                free(g_restore_slip39_shares[g_restore_slip39_selected]);
+            g_restore_slip39_shares[g_restore_slip39_selected] =
+                state.word_list_string();
             g_uistate = RESTORE_SLIP39;
             return;
         default:
@@ -1401,7 +1491,7 @@ void display_printf(char *format, ...) {
   char buff[1024];
   va_list args;
   va_start(args, format);
-  vsnprintf(buff, sizeof(buff), format,args);
+  vsnprintf(buff, sizeof(buff), format, args);
   va_end(args);
   buff[sizeof(buff)/sizeof(buff[0])-1]='\0';
   g_display.print(buff);
@@ -1411,129 +1501,136 @@ void serial_printf(char *format, ...) {
   char buff[1024];
   va_list args;
   va_start(args, format);
-  vsnprintf(buff, sizeof(buff), format,args);
+  vsnprintf(buff, sizeof(buff), format, args);
   va_end(args);
   buff[sizeof(buff)/sizeof(buff[0])-1]='\0';
   Serial.print(buff);
 }
 
-// ----------------------------------------------------------------
+void test_failed(char *format, ...) {
+  char buff[8192];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buff, sizeof(buff), format, args);
+  va_end(args);
+  buff[sizeof(buff)/sizeof(buff[0])-1]='\0';
+  Serial.print(buff);
+  // FIXME - figure out how to display something.
+  // g_display.print(buff);
+  abort();
+}
 
-void no_input_or_display() {
+void self_test() {
+    serial_printf("self_test starting\n");
+    {
+        // Order important here.
+        reset_state();
+        test_generate_seed();
+        test_generate_bip39();
+    }
+    {
+        // Order important here.
+        reset_state();
+        test_restore_bip39();
+        test_generate_slip39();
+    }
+    {
+        // Order important here.
+        reset_state();
+        test_restore_slip39();
+    }
+    reset_state();
+    serial_printf("self_test finished\n");
+}
+
+uint8_t ref_secret[16] =
+{ 0x8d, 0x96, 0x9e, 0xef, 0x6e, 0xca, 0xd3, 0xc2,
+  0x9a, 0x3a, 0x62, 0x92, 0x80, 0xe6, 0x86, 0xcf };
+
+char* ref_bip39_strings[BIP39_WORD_COUNT] =
+{ "mirror", "reject", "rookie", "talk",
+  "pudding", "throw", "happy", "era",
+  "myth", "already", "payment", "owner" };
+
+uint16_t ref_bip39_words[BIP39_WORD_COUNT] =
+{ 0x046c, 0x05a7, 0x05de, 0x06ec,
+  0x0569, 0x070a, 0x0347, 0x0262,
+  0x0494, 0x0039, 0x050d, 0x04f1 };
+
+char* ref_slip39_shares[3] =
+{ "check academic academic acid counter "
+  "both course legs visitor squeeze "
+  "justice sack havoc elbow crunch "
+  "scroll evoke civil exact vexed",
+  
+  "check academic academic agency custody "
+  "purple ceiling walnut garlic hearing "
+  "daughter kind critical necklace boundary "
+  "dish away obesity glen infant",
+  
+  "check academic academic always check "
+  "enemy fawn glimpse bulb rebound "
+  "spelling plunge cover umbrella fused "
+  "ocean desktop elephant beam aluminum" };
+
+void test_generate_seed() {
+    serial_printf("test_generate_seed starting\n");
     g_rolls = "123456";
-    
-    generate_key();
-            
-    for (int ndx = 0; ndx < 12; ndx += 2) {
-        int col = 15;
-        int row = ndx*10 + 40;
-        String word0 = g_bip39.getMnemonic(g_bip39.getWord(ndx));
-        String word1 = g_bip39.getMnemonic(g_bip39.getWord(ndx+1));
-        Serial.println(word0 + " " + word1);
-    }
-    
-    make_slip39_wordlist();
-}
+    seed_from_rolls();
+    if (memcmp(g_master_secret, ref_secret, sizeof(ref_secret)) != 0)
+        test_failed("test_generate_seed failed: secret mismatch\n");
+    serial_printf("test_generate_seed finished\n");
+}     
 
-void generate_key() {
-    Sha256Class sha256;
-    sha256.init();
-    for(uint8_t ii=0; ii < g_rolls.length(); ii++) {
-        sha256.write(g_rolls[ii]);
-    }
-    memcpy(g_master_secret, sha256.result(), sizeof(g_master_secret));
-    g_bip39.setPayloadBytes(sizeof(g_master_secret));
-    g_bip39.setPayload(sizeof(g_master_secret), (uint8_t *)g_master_secret);
-    for (int ndx = 0; ndx < 12; ++ndx) {
-        uint16_t word = g_bip39.getWord(ndx);
-        Serial.println(String(ndx) + " " + String(g_bip39.getMnemonic(word)));
-    }
-}
+void test_generate_bip39() {
+    serial_printf("test_generate_bip39 starting\n");
+    generate_bip39_words();
+    for (int ii = 0; ii < BIP39_WORD_COUNT; ++ii)
+        if (strcmp(g_bip39.getMnemonic(g_bip39.getWord(ii)),
+                   ref_bip39_strings[ii]) != 0)
+            test_failed("test_generate_bip39 failed: word list mismatch\n");
+    serial_printf("test_generate_bip39 finished\n");
+}     
 
-void make_slip39_wordlist() {
-    int gt = 3;
-    int gn = 5;
-    
-    char *ml[gn];
-    
-    for (int ii = 0; ii < gn; ++ii)
-        ml[ii] = (char *)malloc(MNEMONIC_LIST_LEN);
+void test_restore_bip39() {
+    serial_printf("test_restore_bip39 starting\n");
+    int rv = restore_bip39_words(ref_bip39_words, BIP39_WORD_COUNT);
+    if (rv != 0)
+        test_failed("test_restore_bip39 failed: restore failed\n");
+    if (memcmp(g_master_secret, ref_secret, sizeof(ref_secret)) != 0)
+        test_failed("test_restore_bip39 failed: secret mismatch\n");
+    serial_printf("test_restore_bip39 finished\n");
+}     
 
-    Serial.println("calling generate_mnemonics");
-    generate_mnemonics(gt, gn,
-                       g_master_secret, sizeof(g_master_secret),
-                       NULL, 0, 0, ml);
+void test_generate_slip39() {
+    serial_printf("test_generate_slip39 starting\n");
+    g_generate_slip39_thresh = 2;
+    g_generate_slip39_nshares = 3;
+    generate_slip39_shares(fake_random);
+    for (int ii = 0; ii < g_generate_slip39_nshares; ++ii)
+        if (strcmp(g_generate_slip39_shares[ii], ref_slip39_shares[ii]) != 0)
+            test_failed("test_generate_slip39 failed: words mismatch\n");
+    serial_printf("test_generate_slip39 finished\n");
+}    
 
-    for (int ii = 0; ii < gn; ++ii)
-        Serial.println(String(ii) + " " + String(ml[ii]));
+void test_restore_slip39() {
+    serial_printf("test_restore_slip39 starting\n");
+    g_restore_slip39_nshares = 2;
+    g_restore_slip39_shares[0] = strdup(ref_slip39_shares[2]);
+    g_restore_slip39_shares[1] = strdup(ref_slip39_shares[1]);
+    int rv = combine_slip39_shares(g_master_secret, sizeof(g_master_secret));
+    if (rv < 0)
+        test_failed("test_restore_slip39 failed: combine failed\n");
+    if (memcmp(g_master_secret, ref_secret, sizeof(ref_secret)) != 0)
+        test_failed("test_restore_slip39 failed: secret mismatch\n");
+    serial_printf("test_restore_slip39 finished\n");
+}     
 
-    // Combine 2, 0, 4 to recover the secret.
-    char *dml[5];
-    dml[0] = ml[2];
-    dml[1] = ml[0];
-    dml[2] = ml[4];
-    
-    uint8_t ms[16];
-    int msl;
-    msl = sizeof(ms);
-    combine_mnemonics(gt, dml, NULL, 0, ms, &msl);
-
-    for (int ii = 0; ii < gn; ++ii)
-        free(ml[ii]);
-    
-    if (msl == sizeof(g_master_secret) &&
-        memcmp(g_master_secret, ms, msl) == 0) {
-        Serial.println("SUCCESS");
-    } else {
-        Serial.println("FAIL");
-    }
-}
-
-void verify_slip39_multilevel() {
-    int gt = 5;
-    char* ml[5] = {
-                      "eraser senior decision roster beard "
-                      "treat identify grumpy salt index "
-                      "fake aviation theater cubic bike "
-                      "cause research dragon emphasis counter",
-
-                      "eraser senior ceramic snake clay "
-                      "various huge numb argue hesitate "
-                      "auction category timber browser greatest "
-                      "hanger petition script leaf pickup",
-                      
-                      "eraser senior ceramic shaft dynamic "
-                      "become junior wrist silver peasant "
-                      "force math alto coal amazing "
-                      "segment yelp velvet image paces",
-#if 0
-                      // Duplicate of the prior, should fail.
-                      "eraser senior ceramic shaft dynamic "
-                      "become junior wrist silver peasant "
-                      "force math alto coal amazing "
-                      "segment yelp velvet image paces",
-#else
-                      // This one works
-                      "eraser senior ceramic round column "
-                      "hawk trust auction smug shame "
-                      "alive greatest sheriff living perfect "
-                      "corner chest sled fumes adequate",
-#endif
-                      
-                      "eraser senior decision smug corner "
-                      "ruin rescue cubic angel tackle "
-                      "skin skunk program roster trash "
-                      "rumor slush angel flea amazing",
-    };
-
-    uint8_t ms[16];
-    int msl;
-    msl = sizeof(ms);
-    int rc = combine_mnemonics(gt, (char**) ml, NULL, 0, ms, &msl);
-
-    if (rc == 0) {
-        Serial.println("VERIFIED " + String(rc));
-    } else {
-        Serial.println("FAILED " + String(rc));
+// Clearly not random. Only use for tests.
+void fake_random(uint8_t *buf, size_t count) {
+    uint8_t b = 0;
+    for(int i = 0; i < count; i++) {
+        buf[i] = b;
+        b = b + 17;
     }
 }

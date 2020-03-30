@@ -12,6 +12,9 @@ The [Case](case) can be 3D printed.
 
 The [Assembly Instructions](doc/assembly.md) show how to put it together.
 
+The [Seedtool Application Instructions](seedtool/README.md) show how to build
+and run a sample application.
+
 ## Origin, Authors, Copyright & Licenses
 
 Unless otherwise noted (either in this [/README.md](./README.md) or in the file's header comments) the contents of this repository are Copyright © 2020 by Blockchain Commons, LLC, and are [licensed](./LICENSE) under the [spdx:BSD-2-Clause Plus Patent License](https://spdx.org/licenses/BSD-2-Clause-Patent.html).
