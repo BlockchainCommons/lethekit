@@ -1,3 +1,11 @@
+* Add LetheKit specific programming instructions:
+  1. Open case
+  2. Disconnect battery
+  3. Connect device to dev computer USB port.
+  4. Double press reset button
+  5. Confirm port in Arduino IDE
+  6. Upload
+
 * Need better diagnsotics for BIP39 and SLIP39 restore operations.
 
 * Update to bc_bip32 (waiting for Wolf).
@@ -15,24 +23,10 @@
 
 * Find a new supplier for keypads, costs $150 to ship $20 worth ...
 
-Other sources:
 
-* Arduino base software/runtime.
+#### Semantic Versioning Reminder
 
-* SparkFun's "Cores"
-
-* GxEPD2 
-  https://github.com/ZinggJM/GxEPD
-  GNU General Public License v3.0
-
-* Adafruit GFX Library
-  https://github.com/adafruit/Adafruit-GFX-Library
-  https://github.com/adafruit/Adafruit-GFX-Library/blob/master/license.txt
-  
-* Keypad
-  https://playground.arduino.cc/Code/Keypad/
-  GNU General Public License v3.0
-
-* TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
-  https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
-  MIT License
+Given a version number MAJOR.MINOR.PATCH, increment the:
+* MAJOR version when you make incompatible API changes,
+* MINOR version when you add functionality in a backwards compatible manner
+* PATCH version when you make backwards compatible bug fixes.
