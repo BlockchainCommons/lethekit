@@ -16,6 +16,15 @@ installation.
 
 [Install `arduino-cli`](https://arduino.github.io/arduino-cli/installation/)
 
+### Install the Arduino IDE
+
+After installing the Arduino IDE run it once and let it create the
+default sketchbook `~/Arduino`.
+
+Follow the directions at
+[SAMD51 Thing Plus Hookup Guide](https://learn.sparkfun.com/tutorials/samd51-thing-plus-hookup-guide/setting-up-the-arduino-ide) to setup the Arduino for
+working with the SAMD51.
+
 ### Install Lethe Kit on your system
 
 The Lethe Kit software can be placed anywhere you like.  It does not

@@ -47,7 +47,14 @@ aroot=${args[1]}
 
 libpath="${aroot}/libraries"
 
-declare -a libs=(Cryptosuite  bc-crypto-base  bc-shamir	bc-slip39  bip39)
+declare -a libs=(
+    Cryptosuite
+    bc-crypto-base
+    bc-shamir
+    bc-slip39
+    bip39
+    TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
+)
 
 for lib in "${libs[@]}"
 do
@@ -55,6 +62,9 @@ do
 done
 
 # FIXME - remove this when we fix how this is done ...
-( cd ${lkroot}/deps/bc-slip39/src && \
-      ln -fs ../../bc-crypto-base/src bc-crypto-base && \
-      ln -fs ../../bc-shamir/src bc-shamir )
+if [ ! -L "${lkroot}/deps/bc-slip39/src/bc-crypto-base" ]; then
+    ln -fs ../../bc-crypto-base/src ${lkroot}/deps/bc-slip39/src/bc-crypto-base
+fi
+if [ ! -L "${lkroot}/deps/bc-slip39/src/bc-shamir" ]; then
+    ln -fs ../../bc-shamir/src ${lkroot}/deps/bc-slip39/src/bc-shamir
+fi

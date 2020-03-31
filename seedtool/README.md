@@ -12,25 +12,20 @@ be done once, but is safe to do anytime you like.
 
 [Lethe Kit Installation Instructions](../doc/installation.md)
 
-
 ### Add Libraries
 
-Restart the Arduino IDE:
+Launch the Arduino IDE in the `seedtool` subdirectory:
 
-From the Arduino IDE, menu "Sketch" -> "Include Library"
-* Select Cryptosuite
-* Select bip39
-* Select bc-crypto-base
-* Select bc-shamir
-* Select bc-slip39
+    arduino ./
+    
+Open `Tools` -> `Manage Libraries...`, install the following:
+* `GxEPD2`
+* `Adafruit GFX Library`
+* `Keypad`
 
 ### Build seedtool
 
-Connect a Lethe Kit hardware device to an appropriate USB port
-and start the Arduino IDE in the seedtool subdirectory:
-
-    cd $LETHEKIT_ROOT/seedtool
-    arduno ./
+Connect a Lethe Kit hardware device to an appropriate USB port.
 
 Press the "Upload" button. The `seedtool` application should be built
 and uploaded to your device.
