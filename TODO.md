@@ -1,5 +1,3 @@
-* Switch the gitversion to straight `git describe --tags --long --always`
-
 * Need better diagnsotics for BIP39 and SLIP39 restore operations.
 
 * Update to bc_bip32 (waiting for Wolf).
