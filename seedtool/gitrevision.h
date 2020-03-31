@@ -17,5 +17,6 @@
 #define GIT_SHORT_HASH "-------"
 #define GIT_LATEST_TAG "------"
 #define GIT_REVS_SINCE 0
+#define GIT_DESCRIBE "-----------------"
 
 #endif // GITREVISION_H

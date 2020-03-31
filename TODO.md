@@ -14,3 +14,25 @@
   then generate.
 
 * Find a new supplier for keypads, costs $150 to ship $20 worth ...
+
+Other sources:
+
+* Arduino base software/runtime.
+
+* SparkFun's "Cores"
+
+* GxEPD2 
+  https://github.com/ZinggJM/GxEPD
+  GNU General Public License v3.0
+
+* Adafruit GFX Library
+  https://github.com/adafruit/Adafruit-GFX-Library
+  https://github.com/adafruit/Adafruit-GFX-Library/blob/master/license.txt
+  
+* Keypad
+  https://playground.arduino.cc/Code/Keypad/
+  GNU General Public License v3.0
+
+* TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
+  https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
+  MIT License
