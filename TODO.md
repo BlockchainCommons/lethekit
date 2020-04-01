@@ -21,9 +21,6 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 * Where to send questions (you directly or through issues?
 
-s/Lethe Kit/LetheKit/g
-s/lethe-kit/lethekit/g
-
 Photos of the seedtool app menus.
 
 https://github.com/BlockchainCommons/bc-lethekit/settings
@@ -33,3 +30,4 @@ Update the CLAs for name change.
 
 Mark seedtool as deprecated, point to lethekit.
 
+Figure out how to propogate version tags through gitflow.
