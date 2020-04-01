@@ -25,6 +25,7 @@
 
 * Find a new supplier for keypads, costs $150 to ship $20 worth ...
 
+* Can we make WordListState::wordndx a uint16_t? Would streamline.
 
 #### Semantic Versioning Reminder
 

@@ -23,6 +23,8 @@ public:
         return memcmp(data, other.data, SIZE) != 0;
     }
 
+    void log() const;
+    
     uint8_t data[SIZE];
 };
 
@@ -40,11 +42,18 @@ public:
         bip39.setWord(ndx, word);
     }
 
+    // Return the char string for a dictionary index.
+    char const * get_dict_string(size_t ndx) {
+        return bip39.getMnemonic(ndx);
+    }
+
+    // Return the word for a word list index.
     uint16_t get_word(size_t ndx) const {
         return bip39.getWord(ndx);
     }
 
-    char const * get_mnemonic(size_t ndx) {
+    // Return the char string for a list index.
+    char const * get_string(size_t ndx) {
         return bip39.getMnemonic(bip39.getWord(ndx));
     }
 
@@ -68,6 +77,8 @@ public:
 
     ~SLIP39ShareSeq();
 
+    size_t numshares() const { return nshares; }
+    
     // Adds a copy of the argument, returns the share index.
     size_t add_share(uint16_t const * share);
 
@@ -76,41 +87,24 @@ public:
 
     // Read-only, don't free returned value.
     uint16_t const * get_share(size_t ndx) const;
+
+    // Free the returned value!
+    char * get_share_strings(size_t ndx) const;
+    
+    // Read only, don't free returned value.
+    char const * get_share_word(size_t sndx, size_t wndx) const;
     
     // Returns NULL if restore fails, use last_error for diagnostic.
     Seed * restore_seed() const;
 
-    int last_restore_error();
+    int last_restore_error() { return last_rv; }
 
+private:
     size_t nshares;
     
     uint16_t * shares[MAX_SHARES];
 
     mutable int last_rv;
 };
-
-    
-#if 0                 
-                 
-void seed_reset_state();
-
-void seed_from_rolls(String const &rolls);
-
-void seed_generate_bip39_words();
-
-int seed_restore_bip39_words(uint16_t* words, size_t nwords);
-
-void seed_generate_slip39_shares(size_t thres, size_t nshares,
-                                 void(*randgen)(uint8_t *, size_t));
-
-int seed_combine_slip39_shares(char** const shares, size_t nshares);
-
-bool seed_master_secret_equal(uint8_t const* secret, size_t len);
-
-bool seed_bip39_strings_equal(char** const ref, size_t nstrings);
-
-bool seed_slip39_shares_equal(char** const shares, size_t nshares);
-
-#endif
     
 #endif // SEED_H

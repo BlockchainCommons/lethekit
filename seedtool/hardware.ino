@@ -1,7 +1,5 @@
 // Copyright © 2020 Blockchain Commons, LLC
 
-#if 0
-
 // Only define one of these
 #undef ESP32
 #define SAMD51	1
@@ -144,5 +142,3 @@ void hw_random_buffer(uint8_t *buf, size_t len) {
 }
 
 } // extern "C"
-
-#endif

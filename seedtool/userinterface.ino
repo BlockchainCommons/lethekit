@@ -1,7 +1,5 @@
 // Copyright © 2020 Blockchain Commons, LLC
 
-#if 0
-
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
@@ -12,7 +10,7 @@
 #include "seed.h"
 #include "userinterface.h"
 
-namespace {
+namespace userinterface_internal {
 
 enum UIState {
     SEEDLESS_MENU,
@@ -31,12 +29,15 @@ UIState g_uistate;
 String g_rolls;
 bool g_submitted;
 
+Seed * g_master_seed = NULL;
+BIP39Seq * g_bip39 = NULL;
+SLIP39ShareSeq * g_slip39_generate = NULL;
+SLIP39ShareSeq * g_slip39_restore = NULL;
+
 int g_ndx = 0;		// index of "selected" word
 int g_pos = 0;		// char position of cursor
 int g_scroll = 0;	// index of scrolled window
 
-char* g_restore_slip39_shares[MAX_SLIP39_SHARES];
-int g_restore_slip39_nshares = 0;
 int g_restore_slip39_selected;
 
 int const Y_MAX = 200;
@@ -53,14 +54,6 @@ int const YM_FSB12 = 9;	// y-margin
 int const W_FMB12 = 14;	// width
 int const H_FMB12 = 21;	// height
 int const YM_FMB12 = 4;	// y-margin
-
-void free_restore_shares() {
-    for (int ndx = 0; ndx < g_restore_slip39_nshares; ++ndx) {
-        free(g_restore_slip39_shares[ndx]);
-        g_restore_slip39_shares[ndx] = NULL;
-    }
-    g_restore_slip39_nshares = 0;
-}
 
 void full_window_clear() {
     g_display.firstPage();
@@ -127,9 +120,11 @@ void seedless_menu() {
             g_uistate = GENERATE_SEED;
             return;
         case 'B':
+            g_bip39 = new BIP39Seq();
             g_uistate = RESTORE_BIP39;
             return;
         case 'C':
+            g_slip39_restore = new SLIP39ShareSeq();
             g_uistate = RESTORE_SLIP39;
             return;
         case NO_KEY:
@@ -201,8 +196,11 @@ void generate_seed() {
             break;
         case '#':
             g_submitted = true;
-            seed_from_rolls(g_rolls);
-            log_master_secret();
+            assert(!g_master_seed);
+            g_master_seed = Seed::from_rolls(g_rolls);
+            g_master_seed->log();
+            assert(!g_bip39);
+            g_bip39 = new BIP39Seq(g_master_seed);
             digitalWrite(GREEN_LED, HIGH);		// turn on green LED
             g_uistate = DISPLAY_BIP39;
             return;
@@ -260,7 +258,7 @@ void seedy_menu() {
             g_uistate = CONFIG_SLIP39;
             return;
         case 'C':
-            seed_reset_state();
+            ui_reset_state();
             g_uistate = SEEDLESS_MENU;
             return;
         case NO_KEY:
@@ -271,7 +269,7 @@ void seedy_menu() {
 }
 
 void display_bip39() {
-    int const nwords = BIP39_WORD_COUNT;
+    int const nwords = BIP39Seq::WORD_COUNT;
     int scroll = 0;
     
     while (true) {
@@ -298,9 +296,9 @@ void display_bip39() {
             g_display.setFont(&FreeMonoBold12pt7b);
             for (int rr = 0; rr < nrows; ++rr) {
                 int wndx = scroll + rr;
-                uint16_t word = g_bip39.getWord(wndx);
                 g_display.setCursor(xx, yy);
-                display_printf("%2d %s", wndx+1, g_bip39.getMnemonic(word));
+                display_printf("%2d %s", wndx+1,
+                               g_bip39->get_dict_string(wndx));
                 yy += H_FMB12 + YM_FMB12;
             }
             
@@ -467,9 +465,14 @@ void config_slip39() {
                     thresh_done = false;
                     break;
                 }
-                seed_generate_slip39_shares(threshstr.toInt(),
-                                            nsharestr.toInt(),
-                                            hw_random_buffer);
+                // It's ok to generate multiple slip39 shares.
+                if (g_slip39_generate)
+                    delete g_slip39_generate;
+                g_slip39_generate =
+                    SLIP39ShareSeq::from_seed(g_master_seed,
+                                              threshstr.toInt(),
+                                              nsharestr.toInt(),
+                                              hw_random_buffer);
                 g_uistate = DISPLAY_SLIP39;
                 return;
             }
@@ -479,31 +482,8 @@ void config_slip39() {
     }
 }
 
-// Extract the indicted word from the wordlist.
-String slip39_select(char* wordlist, int wordndx) {
-    // Start at the begining of the wordlist.
-    char* pos = wordlist;
-
-    // Advance to the nth word.
-    for (int ii = 0; ii < wordndx; ++ii) {
-        do {
-            ++pos;
-        } while (*pos != ' ');
-        // stops on the next space
-        ++pos; // advance to the next word.
-    }
-
-    char* pos0 = pos;
-    do {
-        ++pos;
-    } while (*pos != ' ');
-    char* epos = pos;
-
-    return String(pos0).substring(0, epos-pos0);	// yuk
-}
-
 void display_slip39() {
-    int const nwords = SLIP39_WORDS_IN_EACH_SHARE;
+    int const nwords = SLIP39ShareSeq::WORDS_PER_SHARE;
     int sharendx = 0;
     int scroll = 0;
     
@@ -524,7 +504,7 @@ void display_slip39() {
             g_display.setFont(&FreeSansBold9pt7b);
             g_display.setCursor(xx, yy);
             display_printf("SLIP39 %d/%d",
-                           sharendx+1, g_generate_slip39_nshares);
+                           sharendx+1, g_slip39_generate->numshares());
             yy += H_FSB9 + YM_FSB9;
             
             yy += 8;
@@ -532,10 +512,10 @@ void display_slip39() {
             g_display.setFont(&FreeMonoBold12pt7b);
             for (int rr = 0; rr < nrows; ++rr) {
                 int wndx = scroll + rr;
-                String word =
-                    slip39_select(g_generate_slip39_shares[sharendx], wndx);
+                char const * word =
+                    g_slip39_generate->get_share_word(sharendx, wndx);
                 g_display.setCursor(xx, yy);
-                display_printf("%2d %s", wndx+1, word.c_str());
+                display_printf("%2d %s", wndx+1, word);
                 yy += H_FMB12 + YM_FMB12;
             }
             
@@ -544,7 +524,7 @@ void display_slip39() {
             yy = Y_MAX - (H_FSB9) + 2;
             g_display.setFont(&FreeSansBold9pt7b);
             g_display.setCursor(xx, yy);
-            if (sharendx < (g_generate_slip39_nshares-1))
+            if (sharendx < (g_slip39_generate->numshares()-1))
                 g_display.println("1,7-Up,Down #-Next");
             else
                 g_display.println("1,7-Up,Down #-Done");
@@ -572,7 +552,7 @@ void display_slip39() {
             }
             break;
         case '#':	// next / done
-            if (sharendx < (g_generate_slip39_nshares-1)) {
+            if (sharendx < (g_slip39_generate->numshares()-1)) {
                 ++sharendx;
                 scroll = 0;
             } else {
@@ -589,7 +569,7 @@ void display_slip39() {
 struct WordListState {
     int nwords;				// number of words in the mnemonic
     int nrefwords;			// number of words in the total word list
-    
+
     int* wordndx;			// ref index for each word in list
     
     int nrows;				// number of words visible
@@ -614,34 +594,14 @@ struct WordListState {
 
     virtual char const * refword(int ndx) = 0;
     
-    void set_words(char* wordlist) {
-        if (!wordlist) {
-            for (int ii = 0; ii < nwords; ++ii)
-                wordndx[ii] = 0;
-        } else {
-            char* tmp = strdup(wordlist);	// so we can poke NULL w/ strtok
-            char* ptr = strtok(tmp, " ");
-            for (int ii = 0; ii < nwords; ++ii) {
-                for (int ndx = 0; ndx < nrefwords; ++ndx) {
-                    if (strcmp(ptr, refword(ndx)) == 0) {
-                        wordndx[ii] = ndx;
-                        break;
-                    }
-                }
-                ptr = strtok(NULL, " ");
-            }
-            free(tmp);
-        }
+    void set_words(uint16_t const * wordlist) {
+        for (int ii = 0; ii < nwords; ++ii)
+            wordndx[ii] = wordlist ? wordlist[ii] : 0;
     }
-    
-    char* word_list_string() {
-        String retval;
-        for (int ii = 0; ii < nwords; ++ii) {
-            retval += refword(wordndx[ii]);
-            if (ii != nwords-1)
-                retval += ' ';
-        }
-        return strdup(retval.c_str());
+
+    void get_words(uint16_t * o_wordlist) {
+        for (int ii = 0; ii < nwords; ++ii)
+            o_wordlist[ii] = wordndx[ii];
     }
 
     void compute_scroll() {
@@ -742,16 +702,18 @@ struct SLIP39WordlistState : WordListState {
 };
 
 struct BIP39WordlistState : WordListState {
-    Bip39 & bip39;
-    BIP39WordlistState(Bip39 i_bip39, int i_nwords)
+    BIP39Seq * bip39;
+    BIP39WordlistState(BIP39Seq * i_bip39, int i_nwords)
         : WordListState(i_nwords, 2048)
         , bip39(i_bip39)
     {}
-    virtual char const * refword(int ndx) { return bip39.getMnemonic(ndx); }
+    virtual char const * refword(int ndx) {
+        return bip39->get_dict_string(ndx);
+    }
 };
 
 void restore_bip39() {
-    BIP39WordlistState state(g_bip39, BIP39_WORD_COUNT);
+    BIP39WordlistState state(g_bip39, BIP39Seq::WORD_COUNT);
     state.set_words(NULL);
 
     while (true) {
@@ -863,13 +825,16 @@ void restore_bip39() {
             break;
         case '#':	// done
             {
-                uint16_t bip39_words[BIP39_WORD_COUNT];
-                for (int ii = 0; ii < BIP39_WORD_COUNT; ++ii)
+                uint16_t bip39_words[BIP39Seq::WORD_COUNT];
+                for (int ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii)
                     bip39_words[ii] = state.wordndx[ii];
-                int rv =
-                    seed_restore_bip39_words(bip39_words, BIP39_WORD_COUNT);
-                if (rv == 0) {
-                    log_master_secret();
+                BIP39Seq * bip39 = BIP39Seq::from_words(bip39_words);
+                Seed * seed = bip39->restore_seed();
+                delete bip39;
+                if (seed) {
+                    assert(!g_master_seed);
+                    g_master_seed = seed;
+                    g_master_seed->log();
                     digitalWrite(GREEN_LED, HIGH);		// turn on green LED
                     g_uistate = SEEDY_MENU;
                     return;
@@ -885,7 +850,7 @@ void restore_bip39() {
 
 void restore_slip39() {
     int scroll = 0;
-    int selected = g_restore_slip39_nshares;	// selects "add" initially
+    int selected = g_slip39_restore->numshares();	// selects "add" initially
     
     while (true) {
         int const xoff = 12;
@@ -893,18 +858,18 @@ void restore_slip39() {
         int const nrows = 4;
     
         // Are we showing the restore action?
-        int showrestore = g_restore_slip39_nshares > 0 ? 1 : 0;
+        int showrestore = g_slip39_restore->numshares() > 0 ? 1 : 0;
 
         // How many rows displayed?
-        int disprows = g_restore_slip39_nshares + 1 + showrestore;
+        int disprows = g_slip39_restore->numshares() + 1 + showrestore;
         if (disprows > nrows)
             disprows = nrows;
             
         // Adjust the scroll to center the selection.
         if (selected < 2)
             scroll = 0;
-        else if (selected > g_restore_slip39_nshares)
-            scroll = g_restore_slip39_nshares + 2 - disprows;
+        else if (selected > g_slip39_restore->numshares())
+            scroll = g_slip39_restore->numshares() + 2 - disprows;
         else
             scroll = selected - 2;
         serial_printf("scroll = %d\n", scroll);
@@ -930,9 +895,9 @@ void restore_slip39() {
             for (int rr = 0; rr < disprows; ++rr) {
                 int sharendx = scroll + rr;
                 char buffer[32];
-                if (sharendx < g_restore_slip39_nshares) {
+                if (sharendx < g_slip39_restore->numshares()) {
                     sprintf(buffer, "Share %d", sharendx+1);
-                } else if (sharendx == g_restore_slip39_nshares) {
+                } else if (sharendx == g_slip39_restore->numshares()) {
                     sprintf(buffer, "Add Share");
                 } else {
                     sprintf(buffer, "Restore");
@@ -975,38 +940,47 @@ void restore_slip39() {
                 selected -= 1;
             break;
         case '7':
-            if (selected < g_restore_slip39_nshares + 1 + showrestore - 1)
+            if (selected < g_slip39_restore->numshares() + 1 + showrestore - 1)
                 selected += 1;
             break;
         case '*':
             g_uistate = SEEDLESS_MENU;
             return;
         case '#':
-            if (selected < g_restore_slip39_nshares) {
+            if (selected < g_slip39_restore->numshares()) {
                 // Edit existing share
                 g_restore_slip39_selected = selected;
                 g_uistate = ENTER_SHARE;
                 return;
-            } else if (selected == g_restore_slip39_nshares) {
-                // Add new share
-                g_restore_slip39_selected = g_restore_slip39_nshares;
-                g_restore_slip39_shares[g_restore_slip39_selected] = NULL;
-                g_restore_slip39_nshares += 1;
+            } else if (selected == g_slip39_restore->numshares()) {
+                // Add new (zeroed) share
+                uint16_t share[SLIP39ShareSeq::WORDS_PER_SHARE] =
+                    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                g_restore_slip39_selected = g_slip39_restore->add_share(share);
                 g_uistate = ENTER_SHARE;
                 return;
             } else {
                 // Attempt restoration
-                for (int ii = 0; ii < g_restore_slip39_nshares; ++ii)
-                    serial_printf("%d %s\n", ii+1, g_restore_slip39_shares[ii]);
-                int rv = seed_combine_slip39_shares();
-                if (rv < 0) {
+                for (int ii = 0; ii < g_slip39_restore->numshares(); ++ii) {
+                    char * strings =
+                        g_slip39_restore->get_share_strings(ii);
+                    serial_printf("%d %s\n", ii+1, strings);
+                    free(strings);
+                }
+                Seed * seed = g_slip39_restore->restore_seed();
+                if (!seed) {
                     // Something went wrong
-                    serial_printf("combine_mnemonics failed: %d\n", rv);
+                    serial_printf("restore_seed failed: %d\n",
+                                  g_slip39_restore->last_restore_error());
                     g_uistate = RESTORE_SLIP39;
                     return;
                 } else {
-                    log_master_secret();
-                    seed_generate_bip39_words();
+                    assert(!g_master_seed);
+                    g_master_seed = seed;
+                    g_master_seed->log();
+                    assert(!g_bip39);
+                    g_bip39 = new BIP39Seq(seed);
                     digitalWrite(GREEN_LED, HIGH);		// turn on green LED
                     g_uistate = DISPLAY_BIP39;
                     return;
@@ -1020,8 +994,8 @@ void restore_slip39() {
 }
 
 void enter_share() {
-    SLIP39WordlistState state(SLIP39_WORDS_IN_EACH_SHARE);
-    state.set_words(g_restore_slip39_shares[g_restore_slip39_selected]);
+    SLIP39WordlistState state(SLIP39ShareSeq::WORDS_PER_SHARE);
+    state.set_words(g_slip39_restore->get_share(g_restore_slip39_selected));
 
     while (true) {
         int const xoff = 12;
@@ -1131,10 +1105,9 @@ void enter_share() {
             state.word_up();
             break;
         case '#':	// done
-            if (g_restore_slip39_shares[g_restore_slip39_selected])
-                free(g_restore_slip39_shares[g_restore_slip39_selected]);
-            g_restore_slip39_shares[g_restore_slip39_selected] =
-                state.word_list_string();
+            uint16_t words[SLIP39ShareSeq::WORDS_PER_SHARE];
+            state.get_words(words);
+            g_slip39_restore->set_share(g_restore_slip39_selected, words);
             g_uistate = RESTORE_SLIP39;
             return;
         default:
@@ -1143,20 +1116,38 @@ void enter_share() {
     }
 }
 
-} // namespace
+} // namespace userinterface_internal
 
 void ui_reset_state() {
-    hw_green_led(LOW);
-            
+    using namespace userinterface_internal;
+    
     g_uistate = SEEDLESS_MENU;
     g_rolls = "";
     g_submitted = false;
 
-    // Clear the restore shares
-    free_restore_shares();
+    if (g_master_seed) {
+        delete g_master_seed;
+        g_master_seed = NULL;
+    }
+    if (g_bip39) {
+        delete g_bip39;
+        g_bip39 = NULL;
+    }
+    if (g_slip39_generate) {
+        delete g_slip39_generate;
+        g_slip39_generate = NULL;
+    }
+    if (g_slip39_restore) {
+        delete g_slip39_restore;
+        g_slip39_restore = NULL;
+    }
+
+    hw_green_led(LOW);
 }
 
 void ui_dispatch() {
+    using namespace userinterface_internal;
+    
     full_window_clear();
     
     switch (g_uistate) {
@@ -1192,5 +1183,3 @@ void ui_dispatch() {
         break;
     }
 }
-
-#endif

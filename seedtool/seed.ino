@@ -34,6 +34,13 @@ Seed::Seed(uint8_t const * i_data, size_t len) {
     memcpy(data, i_data, len);
 }
 
+void Seed::log() const {
+    serial_printf("seed: ");
+    for (int ii = 0; ii < sizeof(data); ++ii)
+        serial_printf("%02x", (int) data[ii]);
+    serial_printf("\n");
+}
+
 BIP39Seq * BIP39Seq::from_words(uint16_t * words) {
     BIP39Seq * retval = new BIP39Seq();
     for (size_t ii = 0; ii < WORD_COUNT; ++ii)
@@ -122,6 +129,17 @@ void SLIP39ShareSeq::set_share(size_t ndx, uint16_t const * share) {
     memcpy(shares[nshares], share, sharesz);
 }
 
+char * SLIP39ShareSeq::get_share_strings(size_t ndx) const {
+    assert(ndx < nshares);
+    return slip39_strings_for_words(shares[ndx], WORDS_PER_SHARE);
+}
+
+char const * SLIP39ShareSeq::get_share_word(size_t sndx, size_t wndx) const {
+    assert(sndx < nshares);
+    assert(wndx < WORDS_PER_SHARE);
+    return slip39_string_for_word(shares[sndx][wndx]);
+}
+
 Seed * SLIP39ShareSeq::restore_seed() const {
     uint8_t seed_data[Seed::SIZE];
     char * password = "";
@@ -166,13 +184,6 @@ void free_slip39_generate_shares() {
     }
 }
 
-
-void log_master_secret() {
-    serial_printf("master secret: ");
-    for (int ii = 0; ii < sizeof(g_master_secret); ++ii)
-        serial_printf("%02x", (int) g_master_secret[ii]);
-    serial_printf("\n");
-}
 
 } // namespace seed_internal
 

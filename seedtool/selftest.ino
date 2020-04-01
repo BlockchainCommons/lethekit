@@ -78,58 +78,6 @@ void test_failed(char *format, ...) {
   abort();
 }
 
-#if 0
-
-void test_generate_seed() {
-    serial_printf("test_generate_seed starting\n");
-    seed_from_rolls("123456");
-    if (!seed_master_secret_equal(ref_secret, sizeof(ref_secret)))
-        test_failed("test_generate_seed failed: secret mismatch\n");
-    serial_printf("test_generate_seed finished\n");
-}     
-
-void test_generate_bip39() {
-    serial_printf("test_generate_bip39 starting\n");
-    seed_generate_bip39_words();
-    if (!seed_bip39_strings_equal(ref_bip39_strings, BIP39_WORD_COUNT))
-        test_failed("test_generate_bip39 failed: word list mismatch\n");
-    serial_printf("test_generate_bip39 finished\n");
-}     
-
-void test_restore_bip39() {
-    serial_printf("test_restore_bip39 starting\n");
-    int rv = seed_restore_bip39_words(ref_bip39_words, BIP39_WORD_COUNT);
-    if (rv != 0)
-        test_failed("test_restore_bip39 failed: restore failed\n");
-    if (!seed_master_secret_equal(ref_secret, sizeof(ref_secret)))
-        test_failed("test_restore_bip39 failed: secret mismatch\n");
-    serial_printf("test_restore_bip39 finished\n");
-}     
-
-void test_generate_slip39() {
-    serial_printf("test_generate_slip39 starting\n");
-    seed_generate_slip39_shares(ref_slip39_thresh, ref_slip39_nshares,
-                                fake_random);
-    if (!seed_slip39_shares_equal(ref_slip39_shares, ref_slip39_nshares))
-        test_failed("test_generate_slip39 failed: words mismatch\n");
-    serial_printf("test_generate_slip39 finished\n");
-}    
-
-void test_restore_slip39() {
-    serial_printf("test_restore_slip39 starting\n");
-    char* restore_shares[ref_slip39_thresh];
-    restore_shares[0] = ref_slip39_shares[2];
-    restore_shares[1] = ref_slip39_shares[1];
-    int rv = seed_combine_slip39_shares(restore_shares, ref_slip39_thresh);
-    if (rv < 0)
-        test_failed("test_restore_slip39 failed: combine failed\n");
-    if (!seed_master_secret_equal(ref_secret, sizeof(ref_secret)))
-        test_failed("test_restore_slip39 failed: secret mismatch\n");
-    serial_printf("test_restore_slip39 finished\n");
-}     
-
-#endif
-
 void test_bip39_generate() {
     serial_printf("test_bip39_generate starting\n");
     Seed * seed = Seed::from_rolls("123456");
@@ -137,7 +85,7 @@ void test_bip39_generate() {
     for (size_t ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii) {
         if (bip39->get_word(ii) != ref_bip39_words[ii])
             test_failed("test_bip39_generate failed: word mismatch\n");
-        if (strcmp(bip39->get_mnemonic(ii), ref_bip39_mnemonics[ii]) != 0)
+        if (strcmp(bip39->get_string(ii), ref_bip39_mnemonics[ii]) != 0)
             test_failed("test_bip39_generate failed: mnemonic mismatch\n");
     }
     delete bip39;
@@ -172,7 +120,7 @@ void test_slip39_generate() {
             slip39_strings_for_words(words, SLIP39ShareSeq::WORDS_PER_SHARE);
         if (strcmp(strings, ref_slip39_shares[ii]) != 0)
             test_failed("test_slip39_generate failed: share mismatch\n");
-        delete strings;
+        free(strings);
     }
     delete slip39;
     delete seed;

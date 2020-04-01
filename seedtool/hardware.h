@@ -3,8 +3,6 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-#if 0
-
 #include <GxEPD2_BW.h>
 #include <Keypad.h>
 
@@ -17,7 +15,5 @@ void hw_green_led(int value);
 extern "C" {
 void hw_random_buffer(uint8_t *buf, size_t len);
 }
-
-#endif
 
 #endif // HARDWARE_H
