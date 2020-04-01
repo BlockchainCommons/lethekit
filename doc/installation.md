@@ -29,14 +29,14 @@ working with the SAMD51.
 
 The Lethe Kit software can be placed anywhere you like.  It does not
 need to be inside your Arduino sketchbook.  In these instructions
-we'll presume you want to install it in `~/src/bc-lethe-kit`
+we'll presume you want to install it in `~/src/bc-lethekit`
 
 Clone the git repository, make sure to enable `--recurse-submodules`:
 
     cd ~/src
     git clone --recurse-submodules \
-        git@github.com:BlockchainCommons/bc-lethe-kit.git
-    cd bc-lethe-kit
+        git@github.com:BlockchainCommons/bc-lethekit.git
+    cd bc-lethekit
     export LK_ROOT=`pwd`
     
 Install Lethe Kit into your Arduino sketchbook:
