@@ -16,7 +16,7 @@ Please see the [Instructions](build.md)
 
 There are three ways to insert a key into the *seedtool*:
 
-![No Seed Menu](images/no-seed.png)
+![No Seed Menu](doc/images/no-seed.png)
 
 ### Key Generation with Dice
 
@@ -24,7 +24,7 @@ By rolling dice and typing the values enough auditable entropy can be
 gathered to generate a secure master seed.  Rolling 50 dice gathers
 roughly 128 bits of entropy.
 
-![Generate Seed](images/generate-seed.png)
+![Generate Seed](doc/images/generate-seed.png)
 
 ### BIP-39 Key Recovery
 
@@ -32,7 +32,7 @@ You can insert a key into the *seedtool* by entering it's BIP-39
 recovery mnemonic passphrase.  From there you can generate SLIP-39
 shares.
 
-![BIP-39 Restore](images/bip39-restore.png)
+![BIP-39 Restore](doc/images/bip39-restore.png)
 
 ### SLIP-39 Key Recovery
 
@@ -40,25 +40,25 @@ If you possess enough shares of a SLIP-39 set, you can recover the
 master seed with *seedtool*.  From there you can generate the BIP-39
 mnemonic passphrase which will allow you to use it with most wallets.
 
-![SLIP-39 Recovery Menu](images/slip39-restore-menu.png) ![SLIP-39 Share Entry](images/slip39-share-restore.png)
+![SLIP-39 Recovery Menu](doc/images/slip39-restore-menu.png) ![SLIP-39 Share Entry](doc/images/slip39-share-restore.png)
 
 ## Functions with a Seed
 
 Once you have a seed through any of the prior flows you can create
 BIP-39 and SLIP-39 mnemonic passphrases.
 
-![Seed Present Menu](images/seed-present.png)
+![Seed Present Menu](doc/images/seed-present.png)
 
 ### BIP-39 Generation
 
 The BIP-39 phrase is displayed and can be backed up in a secure
 offline fashion (ie, hammering into metal).
 
-![BIP-39 View](images/bip39-view.png)
+![BIP-39 View](doc/images/bip39-view.png)
 
 ### SLIP-39 Generation
 
 SLIP-39 requires some configuration choices for total number of shares
 and required number present to recover.
 
-![SLIP-39 Generation Config](images/config-slip39.png) ![SLIP-39 Share View](images/slip39-share-view.png)
+![SLIP-39 Generation Config](doc/images/config-slip39.png) ![SLIP-39 Share View](doc/images/slip39-share-view.png)
