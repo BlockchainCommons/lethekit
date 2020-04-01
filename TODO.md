@@ -19,3 +19,17 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 #### Punchlist
 
+* Where to send questions (you directly or through issues?
+
+s/Lethe Kit/LetheKit/g
+s/lethe-kit/lethekit/g
+
+Photos of the seedtool app menus.
+
+https://github.com/BlockchainCommons/bc-lethekit/settings
+Github suggests 1280×640px for "social preview"
+
+Update the CLAs for name change.
+
+Mark seedtool as deprecated, point to lethekit.
+

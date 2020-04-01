@@ -1,10 +1,10 @@
-# Blockchain Commons Lethe Kit
+# Blockchain Commons LetheKit
 
 **Open source DIY hardware box for offline cryptographic tools**
 
-![Lethe Kit](lethekit.jpg)
+![LetheKit](lethekit.jpg)
 
-The Lethe Kit is a DIY platform for performing various sensitive cryptographic operations on an offline/airgapped device with no WiFi or Bluetooth to leak information, the external USB only charges the battery, and there is no local storage, so when you turn it off it forgets any sensitive data stored in RAM. Thus the name Lethe ("lee-thee") from the [mythological river](https://en.wikipedia.org/wiki/Lethe) of forgetfulness and oblivion.
+The LetheKit is a DIY platform for performing various sensitive cryptographic operations on an offline/airgapped device with no WiFi or Bluetooth to leak information, the external USB only charges the battery, and there is no local storage, so when you turn it off it forgets any sensitive data stored in RAM. Thus the name Lethe ("lee-thee") from the [mythological river](https://en.wikipedia.org/wiki/Lethe) of forgetfulness and oblivion.
 
 The [Parts List](doc/parts-list.md) describes all needed parts.
 
@@ -12,7 +12,7 @@ The [Case](case) can be 3D printed.
 
 The [Assembly Instructions](doc/assembly.md) show how to put it together.
 
-The [Lethe Kit Installation Instructions](doc/installation.md) show how to install Lethe Kit in your Arduino development environment.
+The [LetheKit Installation Instructions](doc/installation.md) show how to install LetheKit in your Arduino development environment.
 
 The [Seedtool Application Instructions](seedtool/README.md) show how to build
 and run a sample application.
@@ -39,19 +39,19 @@ This table below also establishes provenance (repository of origin, permalink, a
 
 ### Used with…
 
-These are other projects that work with or leverage Lethe Kit:
+These are other projects that work with or leverage LetheKit:
 
 - [community/repo-name/](https://github.com/community/repo-name) — Repo that does what, by [developer](https://github.com/developer)  or from  [community](https://community.com).
 
 ### Derived from…
 
-This Lethe Kit project was inspired by:
+This LetheKit project was inspired by:
 
 - [Bitcoin 2019 Conference Tutorial](https://github.com/arcbtc/bitcoin2019conf) — Which provided a fully functional starting point using similar hardware, by [Ben Arc](https://github.com/arcbtc).
 
 ### Dependencies
 
-To build the Lethe Kit you'll need to use the following tools:
+To build the LetheKit you'll need to use the following tools:
 
 - autotools - Gnu Build System from Free Software Foundation ([intro](https://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html)).
 

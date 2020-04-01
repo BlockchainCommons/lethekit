@@ -8,9 +8,9 @@ be done once, but is safe to do anytime you like.
     # Must be run in the seedtool directory
     ./enable-gitrevision-hooks.sh
 
-### Install Lethe Kit in your Arduino Sketchbook
+### Install LetheKit in your Arduino Sketchbook
 
-[Lethe Kit Installation Instructions](../doc/installation.md)
+[LetheKit Installation Instructions](../doc/installation.md)
 
 ### Add Libraries
 
@@ -25,7 +25,7 @@ Open `Tools` -> `Manage Libraries...`, install the following:
 
 ### Build seedtool
 
-Connect a Lethe Kit hardware device to an appropriate USB port.
+Connect a LetheKit hardware device to an appropriate USB port.
 
 To upload code to the SAMD51 module you will need to manually enter
 bootloader mode. There are two approaches, the first involves opening
