@@ -3,7 +3,7 @@
 #ifndef USERINTERFACE_H
 #define USERINTERFACE_H
 
-extern void ui_reset_state();
+extern void ui_reset_state(bool intro);
 
 extern void ui_dispatch();
 

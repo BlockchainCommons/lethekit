@@ -20,7 +20,7 @@ void setup() {
     
     selftest();
 
-    ui_reset_state();
+    ui_reset_state(true);
 
     Serial.println("seedtool starting");
 }

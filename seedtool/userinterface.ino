@@ -15,6 +15,7 @@
 namespace userinterface_internal {
 
 enum UIState {
+    INTRO_SCREEN,
     SEEDLESS_MENU,
     GENERATE_SEED,
     RESTORE_BIP39,
@@ -75,6 +76,76 @@ void display_printf(char *format, ...) {
     va_end(args);
     buff[sizeof(buff)/sizeof(buff[0])-1]='\0';
     g_display.print(buff);
+}
+
+void intro_screen() {
+    int xoff = 16;
+    int yoff = 6;
+    
+    g_display.firstPage();
+    do
+    {
+        g_display.setPartialWindow(0, 0, 200, 200);
+        // g_display.fillScreen(GxEPD_WHITE);
+        g_display.setTextColor(GxEPD_BLACK);
+
+        int xx = xoff + 14;
+        int yy = yoff + (H_FSB12 + YM_FSB12);
+        g_display.setFont(&FreeSansBold12pt7b);
+        g_display.setCursor(xx, yy);
+        g_display.println("LetheKit v0");
+
+        yy += 6;
+        
+        xx = xoff + 20;
+        yy += H_FSB12 + YM_FSB12;
+        g_display.setCursor(xx, yy);
+        display_printf("Seedtool");
+
+        xx = xoff + 50;
+        yy += H_FSB9;
+        g_display.setFont(&FreeSansBold9pt7b);
+        g_display.setCursor(xx, yy);
+        display_printf("%s", GIT_LATEST_TAG);
+
+        xx = xoff + 14;
+        yy += 1*(H_FSB9 + 2*YM_FSB9);
+        g_display.setFont(&FreeSansBold9pt7b);
+        g_display.setCursor(xx, yy);
+        g_display.println("Blockchain");
+
+        xx = xoff + 60;
+        yy += H_FSB9 + 4;
+        g_display.setCursor(xx, yy);
+        g_display.println("Commons");
+
+        xx = xoff + 18;
+        yy += H_FSB9 + YM_FSB9 + 10;
+        g_display.setCursor(xx, yy);
+        g_display.println("Press any key");
+        
+        xx = xoff + 24;
+        yy += H_FSB9;
+        g_display.setCursor(xx, yy);
+        g_display.println("to continue");
+    }
+    while (g_display.nextPage());
+
+    while (true) {
+        char key;
+        do {
+            key = g_keypad.getKey();
+        } while (key == NO_KEY);
+        Serial.println("seedless_menu saw " + String(key));
+        switch (key) {
+        default:
+            g_uistate = SEEDLESS_MENU;
+            return;
+            break;
+        case NO_KEY:
+            break;
+        }
+    }
 }
 
 void seedless_menu() {
@@ -260,7 +331,7 @@ void seedy_menu() {
             g_uistate = CONFIG_SLIP39;
             return;
         case 'C':
-            ui_reset_state();
+            ui_reset_state(false);
             g_uistate = SEEDLESS_MENU;
             return;
         case NO_KEY:
@@ -1167,10 +1238,10 @@ void enter_share() {
 
 } // namespace userinterface_internal
 
-void ui_reset_state() {
+void ui_reset_state(bool intro) {
     using namespace userinterface_internal;
-    
-    g_uistate = SEEDLESS_MENU;
+
+    g_uistate = intro ? INTRO_SCREEN : SEEDLESS_MENU;
     g_rolls = "";
     g_submitted = false;
 
@@ -1200,6 +1271,9 @@ void ui_dispatch() {
     full_window_clear();
     
     switch (g_uistate) {
+    case INTRO_SCREEN:
+        intro_screen();
+        break;
     case SEEDLESS_MENU:
         seedless_menu();
         break;
