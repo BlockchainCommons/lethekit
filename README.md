@@ -14,8 +14,14 @@ The [Assembly Instructions](doc/assembly.md) show how to put it together.
 
 The [LetheKit Installation Instructions](doc/installation.md) show how to install LetheKit in your Arduino development environment.
 
-The [Seedtool Application Instructions](seedtool/README.md) show how to build
-and run a sample application.
+The [Seedtool Application](seedtool/README.md)
+allows you to generate and recover [BIP-32]
+(https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD
+wallet master seeds using
+[BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
+and
+[SLIP-39](https://github.com/satoshilabs/slips/blob/master/slip-0039.md)
+formats.
 
 ## Status - Late Alpha
 

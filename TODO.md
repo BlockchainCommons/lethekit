@@ -1,3 +1,5 @@
+* Add power-on-self test diagnostics to the screen.
+
 * Need better diagnsotics for BIP39 and SLIP39 restore operations.
 
 * Add negative tests to selftest.
