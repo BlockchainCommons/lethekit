@@ -1,11 +1,3 @@
-* Add LetheKit specific programming instructions:
-  1. Open case
-  2. Disconnect battery
-  3. Connect device to dev computer USB port.
-  4. Double press reset button
-  5. Confirm port in Arduino IDE
-  6. Upload
-
 * Need better diagnsotics for BIP39 and SLIP39 restore operations.
 
 * Add negative tests to selftest.
@@ -34,10 +26,3 @@ Crib from https://github.com/blockchaincommons/fullynoded-2:
 * where should testers focus
 
 * Where to send questions (you directly or through issues?
-
-8d969eef6ecad3c29a3a629280e686cf
-8d969eef6ecad3c29a3a629280e686cf
-
-1. dummy data
-2. fix assert
-3. fix bip39 restore
