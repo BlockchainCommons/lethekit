@@ -19,10 +19,3 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 #### Punchlist
 
-Crib from https://github.com/blockchaincommons/fullynoded-2:
-  
-* financial support section: 
-
-* where should testers focus
-
-* Where to send questions (you directly or through issues?

@@ -17,6 +17,12 @@ The [Lethe Kit Installation Instructions](doc/installation.md) show how to insta
 The [Seedtool Application Instructions](seedtool/README.md) show how to build
 and run a sample application.
 
+## Status - Late Alpha
+
+*LetheKit* is currently under active development and in the late alpha
+testing phase. It should not be used for production tasks until it has had
+further testing and audit.
+
 ## Origin, Authors, Copyright & Licenses
 
 Unless otherwise noted (either in this [/README.md](./README.md) or in the file's header comments) the contents of this repository are Copyright © 2020 by Blockchain Commons, LLC, and are [licensed](./LICENSE) under the [spdx:BSD-2-Clause Plus Patent License](https://spdx.org/licenses/BSD-2-Clause-Patent.html).
