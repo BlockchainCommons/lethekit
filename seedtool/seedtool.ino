@@ -4,6 +4,7 @@
 #include "selftest.h"
 #include "seed.h"
 #include "userinterface.h"
+#include "util.h"
 
 #include "gitrevision.h"
 

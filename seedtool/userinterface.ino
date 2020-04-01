@@ -9,6 +9,8 @@
 #include "hardware.h"
 #include "seed.h"
 #include "userinterface.h"
+#include "selftest.h"	// Used to fetch dummy data for UI testing.
+#include "util.h"
 
 namespace userinterface_internal {
 
@@ -196,10 +198,10 @@ void generate_seed() {
             break;
         case '#':
             g_submitted = true;
-            assert(!g_master_seed);
+            serial_assert(!g_master_seed);
             g_master_seed = Seed::from_rolls(g_rolls);
             g_master_seed->log();
-            assert(!g_bip39);
+            serial_assert(!g_bip39);
             g_bip39 = new BIP39Seq(g_master_seed);
             digitalWrite(GREEN_LED, HIGH);		// turn on green LED
             g_uistate = DISPLAY_BIP39;
@@ -297,8 +299,7 @@ void display_bip39() {
             for (int rr = 0; rr < nrows; ++rr) {
                 int wndx = scroll + rr;
                 g_display.setCursor(xx, yy);
-                display_printf("%2d %s", wndx+1,
-                               g_bip39->get_dict_string(wndx));
+                display_printf("%2d %s", wndx+1, g_bip39->get_string(wndx));
                 yy += H_FMB12 + YM_FMB12;
             }
             
@@ -468,6 +469,12 @@ void config_slip39() {
                 // It's ok to generate multiple slip39 shares.
                 if (g_slip39_generate)
                     delete g_slip39_generate;
+
+                // This will take a few seconds; clear the screen
+                // immediately to let the user know something is
+                // happening ..
+                full_window_clear();
+                
                 g_slip39_generate =
                     SLIP39ShareSeq::from_seed(g_master_seed,
                                               threshstr.toInt(),
@@ -599,7 +606,7 @@ struct WordListState {
             wordndx[ii] = wordlist ? wordlist[ii] : 0;
     }
 
-    void get_words(uint16_t * o_wordlist) {
+    void get_words(uint16_t * o_wordlist) const {
         for (int ii = 0; ii < nwords; ++ii)
             o_wordlist[ii] = wordndx[ii];
     }
@@ -823,6 +830,21 @@ void restore_bip39() {
         case '8':
             state.word_up();
             break;
+        case 'D':
+            // If 'D' and then '0' are typed, fill dummy data.
+            do {
+                key = g_keypad.getKey();
+            } while (key == NO_KEY);
+            Serial.println("restore bip39_D saw " + String(key));
+            switch (key) {
+            case '0':
+                Serial.println("Loading dummy bip39 data");
+                state.set_words(selftest_dummy_bip39());
+                break;
+            default:
+                break;
+            }
+            break;
         case '#':	// done
             {
                 uint16_t bip39_words[BIP39Seq::WORD_COUNT];
@@ -830,16 +852,19 @@ void restore_bip39() {
                     bip39_words[ii] = state.wordndx[ii];
                 BIP39Seq * bip39 = BIP39Seq::from_words(bip39_words);
                 Seed * seed = bip39->restore_seed();
-                delete bip39;
                 if (seed) {
-                    assert(!g_master_seed);
+                    serial_assert(!g_master_seed);
                     g_master_seed = seed;
                     g_master_seed->log();
+                    delete g_bip39;
+                    g_bip39 = bip39;
                     digitalWrite(GREEN_LED, HIGH);		// turn on green LED
                     g_uistate = SEEDY_MENU;
                     return;
-                }
+                } else {
                 // FIXME - need diagnostic here
+                    delete bip39;
+                }
             }
             break;
         default:
@@ -933,7 +958,7 @@ void restore_slip39() {
         do {
             key = g_keypad.getKey();
         } while (key == NO_KEY);
-        Serial.println("display_bip39 saw " + String(key));
+        Serial.println("restore_slip39 saw " + String(key));
         switch (key) {
         case '1':
             if (selected > 0)
@@ -962,6 +987,12 @@ void restore_slip39() {
                 return;
             } else {
                 // Attempt restoration
+                
+                // This will take a few seconds; clear the screen
+                // immediately to let the user know something is
+                // happening ..
+                full_window_clear();
+                
                 for (int ii = 0; ii < g_slip39_restore->numshares(); ++ii) {
                     char * strings =
                         g_slip39_restore->get_share_strings(ii);
@@ -976,10 +1007,10 @@ void restore_slip39() {
                     g_uistate = RESTORE_SLIP39;
                     return;
                 } else {
-                    assert(!g_master_seed);
+                    serial_assert(!g_master_seed);
                     g_master_seed = seed;
                     g_master_seed->log();
-                    assert(!g_bip39);
+                    serial_assert(!g_bip39);
                     g_bip39 = new BIP39Seq(seed);
                     digitalWrite(GREEN_LED, HIGH);		// turn on green LED
                     g_uistate = DISPLAY_BIP39;
@@ -1104,12 +1135,30 @@ void enter_share() {
         case '8':
             state.word_up();
             break;
+        case 'D':
+            // If 'D' and then '0' are typed, fill dummy data.
+            do {
+                key = g_keypad.getKey();
+            } while (key == NO_KEY);
+            Serial.println("enter_share_D saw " + String(key));
+            switch (key) {
+            case '0':
+                Serial.println("Loading dummy slip39 data");
+                state.set_words(selftest_dummy_slip39(g_restore_slip39_selected));
+                break;
+            default:
+                break;
+            }
+            break;
         case '#':	// done
-            uint16_t words[SLIP39ShareSeq::WORDS_PER_SHARE];
-            state.get_words(words);
-            g_slip39_restore->set_share(g_restore_slip39_selected, words);
-            g_uistate = RESTORE_SLIP39;
-            return;
+            {
+                uint16_t words[SLIP39ShareSeq::WORDS_PER_SHARE];
+                state.get_words(words);
+                serial_assert(g_slip39_restore);
+                g_slip39_restore->set_share(g_restore_slip39_selected, words);
+                g_uistate = RESTORE_SLIP39;
+                return;
+            }
         default:
             break;
         }

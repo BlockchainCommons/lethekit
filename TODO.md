@@ -14,15 +14,6 @@
 
 * Remove the ESP32 code from lethe.ino?
 
-* Should combine_slip39_shares() take globals as args?  Inconsistent ...
-
-* Structure the globals in seedtool.
-
-* Break seedtool into MVCish components.
-
-* Give faster feedback on SLIP39 generate, clear the screen first,
-  then generate.
-
 * Find a new supplier for keypads, costs $150 to ship $20 worth ...
 
 * Can we make WordListState::wordndx a uint16_t? Would streamline.
@@ -44,3 +35,9 @@ Crib from https://github.com/blockchaincommons/fullynoded-2:
 
 * Where to send questions (you directly or through issues?
 
+8d969eef6ecad3c29a3a629280e686cf
+8d969eef6ecad3c29a3a629280e686cf
+
+1. dummy data
+2. fix assert
+3. fix bip39 restore

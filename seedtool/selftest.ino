@@ -1,6 +1,9 @@
 // Copyright © 2020 Blockchain Commons, LLC
 
+#include <stdint.h>
+
 #include "seed.h"
+#include "util.h"
 
 #include "selftest.h"
 
@@ -148,7 +151,6 @@ void test_slip39_restore() {
 
 void selftest() {
     using namespace selftest_internal;
-
     serial_printf("self_test starting\n");
     test_bip39_generate();
     test_bip39_restore();
@@ -157,3 +159,14 @@ void selftest() {
     serial_printf("self_test finished\n");
 }
 
+const uint16_t * selftest_dummy_bip39() {
+    using namespace selftest_internal;
+    return ref_bip39_words;
+}
+
+const uint16_t * selftest_dummy_slip39(size_t ndx) {
+    using namespace selftest_internal;
+    if (ndx > ref_slip39_nshares - 1)
+        ndx = ref_slip39_nshares - 1;
+    return ref_slip39_words[ndx];
+}
