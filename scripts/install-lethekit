@@ -5,7 +5,7 @@
 function usage {
     echo "usage: $0 <lethkit-root> <arduino-sketchbook>"
     echo "  example:"
-    echo "   $0 ~/src/bc-lethe-kit ~/Arduino"
+    echo "   $0 ~/src/bc-lethekit ~/Arduino"
 }
 
 function usage_error {

@@ -1,4 +1,4 @@
-Lethe Kit Parts List
+LetheKit Parts List
 ================================================================
 
 | Supplier   | Description | Quantity | Price |
