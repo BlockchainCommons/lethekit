@@ -10,7 +10,7 @@ formats.
 
 ## Compile and Upload Instruction
 
-Please see the [Instructions](build.md)
+Please see the [Instructions](doc/build.md)
 
 ## "No Seed" Functions
 
