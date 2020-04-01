@@ -1,24 +1,28 @@
 // Copyright © 2020 Blockchain Commons, LLC
 
+#include "seed.h"
+
 #include "selftest.h"
 
-namespace {
+namespace selftest_internal {
 
 uint8_t ref_secret[16] =
 { 0x8d, 0x96, 0x9e, 0xef, 0x6e, 0xca, 0xd3, 0xc2,
   0x9a, 0x3a, 0x62, 0x92, 0x80, 0xe6, 0x86, 0xcf };
 
-char* ref_bip39_strings[BIP39_WORD_COUNT] =
-{ "mirror", "reject", "rookie", "talk",
-  "pudding", "throw", "happy", "era",
-  "myth", "already", "payment", "owner" };
-
-uint16_t ref_bip39_words[BIP39_WORD_COUNT] =
+uint16_t ref_bip39_words[BIP39Seq::WORD_COUNT] =
 { 0x046c, 0x05a7, 0x05de, 0x06ec,
   0x0569, 0x070a, 0x0347, 0x0262,
   0x0494, 0x0039, 0x050d, 0x04f1 };
 
-char* ref_slip39_shares[3] =
+char* ref_bip39_mnemonics[BIP39Seq::WORD_COUNT] =
+{ "mirror", "reject", "rookie", "talk",
+  "pudding", "throw", "happy", "era",
+  "myth", "already", "payment", "owner" };
+
+size_t const ref_slip39_thresh = 2;
+size_t const ref_slip39_nshares = 3;
+char* ref_slip39_shares[ref_slip39_nshares] =
 { "check academic academic acid counter "
   "both course legs visitor squeeze "
   "justice sack havoc elbow crunch "
@@ -33,6 +37,24 @@ char* ref_slip39_shares[3] =
   "enemy fawn glimpse bulb rebound "
   "spelling plunge cover umbrella fused "
   "ocean desktop elephant beam aluminum" };
+
+uint16_t ref_slip39_words[ref_slip39_nshares][SLIP39ShareSeq::WORDS_PER_SHARE] =
+{ 
+ { 0x0088, 0x0000, 0x0000, 0x0001, 0x00a2,
+   0x005d, 0x00a3, 0x0207, 0x03d8, 0x035a,
+   0x01ee, 0x0307, 0x01aa, 0x0108, 0x00b0,
+   0x031a, 0x0131, 0x008e, 0x0132, 0x03d1 },
+ 
+ { 0x0088, 0x0000, 0x0000, 0x0011, 0x00b7,
+   0x02ca, 0x0082, 0x03e0, 0x0181, 0x01af,
+   0x00be, 0x01f2, 0x00ad, 0x0260, 0x005e,
+   0x00e3, 0x0040, 0x026a, 0x018d, 0x01d2 },
+ 
+ { 0x0088, 0x0000, 0x0000, 0x0021, 0x0088,
+   0x011b, 0x0151, 0x018e, 0x006a, 0x02dc,
+   0x034f, 0x02ab, 0x00a4, 0x03b4, 0x017c,
+   0x026e, 0x00d3, 0x010d, 0x0043, 0x0020 }
+};
 
 // Clearly not random. Only use for tests.
 void fake_random(uint8_t *buf, size_t count) {
@@ -56,10 +78,12 @@ void test_failed(char *format, ...) {
   abort();
 }
 
+#if 0
+
 void test_generate_seed() {
     serial_printf("test_generate_seed starting\n");
     seed_from_rolls("123456");
-    if (memcmp(g_master_secret, ref_secret, sizeof(ref_secret)) != 0)
+    if (!seed_master_secret_equal(ref_secret, sizeof(ref_secret)))
         test_failed("test_generate_seed failed: secret mismatch\n");
     serial_printf("test_generate_seed finished\n");
 }     
@@ -67,10 +91,8 @@ void test_generate_seed() {
 void test_generate_bip39() {
     serial_printf("test_generate_bip39 starting\n");
     seed_generate_bip39_words();
-    for (int ii = 0; ii < BIP39_WORD_COUNT; ++ii)
-        if (strcmp(g_bip39.getMnemonic(g_bip39.getWord(ii)),
-                   ref_bip39_strings[ii]) != 0)
-            test_failed("test_generate_bip39 failed: word list mismatch\n");
+    if (!seed_bip39_strings_equal(ref_bip39_strings, BIP39_WORD_COUNT))
+        test_failed("test_generate_bip39 failed: word list mismatch\n");
     serial_printf("test_generate_bip39 finished\n");
 }     
 
@@ -79,58 +101,111 @@ void test_restore_bip39() {
     int rv = seed_restore_bip39_words(ref_bip39_words, BIP39_WORD_COUNT);
     if (rv != 0)
         test_failed("test_restore_bip39 failed: restore failed\n");
-    if (memcmp(g_master_secret, ref_secret, sizeof(ref_secret)) != 0)
+    if (!seed_master_secret_equal(ref_secret, sizeof(ref_secret)))
         test_failed("test_restore_bip39 failed: secret mismatch\n");
     serial_printf("test_restore_bip39 finished\n");
 }     
 
 void test_generate_slip39() {
     serial_printf("test_generate_slip39 starting\n");
-    g_generate_slip39_thresh = 2;
-    g_generate_slip39_nshares = 3;
-    seed_generate_slip39_shares(fake_random);
-    for (int ii = 0; ii < g_generate_slip39_nshares; ++ii)
-        if (strcmp(g_generate_slip39_shares[ii], ref_slip39_shares[ii]) != 0)
-            test_failed("test_generate_slip39 failed: words mismatch\n");
+    seed_generate_slip39_shares(ref_slip39_thresh, ref_slip39_nshares,
+                                fake_random);
+    if (!seed_slip39_shares_equal(ref_slip39_shares, ref_slip39_nshares))
+        test_failed("test_generate_slip39 failed: words mismatch\n");
     serial_printf("test_generate_slip39 finished\n");
 }    
 
 void test_restore_slip39() {
     serial_printf("test_restore_slip39 starting\n");
-    g_restore_slip39_nshares = 2;
-    g_restore_slip39_shares[0] = strdup(ref_slip39_shares[2]);
-    g_restore_slip39_shares[1] = strdup(ref_slip39_shares[1]);
-    int rv =
-        seed_combine_slip39_shares(g_master_secret, sizeof(g_master_secret));
+    char* restore_shares[ref_slip39_thresh];
+    restore_shares[0] = ref_slip39_shares[2];
+    restore_shares[1] = ref_slip39_shares[1];
+    int rv = seed_combine_slip39_shares(restore_shares, ref_slip39_thresh);
     if (rv < 0)
         test_failed("test_restore_slip39 failed: combine failed\n");
-    if (memcmp(g_master_secret, ref_secret, sizeof(ref_secret)) != 0)
+    if (!seed_master_secret_equal(ref_secret, sizeof(ref_secret)))
         test_failed("test_restore_slip39 failed: secret mismatch\n");
     serial_printf("test_restore_slip39 finished\n");
 }     
 
-} // namespace
+#endif
+
+void test_bip39_generate() {
+    serial_printf("test_bip39_generate starting\n");
+    Seed * seed = Seed::from_rolls("123456");
+    BIP39Seq * bip39 = new BIP39Seq(seed);
+    for (size_t ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii) {
+        if (bip39->get_word(ii) != ref_bip39_words[ii])
+            test_failed("test_bip39_generate failed: word mismatch\n");
+        if (strcmp(bip39->get_mnemonic(ii), ref_bip39_mnemonics[ii]) != 0)
+            test_failed("test_bip39_generate failed: mnemonic mismatch\n");
+    }
+    delete bip39;
+    delete seed;
+    serial_printf("test_bip39_generate finished\n");
+}
+
+void test_bip39_restore() {
+    serial_printf("test_bip39_restore starting\n");
+    BIP39Seq * bip39 = BIP39Seq::from_words(ref_bip39_words);
+    Seed * seed = bip39->restore_seed();
+    if (!seed)
+        test_failed("test_bip39_restore failed: restore failed\n");
+    Seed * seed0 = Seed::from_rolls("123456");
+    if (*seed != *seed0)
+        test_failed("test_bip39_restore failed: seed mismatch\n");
+    delete seed0;
+    delete seed;
+    delete bip39;
+    serial_printf("test_bip39_restore finished\n");
+}
+
+void test_slip39_generate() {
+    serial_printf("test_slip39_generate starting\n");
+    Seed * seed = Seed::from_rolls("123456");
+    SLIP39ShareSeq * slip39 =
+        SLIP39ShareSeq::from_seed(seed, ref_slip39_thresh,
+                                  ref_slip39_nshares, fake_random);
+    for (size_t ii = 0; ii < ref_slip39_nshares; ++ii) {
+        uint16_t const * words = slip39->get_share(ii);
+        char * strings = 
+            slip39_strings_for_words(words, SLIP39ShareSeq::WORDS_PER_SHARE);
+        if (strcmp(strings, ref_slip39_shares[ii]) != 0)
+            test_failed("test_slip39_generate failed: share mismatch\n");
+        delete strings;
+    }
+    delete slip39;
+    delete seed;
+    serial_printf("test_slip39_generate finished\n");
+}
+
+void test_slip39_restore() {
+    serial_printf("test_slip39_restore starting\n");
+    SLIP39ShareSeq * slip39 = new SLIP39ShareSeq();
+    slip39->add_share(ref_slip39_words[2]);
+    slip39->add_share(ref_slip39_words[1]);
+    Seed * seed = slip39->restore_seed();
+    if (!seed)
+        test_failed("test_slip39_restore failed: restore failed\n");
+    Seed * seed0 = Seed::from_rolls("123456");
+    if (*seed != *seed0)
+        test_failed("test_slip39_restore failed: seed mismatch\n");
+    delete seed0;
+    delete seed;
+    delete slip39;
+    serial_printf("test_slip39_restore finished\n");
+}
+
+} // namespace selftest_internal
 
 void selftest() {
+    using namespace selftest_internal;
+
     serial_printf("self_test starting\n");
-    {
-        // Order important here.
-        seed_reset_state();
-        test_generate_seed();
-        test_generate_bip39();
-    }
-    {
-        // Order important here.
-        seed_reset_state();
-        test_restore_bip39();
-        test_generate_slip39();
-    }
-    {
-        // Order important here.
-        seed_reset_state();
-        test_restore_slip39();
-    }
-    seed_reset_state();
+    test_bip39_generate();
+    test_bip39_restore();
+    test_slip39_generate();
+    test_slip39_restore();
     serial_printf("self_test finished\n");
 }
 

@@ -1,5 +1,7 @@
 // Copyright © 2020 Blockchain Commons, LLC
 
+#if 0
+
 // Only define one of these
 #undef ESP32
 #define SAMD51	1
@@ -118,12 +120,6 @@ void hw_setup() {
 #if defined(ESP32)
     while (!Serial);	// wait for serial to come online
 #endif
-
-    // To see the debugging output from the power-on-self-test
-    // you will need to uncomment this delay to give you a chance
-    // to get the serial monitor launched.
-    //
-    // delay(5000);
 }
 
 void hw_green_led(int value) {
@@ -148,3 +144,5 @@ void hw_random_buffer(uint8_t *buf, size_t len) {
 }
 
 } // extern "C"
+
+#endif

@@ -1,5 +1,7 @@
 // Copyright © 2020 Blockchain Commons, LLC
 
+#if 0
+
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
@@ -32,7 +34,11 @@ bool g_submitted;
 int g_ndx = 0;		// index of "selected" word
 int g_pos = 0;		// char position of cursor
 int g_scroll = 0;	// index of scrolled window
-    
+
+char* g_restore_slip39_shares[MAX_SLIP39_SHARES];
+int g_restore_slip39_nshares = 0;
+int g_restore_slip39_selected;
+
 int const Y_MAX = 200;
 
 // FreeSansBold9pt7b
@@ -47,6 +53,14 @@ int const YM_FSB12 = 9;	// y-margin
 int const W_FMB12 = 14;	// width
 int const H_FMB12 = 21;	// height
 int const YM_FMB12 = 4;	// y-margin
+
+void free_restore_shares() {
+    for (int ndx = 0; ndx < g_restore_slip39_nshares; ++ndx) {
+        free(g_restore_slip39_shares[ndx]);
+        g_restore_slip39_shares[ndx] = NULL;
+    }
+    g_restore_slip39_nshares = 0;
+}
 
 void full_window_clear() {
     g_display.firstPage();
@@ -453,9 +467,9 @@ void config_slip39() {
                     thresh_done = false;
                     break;
                 }
-                g_generate_slip39_thresh = threshstr.toInt();
-                g_generate_slip39_nshares = nsharestr.toInt();
-                seed_generate_slip39_shares(hw_random_buffer);
+                seed_generate_slip39_shares(threshstr.toInt(),
+                                            nsharestr.toInt(),
+                                            hw_random_buffer);
                 g_uistate = DISPLAY_SLIP39;
                 return;
             }
@@ -982,17 +996,15 @@ void restore_slip39() {
                 return;
             } else {
                 // Attempt restoration
-                uint8_t ms[16];
                 for (int ii = 0; ii < g_restore_slip39_nshares; ++ii)
                     serial_printf("%d %s\n", ii+1, g_restore_slip39_shares[ii]);
-                int rv = seed_combine_slip39_shares(ms, sizeof(ms));
+                int rv = seed_combine_slip39_shares();
                 if (rv < 0) {
                     // Something went wrong
                     serial_printf("combine_mnemonics failed: %d\n", rv);
                     g_uistate = RESTORE_SLIP39;
                     return;
                 } else {
-                    memcpy(g_master_secret, ms, sizeof(ms));
                     log_master_secret();
                     seed_generate_bip39_words();
                     digitalWrite(GREEN_LED, HIGH);		// turn on green LED
@@ -1139,6 +1151,9 @@ void ui_reset_state() {
     g_uistate = SEEDLESS_MENU;
     g_rolls = "";
     g_submitted = false;
+
+    // Clear the restore shares
+    free_restore_shares();
 }
 
 void ui_dispatch() {
@@ -1177,3 +1192,5 @@ void ui_dispatch() {
         break;
     }
 }
+
+#endif
