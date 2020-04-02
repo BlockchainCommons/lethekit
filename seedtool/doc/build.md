@@ -1,9 +1,15 @@
-## Seedtool Application Instructions
+# Seedtool Installation Instructions
 
-### One Time Setup
+### Install LetheKit in your Arduino Sketchbook
+
+If you haven't already, install LetheKit:
+
+[LetheKit Installation Instructions](../../doc/installation.md)
+
+### Install gitrevision.h
 
 The `gitrevision.h` file is generated with git hooks and contains the
-latest version information so it can be built into the application and
+latest version information, allowing that information to be built into the application and
 reported to the user.  It is not critical, but is very helpful when
 reporting bugs, requesting features etc.
 
@@ -16,10 +22,6 @@ be done once, but is safe to do anytime you like.
 You may disable `gitrevision.h` generation with:
 
     ./disable-gitrevision-hooks.sh
-
-### Install LetheKit in your Arduino Sketchbook
-
-[LetheKit Installation Instructions](../../doc/installation.md)
 
 ### Add Libraries
 
@@ -52,7 +54,7 @@ switch method:
 
 2. Turn off, on, off, on rapidly.
 
-3. If the device is in bootloader mode the blue power light will not
+3. If the device is in bootloader mode, the blue power light will not
    be on, even though it is plugged in and the switch is left in the
    "on" position.
 
@@ -62,3 +64,5 @@ search for "Don't Forget to Launch the Bootloader".
 
 Press the "Upload" button on the Arduino IDE. The *seedtool*
 application will be built and uploaded to your device.
+
+See [The Seedtool BIP39/SLIP39 Utility](../README.md) for information on using the *seedtool*.
