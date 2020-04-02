@@ -58,7 +58,7 @@ declare -a libs=(
 
 for lib in "${libs[@]}"
 do
-    ln -s ${lkroot}/deps/${lib} ${aroot}/libraries/
+    ln -fs ${lkroot}/deps/${lib} ${aroot}/libraries/
 done
 
 # FIXME - remove this when we fix how this is done ...
