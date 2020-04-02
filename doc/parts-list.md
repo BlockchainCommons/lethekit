@@ -18,5 +18,5 @@ LetheKit Parts List
 | McMaster   | [Push-In Bumpers](https://www.mcmaster.com/9544k12)                                                       | 4 |  $0.30 |
 |            | [3D Printed Case](../case/README.md)                                                                     | 1 |        |
 |            | [3D Printed Cover](../case/README.md)                                                                    | 1 |        |
-|            | [3D Printed Batter Shield](../case/README.md)                                                            | 1 |        |
+|            | [3D Printed Battery Shield](../case/README.md)                                                            | 1 |        |
 |            | **TOTAL**                                                                                                 |   | $58.03 |
