@@ -65,4 +65,6 @@ search for "Don't Forget to Launch the Bootloader".
 Press the "Upload" button on the Arduino IDE. The *seedtool*
 application will be built and uploaded to your device.
 
+### Use *seedtool*
+
 See [The Seedtool BIP39/SLIP39 Utility](../README.md) for information on using the *seedtool*.
