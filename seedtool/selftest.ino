@@ -81,6 +81,17 @@ void test_failed(char *format, ...) {
   abort();
 }
 
+void test_seed_generate() {
+    serial_printf("test_seed_generate starting\n");
+    Seed * seed = Seed::from_rolls("123456");
+    Seed * seed0 = new Seed(ref_secret, sizeof(ref_secret));
+    if (*seed != *seed0)
+        test_failed("test_seed_generate failed: seed mismatch\n");
+    delete seed0;
+    delete seed;
+    serial_printf("test_seed_generate finished\n");
+}
+
 void test_bip39_generate() {
     serial_printf("test_bip39_generate starting\n");
     Seed * seed = Seed::from_rolls("123456");
@@ -147,17 +158,38 @@ void test_slip39_restore() {
     serial_printf("test_slip39_restore finished\n");
 }
 
+struct selftest_t {
+    char const * testname;
+    void (*testfun)();
+};
+
+selftest_t g_selftests[] =
+{
+ // Max test name length is ~16 chars.
+ { "seed generate", test_seed_generate },
+ { "BIP39 generate", test_bip39_generate },
+ { "BIP39 restore", test_bip39_restore },
+ { "SLIP39 generate", test_slip39_generate },
+ { "SLIP39 restore", test_slip39_restore },
+};
+
+size_t const g_numtests = sizeof(g_selftests) / sizeof(g_selftests[0]);
+
 } // namespace selftest_internal
 
+// deprecated, calling these from userinterface now
+#if 0
 void selftest() {
     using namespace selftest_internal;
     serial_printf("self_test starting\n");
+    test_seed_generate();
     test_bip39_generate();
     test_bip39_restore();
     test_slip39_generate();
     test_slip39_restore();
     serial_printf("self_test finished\n");
 }
+#endif
 
 const uint16_t * selftest_dummy_bip39() {
     using namespace selftest_internal;
@@ -169,4 +201,21 @@ const uint16_t * selftest_dummy_slip39(size_t ndx) {
     if (ndx > ref_slip39_nshares - 1)
         ndx = ref_slip39_nshares - 1;
     return ref_slip39_words[ndx];
+}
+
+size_t selftest_numtests() {
+    using namespace selftest_internal;
+    return g_numtests;
+}
+
+String selftest_testname(size_t ndx) {
+    using namespace selftest_internal;
+    serial_assert(ndx < g_numtests);
+    return g_selftests[ndx].testname;
+}
+
+void selftest_testrun(size_t ndx) {
+    using namespace selftest_internal;
+    serial_assert(ndx < g_numtests);
+    g_selftests[ndx].testfun();
 }
