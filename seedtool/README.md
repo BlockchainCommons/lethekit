@@ -12,6 +12,39 @@ formats.
 
 Please see the [Instructions](doc/build.md)
 
+## Common Workflows
+
+There are several common key management workflows that *seedtool* is
+useful for.
+
+### Generating a New Wallet
+
+By using dice to generate a BIP-39 mnemonic passphrase you can avoid
+trusting a particular hardware vendor's hardware.
+[See: RNG subversion](https://en.wikipedia.org/wiki/Random_number_generator_attack#RNG_subversion)
+
+To execute this flow with *seedtool*:
+1. Generate a new master seed using 50+ die rolls.
+2. Record your master BIP-39 backup in a secure manner (hammer into metal).
+   This BIP-39 backup may be restored into most other wallets for common use.
+3. Optionally create a SLIP-39 sharded backup set which can serve as
+   long-term cold storage.
+   
+### Generating a SLIP-39 Backup Set for an Existing Wallet
+
+If you've already got a wallet in use, and have the BIP-39 backup for
+it you can generate a SLIP-39 backup set as well:
+1. Restore your seed in *seedtool* using your BIP-39 backup.
+2. Create a SLIP-39 sharded backup.
+
+### Recover a Master Seed from SLIP-39 backup shards.
+
+If you need to recover your master seed and have enough shards from a
+SLIP-39 backup set:
+1. Recover the master seed from the SLIP-39 shards.
+2. Create a BIP-39 mnemonic which may then be directly restored into
+   most wallets for use.
+
 ## "No Seed" Functions
 
 There are three ways to insert a key into the *seedtool*:

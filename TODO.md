@@ -23,8 +23,6 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 * Where to send questions (you directly or through issues?
 
-Photos of the seedtool app menus.
-
 https://github.com/BlockchainCommons/bc-lethekit/settings
 Github suggests 1280×640px for "social preview"
 
