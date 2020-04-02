@@ -1,47 +1,64 @@
-## Seedtool Application Instructions
+# The Seedtool BIP39/SLIP39 Utility
 
-### One Time Setup
+The *seedtool* utility allows you to generate and recover
+[BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki)
+HD wallet master seeds using
+[BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
+and
+[SLIP-39](https://github.com/satoshilabs/slips/blob/master/slip-0039.md)
+formats.
 
-Enable the generation of the `gitrevision.h` file.  This only needs to
-be done once, but is safe to do anytime you like.
+## Compile and Upload Instruction
 
-    # Must be run in the seedtool directory
-    ./enable-gitrevision-hooks.sh
+Please see the [Instructions](doc/build.md)
 
-### Install LetheKit in your Arduino Sketchbook
+## "No Seed" Functions
 
-[LetheKit Installation Instructions](../doc/installation.md)
+There are three ways to insert a key into the *seedtool*:
 
-### Add Libraries
+![No Seed Menu](doc/images/no-seed.png)
 
-Launch the Arduino IDE in the `seedtool` subdirectory:
+### Key Generation with Dice
 
-    arduino ./
-    
-Open `Tools` -> `Manage Libraries...`, install the following:
-* `GxEPD2`
-* `Adafruit GFX Library`
-* `Keypad`
+By rolling dice and typing the values enough auditable entropy can be
+gathered to generate a secure master seed.  Rolling 50 dice gathers
+roughly 128 bits of entropy.
 
-### Build seedtool
+![Generate Seed](doc/images/generate-seed.png)
 
-Connect a LetheKit hardware device to an appropriate USB port.
+### BIP-39 Key Recovery
 
-To upload code to the SAMD51 module you will need to manually enter
-bootloader mode. There are two approaches, the first involves opening
-the case and pressing the reset button twice in rapid succession.  It
-is also possible to enter bootloader mode by power cycling with the
-external power switch.  Here are the steps for the external power
-switch method:
+You can insert a key into the *seedtool* by entering it's BIP-39
+recovery mnemonic passphrase.  From there you can generate SLIP-39
+shares.
 
-1. Connect the LetheKit to a USB port on you computer. Turn the
-   LetheKit on and wait a few seconds.
+![BIP-39 Restore](doc/images/bip39-restore.png)
 
-2. Turn off, on, off, on rapidly.
+### SLIP-39 Key Recovery
 
-3. If the device is in bootloader mode the blue power light will not
-   be on, even though it is plugged in and the switch is left in the
-   "on" position.
+If you possess enough shares of a SLIP-39 set, you can recover the
+master seed with *seedtool*.  From there you can generate the BIP-39
+mnemonic passphrase which will allow you to use it with most wallets.
 
-Press the "Upload" button on the Arduino IDE. The `seedtool`
-application will be built and uploaded to your device.
+![SLIP-39 Recovery Menu](doc/images/slip39-restore-menu.png) ![SLIP-39 Share Entry](doc/images/slip39-share-restore.png)
+
+## Functions with a Seed
+
+Once you have a seed through any of the prior flows you can create
+BIP-39 and SLIP-39 mnemonic passphrases.
+
+![Seed Present Menu](doc/images/seed-present.png)
+
+### BIP-39 Generation
+
+The BIP-39 phrase is displayed and can be backed up in a secure
+offline fashion (ie, hammering into metal).
+
+![BIP-39 View](doc/images/bip39-view.png)
+
+### SLIP-39 Generation
+
+SLIP-39 requires some configuration choices for total number of shares
+and required number present to recover.
+
+![SLIP-39 Generation Config](doc/images/config-slip39.png) ![SLIP-39 Share View](doc/images/slip39-share-view.png)
