@@ -1,8 +1,8 @@
 # The Seedtool BIP39/SLIP39 Utility
 
-The *seedtool* utility allows you to generate and recover [BIP-32]
-(https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD
-wallet master seeds using
+The *seedtool* utility allows you to generate and recover
+[BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki)
+HD wallet master seeds using
 [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
 and
 [SLIP-39](https://github.com/satoshilabs/slips/blob/master/slip-0039.md)
