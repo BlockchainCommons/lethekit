@@ -9,13 +9,6 @@ These instructions describe how to install LetheKit into your local
 development environment.  We presume you already have the Arduino IDE
 installed and your "Sketchbook location" is `~/Arduino`.
 
-### Install `arduino-cli`
-
-LetheKit's installation script uses `arduino-cli` during
-installation.
-
-[Install `arduino-cli`](https://arduino.github.io/arduino-cli/installation/)
-
 ### Install the Arduino IDE
 
 After installing the Arduino IDE run it once and let it create the
