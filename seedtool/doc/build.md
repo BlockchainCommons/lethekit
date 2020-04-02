@@ -10,7 +10,7 @@ be done once, but is safe to do anytime you like.
 
 ### Install LetheKit in your Arduino Sketchbook
 
-[LetheKit Installation Instructions](../doc/installation.md)
+[LetheKit Installation Instructions](../../doc/installation.md)
 
 ### Add Libraries
 
