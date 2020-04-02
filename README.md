@@ -59,7 +59,7 @@ This LetheKit project was inspired by:
 
 To build the LetheKit you'll need to use the following tools:
 
-- autotools - Gnu Build System from Free Software Foundation ([intro](https://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html)).
+- [The Arduino IDE](https://www.arduino.cc/en/main/software)
 
 ## Financial Support
 
