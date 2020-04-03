@@ -14,7 +14,7 @@ The following files contain everything you need to set up your LetheKit hardware
 * The [Case Information](case) contains STL files for 3-D printing.
 * The [Lethekit Assembly Instructions](doc/assembly.md) show how to put it together.
 * The [Lethekit Installation Instructions](doc/installation.md) show how to install LetheKit in your Arduino development environment.
-* the [Seedtool Installation Instructions](seedtool/doc/build.md) show to install Seedtool on your LetheKit using the Arduino IDE.
+* The [Seedtool Installation Instructions](seedtool/doc/build.md) show to install Seedtool on your LetheKit using the Arduino IDE.
 * The [Seedtool Application Instuctions](seedtool/README.md) describe how to generate and recover
 [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD wallet master seeds in [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and [SLIP-39](https://github.com/satoshilabs/slips/blob/master/slip-0039.md) formats.
 
