@@ -16,5 +16,7 @@ LetheKit Parts List
 | McMaster   | [Flat Head Thread-Forming Screws, No. 6, 1/2"](https://www.mcmaster.com/96068a153)                        | 4 |  $0.23 |
 | McMaster   | [Phillips Rounded Head Thread-Forming Screws, No. 2, 3/16"](https://www.mcmaster.com/99461A710)           | 6 |  $1.46 |
 | McMaster   | [Push-In Bumpers](https://www.mcmaster.com/9544k12)                                                       | 4 |  $0.30 |
-|            | 3D Printed Case                                                                                           | 1 |        |
+|            | [3D Printed Case](../case/README.md)                                                                     | 1 |        |
+|            | [3D Printed Cover](../case/README.md)                                                                    | 1 |        |
+|            | [3D Printed Battery Shield](../case/README.md)                                                            | 1 |        |
 |            | **TOTAL**                                                                                                 |   | $58.03 |
