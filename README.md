@@ -4,7 +4,7 @@
 
 ![LetheKit](lethekit.jpg)
 
-The LetheKit is a do-it-youself platform for performing various sensitive cryptographic operations on an offline airgapped device. It uses no WiFi or Bluetooth which could leak information and contains no local storage. The external USB only charges the battery, and when the device is turned off it forgets any sensitive data stored in RAM. Thus the name Lethe (_lee-thee_), from the [mythological river](https://en.wikipedia.org/wiki/Lethe) of forgetfulness and oblivion.
+*LetheKit* is a do-it-youself platform for performing various sensitive cryptographic operations on an offline airgapped device. It uses no WiFi or Bluetooth which could leak information and contains no local storage. The external USB only charges the battery, and when the device is turned off it forgets any sensitive data stored in RAM. Thus the name Lethe (_lee-thee_), from the [mythological river](https://en.wikipedia.org/wiki/Lethe) of forgetfulness and oblivion.
 
 ## Additional Information
 
@@ -20,15 +20,13 @@ The following files contain everything you need to set up your LetheKit hardware
 
 ### Dependencies
 
-To build the LetheKit you'll need to use the following tools:
+To build the *LetheKit* you'll need to use the following tools:
 
 - [The Arduino IDE](https://www.arduino.cc/en/main/software)
 
 ## Status - Late Alpha
 
-*LetheKit* is currently under active development and in the late alpha
-testing phase. It should not be used for production tasks until it has had
-further testing and auditing.
+*LetheKit* is currently under active development and in the late alpha testing phase. It should not be used for production tasks until it has had further testing and auditing.
 
 ## Origin, Authors, Copyright & Licenses
 
@@ -46,13 +44,17 @@ This table below also establishes provenance (repository of origin, permalink, a
 
 ### Used with ...
 
-These are other projects that work with or leverage LetheKit:
+These are other projects that work with or leverage LetheKit.
 
-Please use the followng template, then issue a PR, to include your project:
-
-- [community/repo-name/](https://github.com/community/repo-name) — Repo that does what, by [developer](https://github.com/developer)  or from  [community](https://community.com).
+- (submit a PR to this repo list your project)
 
 ### Derived from ...
+
+LetheKit leverages a number of Blockchain Commons projects:
+
+- [BlockchainCommons/bc-crypto-base](https://github.com/blockchaincommons/bc-crypto-base) — Well-Reviewed and Audited Cryptographic Functions for Use in Blockchain Commons Software Projects
+- [BlockchainCommons/bc-shamir](https://github.com/BlockchainCommons/bc-shamir) - C Implementation of Shamir Secret Sharing for use in Blockchain Commons Software Projects
+- [BlockchainCommons/bc-slip39](https://github.com/BlockchainCommons/bc-slip39) - C Implementation of SLIP-39 Shamir Secret Sharing standard.
 
 This LetheKit project was inspired by:
 
@@ -60,9 +62,9 @@ This LetheKit project was inspired by:
 
 ## Financial Support
 
-*LetheKit* (lee-thee kit) is a project by [Blockchain Commons](https://www.blockchaincommons.com/), a not-for-profit organization promoting an open web. Our work is funded entirely by collaborative projects and donations and by people like you. Every donation will be spent on building open tools, technologies, and techniques for blockchain.
+LetheKit (lee-thee kit) is a project by [Blockchain Commons](https://www.blockchaincommons.com/), a not-for-profit benefit organization supporting the open web. Our work is funded entirely by donations from people like you. Every donation will be spent on building open tools & technology for blockchain & security infrastructure.
 
-To financially support further development of *LetheKit*, please consider becoming a Patron of Blockchain Commons by contributing Bitcoin at our [BTCPay Server](https://btcpay.blockchaincommons.com/) or through ongoing fiat patronage by becoming a [Github Sponsor](https://github.com/sponsors/BlockchainCommons); currently, GitHub will match sponsorships so please do consider this option.
+To financially support further development of *LetheKit* and other projects, please consider becoming a Patron of Blockchain Commons through ongoing individual or monthly patronage by becoming a [Sponsor](https://github.com/sponsors/BlockchainCommons) through GitHub; currently they are matching the first $5k so please do consider this option. You can also offer support with Bitcoin via our [BTCPay Server](https://btcpay.blockchaincommons.com/).
 
 ## Contributing
 
