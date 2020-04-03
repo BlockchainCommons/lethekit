@@ -18,12 +18,6 @@ The following files contain everything you need to set up your LetheKit hardware
 * The [Seedtool Application Instuctions](seedtool/README.md) describe how to generate and recover
 [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD wallet master seeds in [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and [SLIP-39](https://github.com/satoshilabs/slips/blob/master/slip-0039.md) formats.
 
-### Dependencies
-
-To build the *LetheKit* you'll need to use the following tools:
-
-- [The Arduino IDE](https://www.arduino.cc/en/main/software)
-
 ## Status - Late Alpha
 
 *LetheKit* is currently under active development and in the late alpha testing phase. It should not be used for production tasks until it has had further testing and auditing.
@@ -42,23 +36,29 @@ This table below also establishes provenance (repository of origin, permalink, a
 | bip39 | [https://github.com/ksedgwic/bip39](https://github.com/ksedgwic/bip39) | 9b8fa3c7d145c39558c2534f6cf40879477d93a1 | 2018 Chris Howe | [MIT License](https://github.com/ksedgwic/bip39/blob/master/LICENSE) |
 | TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4- | [https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-](https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-) | 17d5e36cd922ce7df8047d9c89633dca9b5ae122 | 2019 Ron Sutton | [MIT License](https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-/blob/master/LICENSE.txt) |
 
-### Used with ...
+### Dependencies
 
-These are other projects that work with or leverage LetheKit.
+To build the *LetheKit* you'll need to use the following exterinal tools:
 
-- (submit a PR to this repo list your project)
+- [The Arduino IDE](https://www.arduino.cc/en/main/software)
 
-### Derived from ...
-
-LetheKit leverages a number of Blockchain Commons projects:
+The following internal Blockchain Commons projects are leveraged by *LetheKit*:
 
 - [BlockchainCommons/bc-crypto-base](https://github.com/blockchaincommons/bc-crypto-base) — Well-Reviewed and Audited Cryptographic Functions for Use in Blockchain Commons Software Projects
 - [BlockchainCommons/bc-shamir](https://github.com/BlockchainCommons/bc-shamir) - C Implementation of Shamir Secret Sharing for use in Blockchain Commons Software Projects
 - [BlockchainCommons/bc-slip39](https://github.com/BlockchainCommons/bc-slip39) - C Implementation of SLIP-39 Shamir Secret Sharing standard.
 
+### Derived from ...
+
 This LetheKit project was inspired by:
 
 - [Bitcoin 2019 Conference Tutorial](https://github.com/arcbtc/bitcoin2019conf), by [Ben Arc](https://github.com/arcbtc), which provided a fully functional starting point using similar hardware.
+
+### Used with ...
+
+These are other projects that work with or leverage LetheKit.
+
+- (submit a PR to this repo list your project)
 
 ## Financial Support
 
