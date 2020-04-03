@@ -14,6 +14,8 @@
 
 * Add compatibility instructions for https://iancoleman.io/bip39/
 
+* Add Security Considerations section to README.md, in particular talk about custody of device, evil maid attack, and tamper evident measures.
+
 #### Semantic Versioning Reminder
 
 Given a version number MAJOR.MINOR.PATCH, increment the:
