@@ -67,4 +67,4 @@ application will be built and uploaded to your device.
 
 ### Use *seedtool*
 
-See [The Seedtool BIP39/SLIP39 Utility](../README.md) for information on using the *seedtool*.
+See the [Seedtool Application Instructions](../README.md) for information on using the *seedtool*.
