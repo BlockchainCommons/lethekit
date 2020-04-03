@@ -8,13 +8,13 @@
 
 ## Additional Information
 
-The following files contain everything you need to set up your LetheKit hardware and install its software.
+The following files contain everything you need to set up your *LetheKit* hardware and install its software.
 
 * The [Parts List](doc/parts-list.md) describes all needed parts.
 * The [Case Information](case) contains STL files for 3-D printing.
 * The [Lethekit Assembly Instructions](doc/assembly.md) show how to put it together.
 * The [Lethekit Installation Instructions](doc/installation.md) show how to install LetheKit in your Arduino development environment.
-* The [Seedtool Installation Instructions](seedtool/doc/build.md) show to install Seedtool on your LetheKit using the Arduino IDE.
+* The [Seedtool Installation Instructions](seedtool/doc/build.md) show to install Seedtool on your *LetheKit* using the Arduino IDE.
 * The [Seedtool Application Instuctions](seedtool/README.md) describe how to generate and recover
 [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD wallet master seeds in [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and [SLIP-39](https://github.com/satoshilabs/slips/blob/master/slip-0039.md) formats.
 
@@ -50,25 +50,25 @@ The following internal Blockchain Commons projects are leveraged by *LetheKit*:
 
 ### Derived from ...
 
-This LetheKit project was inspired by:
+The *LetheKit* project was inspired by:
 
 - [Bitcoin 2019 Conference Tutorial](https://github.com/arcbtc/bitcoin2019conf), by [Ben Arc](https://github.com/arcbtc), which provided a fully functional starting point using similar hardware.
 
 ### Used with ...
 
-These are other projects that work with or leverage LetheKit.
+These are other projects that work with or leverage *LetheKit*.
 
 - (submit a PR to this repo list your project)
 
 ## Financial Support
 
-LetheKit (lee-thee kit) is a project by [Blockchain Commons](https://www.blockchaincommons.com/), a not-for-profit benefit organization supporting the open web. Our work is funded entirely by donations from people like you. Every donation will be spent on building open tools & technology for blockchain & security infrastructure.
+*LetheKit* (lee-thee kit) is a project by [Blockchain Commons](https://www.blockchaincommons.com/), a not-for-profit benefit organization supporting the open web. Our work is funded entirely by donations from people like you. Every donation will be spent on building open tools & technology for blockchain & security infrastructure.
 
 To financially support further development of *LetheKit* and other projects, please consider becoming a Patron of Blockchain Commons through ongoing individual or monthly patronage by becoming a [Sponsor](https://github.com/sponsors/BlockchainCommons) through GitHub; currently they are matching the first $5k so please do consider this option. You can also offer support with Bitcoin via our [BTCPay Server](https://btcpay.blockchaincommons.com/).
 
 ## Contributing
 
-We encourage public contributions through issues and pull requests! Please review [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our development process. All contributions to this repository require a GPG signed [Contributor License Agreement](./CLA.md).
+We encourage public contributions to this project through issues and pull requests! Please review [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our development process. All contributions to this repository require a GPG signed [Contributor License Agreement](./CLA.md).
 
 ### Credits
 
