@@ -13,7 +13,7 @@ latesttag=`git describe --tags --abbrev=0 --always`
 
 # Compute number of revisions since last tag.
 revssince=`git rev-list $latesttag..HEAD --count`
-gitdescribe=`git describe --tags --long --always`
+gitdescribe=`git describe --tags --long --always --match='v*.*'`
 
 cat << EOF > $FILENAME
 // ---------------- IMPORTANT - GENERATED FILE ----------------
