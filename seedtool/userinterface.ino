@@ -14,19 +14,6 @@
 
 namespace userinterface_internal {
 
-enum UIState {
-    INTRO_SCREEN,
-    SEEDLESS_MENU,
-    GENERATE_SEED,
-    RESTORE_BIP39,
-    RESTORE_SLIP39,
-    ENTER_SHARE,
-    SEEDY_MENU,
-    DISPLAY_BIP39,
-    CONFIG_SLIP39,
-    DISPLAY_SLIP39,
-};
-
 UIState g_uistate;
 
 String g_rolls;
@@ -53,6 +40,10 @@ int const YM_FSB9 = 6;	// y-margin
 int const H_FSB12 = 20;	// height
 int const YM_FSB12 = 9;	// y-margin
 
+// FreeMonoBold9pt7b
+int const H_FMB9 = 14;	// height
+int const YM_FMB9 = 2;	// y-margin
+
 // FreeMonoBold12pt7b
 int const W_FMB12 = 14;	// width
 int const H_FMB12 = 21;	// height
@@ -76,6 +67,60 @@ void display_printf(char *format, ...) {
     va_end(args);
     buff[sizeof(buff)/sizeof(buff[0])-1]='\0';
     g_display.print(buff);
+}
+
+void self_test() {
+    int xoff = 16;
+    int yoff = 6;
+
+    size_t const NLINES = 8;
+    String lines[NLINES];
+
+    size_t numtests = selftest_numtests();
+    for (int ndx = 0; ndx < numtests; ++ndx) {
+        size_t row = ndx;
+        if (row > NLINES - 1) {
+            // slide all the lines up one
+            for (size_t ii = 0; ii < NLINES - 1; ++ii)
+                lines[ii] = lines[ii+1];
+            row = NLINES - 1;
+        }
+        lines[row] = selftest_testname(ndx).c_str();
+        g_display.firstPage();
+        do
+        {
+            g_display.setPartialWindow(0, 0, 200, 200);
+            // g_display.fillScreen(GxEPD_WHITE);
+            g_display.setTextColor(GxEPD_BLACK);
+
+            int xx = xoff;
+            int yy = yoff;
+        
+            yy += 1*(H_FSB9 + YM_FSB9);
+            g_display.setFont(&FreeSansBold9pt7b);
+            g_display.setCursor(xx, yy);
+            g_display.println("Running self tests:");
+
+            yy += 10;
+
+            for (size_t ii = 0; ii < NLINES; ++ii) {
+                yy += 1*(H_FMB9 + YM_FMB9);
+                g_display.setFont(&FreeMonoBold9pt7b);
+                g_display.setCursor(xx, yy);
+                display_printf("%s", lines[ii].c_str());
+                // display_printf("OK");
+            }
+
+            yy = 190; // Absolute, stuck to bottom
+            g_display.setFont(&FreeSansBold9pt7b);
+            g_display.setCursor(xx, yy);
+            display_printf("%", GIT_DESCRIBE);
+        }
+        while (g_display.nextPage());
+        selftest_testrun(ndx);
+    }
+    // delay(1000);	// short pause ..
+    g_uistate = INTRO_SCREEN;
 }
 
 void intro_screen() {
@@ -331,7 +376,7 @@ void seedy_menu() {
             g_uistate = CONFIG_SLIP39;
             return;
         case 'C':
-            ui_reset_state(false);
+            ui_reset_into_state(SEEDLESS_MENU);
             g_uistate = SEEDLESS_MENU;
             return;
         case NO_KEY:
@@ -1238,12 +1283,8 @@ void enter_share() {
 
 } // namespace userinterface_internal
 
-void ui_reset_state(bool intro) {
+void ui_reset_into_state(UIState state) {
     using namespace userinterface_internal;
-
-    g_uistate = intro ? INTRO_SCREEN : SEEDLESS_MENU;
-    g_rolls = "";
-    g_submitted = false;
 
     if (g_master_seed) {
         delete g_master_seed;
@@ -1262,6 +1303,10 @@ void ui_reset_state(bool intro) {
         g_slip39_restore = NULL;
     }
 
+    g_rolls = "";
+    g_submitted = false;
+    g_uistate = state;
+
     hw_green_led(LOW);
 }
 
@@ -1271,6 +1316,9 @@ void ui_dispatch() {
     full_window_clear();
     
     switch (g_uistate) {
+    case SELF_TEST:
+        self_test();
+        break;
     case INTRO_SCREEN:
         intro_screen();
         break;

@@ -12,6 +12,8 @@
 
 * Can we make WordListState::wordndx a uint16_t? Would streamline.
 
+* Add compatibility instructions for https://iancoleman.io/bip39/
+
 #### Semantic Versioning Reminder
 
 Given a version number MAJOR.MINOR.PATCH, increment the:
@@ -21,13 +23,4 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 #### Punchlist
 
-* Where to send questions (you directly or through issues?
-
-https://github.com/BlockchainCommons/bc-lethekit/settings
-Github suggests 1280×640px for "social preview"
-
-Update the CLAs for name change.
-
-Mark seedtool as deprecated, point to lethekit.
-
-Figure out how to propogate version tags through gitflow.
+Mark ksedgwic/seedtool (my old repo) as deprecated, point to lethekit.

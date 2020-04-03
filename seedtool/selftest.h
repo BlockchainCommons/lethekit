@@ -5,6 +5,11 @@
 
 void selftest();
 
+// Used to run selftests from the UI.
+size_t selftest_numtests();
+String selftest_testname(size_t ndx);
+void selftest_testrun(size_t ndx);
+
 // Used to populate dummy data in UI testing.
 const uint16_t * selftest_dummy_bip39();
 const uint16_t * selftest_dummy_slip39(size_t ndx);
