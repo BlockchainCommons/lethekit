@@ -8,7 +8,7 @@ exec 1>&2
 
 branch=`git rev-parse --abbrev-ref HEAD`
 shorthash=`git log --pretty=format:'%h' -n 1`
-latesttag=`git describe --tags --abbrev=0 --always`
+latesttag=`git describe --tags --abbrev=0 --always --match='v*.*'`
 # revcount=`git log --oneline | wc -l`
 
 # Compute number of revisions since last tag.
