@@ -75,6 +75,15 @@ uint16_t ref_slip39_words[ref_slip39_nshares][SLIP39ShareSeq::WORDS_PER_SHARE] =
    0x026e, 0x00d3, 0x010d, 0x0043, 0x0020 }
 };
 
+uint16_t ref_slip39_share_bad_checksum[SLIP39ShareSeq::WORDS_PER_SHARE] =
+{
+ // ref_slip39_words[0], 11th word is altered
+ 0x0088, 0x0000, 0x0000, 0x0001, 0x00a2,
+ 0x005d, 0x00a3, 0x0207, 0x03d8, 0x035a,
+ 0x0132, 0x0307, 0x01aa, 0x0108, 0x00b0,
+ 0x031a, 0x0131, 0x008e, 0x0132, 0x03d1
+};
+ 
 // Clearly not random. Only use for tests.
 void fake_random(uint8_t *buf, size_t count) {
     uint8_t b = 0;
@@ -190,6 +199,56 @@ bool test_slip39_restore() {
     return true;
 }
 
+bool test_slip39_verify_share_valid() {
+    serial_printf("test_slip39_verify_share_valid starting\n");
+    bool ok = SLIP39ShareSeq::verify_share_checksum(ref_slip39_words[0]);
+    if (!ok)
+        return test_failed("test_slip39_verify_share_valid failed: invalid\n");
+    serial_printf("test_slip39_verify_share_valid finished\n");
+    return true;
+}
+
+bool test_slip39_verify_share_invalid() {
+    serial_printf("test_slip39_verify_share_invalid starting\n");
+    bool ok =
+        SLIP39ShareSeq::verify_share_checksum(ref_slip39_share_bad_checksum);
+    if (ok)
+        return test_failed("test_slip39_verify_share_invalid failed: valid\n");
+    serial_printf("test_slip39_verify_share_invalid finished\n");
+    return true;
+}
+
+bool test_slip39_del_share() {
+    serial_printf("test_slip39_del_share starting\n");
+    SLIP39ShareSeq * slip39 = new SLIP39ShareSeq();
+    slip39->add_share(ref_slip39_words[2]);
+    slip39->add_share(ref_slip39_words[0]);	// this will get deleted
+    slip39->add_share(ref_slip39_words[1]);
+
+    // delete the middle share
+    slip39->del_share(1);
+    if (slip39->numshares() != 2)
+        return test_failed("test_slip39_del_share failed: bad numshares\n");
+
+    // add and delete the last share
+    slip39->add_share(ref_slip39_words[0]);	// this will get deleted
+    slip39->del_share(2);
+    if (slip39->numshares() != 2)
+        return test_failed("test_slip39_del_share failed: bad numshares\n");
+    
+    Seed * seed = slip39->restore_seed();
+    if (!seed)
+        return test_failed("test_slip39_del_share failed: restore failed\n");
+    Seed * seed0 = Seed::from_rolls("123456");
+    if (*seed != *seed0)
+        return test_failed("test_slip39_del_share failed: seed mismatch\n");
+    delete seed0;
+    delete seed;
+    delete slip39;
+    serial_printf("test_slip39_del_share finished\n");
+    return true;
+}
+
 struct selftest_t {
     char const * testname;
     bool (*testfun)();
@@ -206,10 +265,17 @@ selftest_t g_selftests[] =
  { "SLIP39 restore", test_slip39_restore },
  { "BIP39 restore", test_bip39_restore },
  { "BIP39 bad chksum", test_bip39_bad_checksum },
+ { "SLIP39 share ok", test_slip39_verify_share_valid },
+ { "SLIP39 share bad", test_slip39_verify_share_invalid },
+ { "SLIP39 del share", test_slip39_del_share },
+ // not enough shares
+ // too many shares
+ // same share twice
+ // foreign share
  // |--------------|
 };
 
-size_t const g_numtests = sizeof(g_selftests) / sizeof(g_selftests[0]);
+size_t const g_numtests = sizeof(g_selftests) / sizeof(*g_selftests);
 
 } // namespace selftest_internal
 

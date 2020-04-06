@@ -130,6 +130,7 @@ void self_test() {
     // Loop, once for each test.  Need an extra trip at the end in
     // case we failed the last test.
     for (int ndx = 0; ndx < numtests+1; ++ndx) {
+        
         // Append each test name to the bottom of the displayed list.
         size_t row = ndx;
         if (row > NLINES - 1) {
@@ -138,10 +139,14 @@ void self_test() {
                 lines[ii] = lines[ii+1];
             row = NLINES - 1;
         }
+        
         if (!last_test_passed) {
             lines[row] = "TEST FAILED";
         } else if (ndx < numtests) {
             lines[row] = selftest_testname(ndx).c_str();
+        } else {
+            // ran last test and it passed
+            lines[row] = "";
         }
 
         // Display the current list.
@@ -1338,14 +1343,35 @@ void enter_share() {
                 break;
             }
             break;
+        case '*':
+            // Don't add this share, go back to enter restore_slip39 menu.
+            serial_assert(g_slip39_restore);
+            g_slip39_restore->del_share(g_restore_slip39_selected);
+            g_uistate = RESTORE_SLIP39;
+            return;
         case '#':	// done
             {
                 uint16_t words[SLIP39ShareSeq::WORDS_PER_SHARE];
                 state.get_words(words);
-                serial_assert(g_slip39_restore);
-                g_slip39_restore->set_share(g_restore_slip39_selected, words);
-                g_uistate = RESTORE_SLIP39;
-                return;
+                bool ok = SLIP39ShareSeq::verify_share_checksum(words);
+                if (!ok) {
+                    String lines[7];
+                    size_t nlines = 0;
+                    lines[nlines++] = "SLIP39 Share";
+                    lines[nlines++] = "Checksum Error";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Check your word";
+                    lines[nlines++] = "list carefully";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Press # to revisit";
+                    interstitial_error(lines, nlines);
+                } else {
+                    serial_assert(g_slip39_restore);
+                    g_slip39_restore->set_share(
+                        g_restore_slip39_selected, words);
+                    g_uistate = RESTORE_SLIP39;
+                    return;
+                }
             }
         default:
             break;

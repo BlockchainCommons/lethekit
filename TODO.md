@@ -1,7 +1,3 @@
-* Need better diagnsotics for SLIP39 restore operations.
-
-* Add negative SLIP39 tests to selftest.
-
 * Update to bc_bip32 (waiting for Wolf).
 
 * Remove the ESP32 code from lethe.ino?
@@ -12,7 +8,9 @@
 
 * Add compatibility instructions for https://iancoleman.io/bip39/
 
-* Add Security Considerations section to README.md, in particular talk about custody of device, evil maid attack, and tamper evident measures.
+* Add Security Considerations section to README.md, in particular talk
+  about custody of device, evil maid attack, and tamper evident
+  measures.
 
 #### Semantic Versioning Reminder
 

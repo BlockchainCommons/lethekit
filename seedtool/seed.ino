@@ -60,6 +60,10 @@ Seed * BIP39Seq::restore_seed() const {
         : NULL;
 }
 
+bool SLIP39ShareSeq::verify_share_checksum(uint16_t const * share) {
+    return rs1024_verify_checksum(share, WORDS_PER_SHARE);
+}
+
 SLIP39ShareSeq * SLIP39ShareSeq::from_seed(Seed const * seed,
                                            size_t thresh,
                                            size_t nshares,
@@ -126,6 +130,16 @@ void SLIP39ShareSeq::set_share(size_t ndx, uint16_t const * share) {
     size_t sharesz = sizeof(uint16_t) * WORDS_PER_SHARE;
     shares[ndx] = (uint16_t *) malloc(sharesz);
     memcpy(shares[ndx], share, sharesz);
+}
+
+void SLIP39ShareSeq::del_share(size_t ndx) {
+    serial_assert(ndx < nshares);
+    if (shares[ndx])
+        free(shares[ndx]);
+    // Compact any created gap.
+    for (size_t ii = ndx; ii < nshares-1; ++ii)
+        shares[ii] = shares[ii+1];
+    nshares -= 1;
 }
 
 char * SLIP39ShareSeq::get_share_strings(size_t ndx) const {
