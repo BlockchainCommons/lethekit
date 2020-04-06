@@ -131,6 +131,10 @@ void self_test() {
     // case we failed the last test.
     for (int ndx = 0; ndx < numtests+1; ++ndx) {
 
+        // If any key is pressed, skip remaining self test.
+        if (g_keypad.getKey() != NO_KEY)
+            break;
+        
         // Append each test name to the bottom of the displayed list.
         size_t row = ndx;
         if (row > NLINES - 1) {
@@ -146,7 +150,7 @@ void self_test() {
             lines[row] = selftest_testname(ndx).c_str();
         } else {
             // ran last test and it passed
-            lines[row] = "";
+            lines[row] = "TESTS PASSED";
         }
 
         // Display the current list.
