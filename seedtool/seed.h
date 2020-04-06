@@ -68,22 +68,30 @@ public:
     static size_t const MAX_SHARES = 16;
     static size_t const WORDS_PER_SHARE = 20;
     
+    static bool verify_share_checksum(uint16_t const * share);
+    
     static SLIP39ShareSeq * from_seed(Seed const * seed,
                                       size_t thresh,
                                       size_t nshares,
                                       void(*randgen)(uint8_t *, size_t));
+
+    //  Read-only, don't free returned value.
+    static char const * error_msg(int errval);
 
     SLIP39ShareSeq();
 
     ~SLIP39ShareSeq();
 
     size_t numshares() const { return nshares; }
-    
+
     // Adds a copy of the argument, returns the share index.
     size_t add_share(uint16_t const * share);
 
     // Replace a share's value with a copy of the argument.
     void set_share(size_t ndx, uint16_t const * share);
+
+    // Delete the specified share, compact gaps.
+    void del_share(size_t ndx);
 
     // Read-only, don't free returned value.
     uint16_t const * get_share(size_t ndx) const;

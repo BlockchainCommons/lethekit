@@ -69,15 +69,73 @@ void display_printf(char *format, ...) {
     g_display.print(buff);
 }
 
-void self_test() {
+void interstitial_error(String const lines[], size_t nlines) {
+    serial_assert(nlines <= 7);
+    
     int xoff = 16;
+    int yoff = 6;
+    
+    g_display.firstPage();
+    do
+    {
+        g_display.setPartialWindow(0, 0, 200, 200);
+        // g_display.fillScreen(GxEPD_WHITE);
+        g_display.setTextColor(GxEPD_BLACK);
+
+        int xx = xoff;
+        int yy = yoff;
+
+        for (size_t ii = 0; ii < nlines; ++ii) {
+            yy += H_FSB9 + YM_FSB9;
+            g_display.setFont(&FreeSansBold9pt7b);
+            g_display.setCursor(xx, yy);
+            serial_printf("%s", lines[ii].c_str());
+            display_printf("%s", lines[ii].c_str());
+        }
+
+        yy = 190; // Absolute, stuck to bottom
+        g_display.setFont(&FreeSansBold9pt7b);
+        g_display.setCursor(xx, yy);
+        display_printf("%", GIT_DESCRIBE);
+    }
+    while (g_display.nextPage());
+
+    while (true) {
+        char key;
+        do {
+            key = g_keypad.getKey();
+        } while (key == NO_KEY);
+        Serial.println("interstitial_error saw " + String(key));
+        switch (key) {
+        case '#':
+            return;
+        default:
+            break;
+        }
+    }
+}
+
+void self_test() {
+    int xoff = 8;
     int yoff = 6;
 
     size_t const NLINES = 8;
     String lines[NLINES];
 
+    // Turn the green LED on for the duration of the tests.
+    hw_green_led(HIGH);
+    
+    bool last_test_passed = true;
     size_t numtests = selftest_numtests();
-    for (int ndx = 0; ndx < numtests; ++ndx) {
+    // Loop, once for each test.  Need an extra trip at the end in
+    // case we failed the last test.
+    for (int ndx = 0; ndx < numtests+1; ++ndx) {
+
+        // If any key is pressed, skip remaining self test.
+        if (g_keypad.getKey() != NO_KEY)
+            break;
+        
+        // Append each test name to the bottom of the displayed list.
         size_t row = ndx;
         if (row > NLINES - 1) {
             // slide all the lines up one
@@ -85,7 +143,17 @@ void self_test() {
                 lines[ii] = lines[ii+1];
             row = NLINES - 1;
         }
-        lines[row] = selftest_testname(ndx).c_str();
+        
+        if (!last_test_passed) {
+            lines[row] = "TEST FAILED";
+        } else if (ndx < numtests) {
+            lines[row] = selftest_testname(ndx).c_str();
+        } else {
+            // ran last test and it passed
+            lines[row] = "TESTS PASSED";
+        }
+
+        // Display the current list.
         g_display.firstPage();
         do
         {
@@ -108,7 +176,6 @@ void self_test() {
                 g_display.setFont(&FreeMonoBold9pt7b);
                 g_display.setCursor(xx, yy);
                 display_printf("%s", lines[ii].c_str());
-                // display_printf("OK");
             }
 
             yy = 190; // Absolute, stuck to bottom
@@ -117,9 +184,19 @@ void self_test() {
             display_printf("%", GIT_DESCRIBE);
         }
         while (g_display.nextPage());
-        selftest_testrun(ndx);
+
+        // If the test failed, abort (leaving status on screen).
+        if (!last_test_passed) {
+            hw_green_led(LOW);
+            abort();
+        }
+
+        // If this isn't the last pass run the next test.
+        if (ndx < numtests)
+            last_test_passed = selftest_testrun(ndx);
     }
-    // delay(1000);	// short pause ..
+    delay(1000);		// short pause ..
+    hw_green_led(LOW);	// Green LED back off until there is a seed.
     g_uistate = INTRO_SCREEN;
 }
 
@@ -181,15 +258,9 @@ void intro_screen() {
         do {
             key = g_keypad.getKey();
         } while (key == NO_KEY);
-        Serial.println("seedless_menu saw " + String(key));
-        switch (key) {
-        default:
-            g_uistate = SEEDLESS_MENU;
-            return;
-            break;
-        case NO_KEY:
-            break;
-        }
+        Serial.println("intro_screen saw " + String(key));
+        g_uistate = SEEDLESS_MENU;
+        return;
     }
 }
 
@@ -221,7 +292,8 @@ void seedless_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Restore SLIP39");
 
-        yy += 2*(H_FSB9 + 2*YM_FSB9);
+        yy = 190; // Absolute, stuck to bottom
+        g_display.setFont(&FreeSansBold9pt7b);
         g_display.setCursor(xx, yy);
         display_printf("%", GIT_DESCRIBE);
     }
@@ -245,7 +317,6 @@ void seedless_menu() {
             g_slip39_restore = new SLIP39ShareSeq();
             g_uistate = RESTORE_SLIP39;
             return;
-        case NO_KEY:
         default:
             break;
         }
@@ -356,7 +427,8 @@ void seedy_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Wipe Seed");
 
-        yy += 2*(H_FSB9 + 2*YM_FSB9);
+        yy = 190; // Absolute, stuck to bottom
+        g_display.setFont(&FreeSansBold9pt7b);
         g_display.setCursor(xx, yy);
         display_printf("%", GIT_DESCRIBE);
     }
@@ -379,7 +451,6 @@ void seedy_menu() {
             ui_reset_into_state(SEEDLESS_MENU);
             g_uistate = SEEDLESS_MENU;
             return;
-        case NO_KEY:
         default:
             break;
         }
@@ -978,9 +1049,19 @@ void restore_bip39() {
                     g_uistate = SEEDY_MENU;
                     return;
                 } else {
-                // FIXME - need diagnostic here
                     delete bip39;
+                    String lines[7];
+                    size_t nlines = 0;
+                    lines[nlines++] = "BIP39 Word List";
+                    lines[nlines++] = "Checksum Error";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Check your word";
+                    lines[nlines++] = "list carefully";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Press # to revisit";
+                    interstitial_error(lines, nlines);
                 }
+                break;
             }
             break;
         default:
@@ -1117,11 +1198,17 @@ void restore_slip39() {
                 }
                 Seed * seed = g_slip39_restore->restore_seed();
                 if (!seed) {
-                    // Something went wrong
-                    serial_printf("restore_seed failed: %d\n",
-                                  g_slip39_restore->last_restore_error());
-                    g_uistate = RESTORE_SLIP39;
-                    return;
+                    int err = g_slip39_restore->last_restore_error();
+                    String lines[7];
+                    size_t nlines = 0;
+                    lines[nlines++] = "SLIP39 Error";
+                    lines[nlines++] = "";
+                    lines[nlines++] = SLIP39ShareSeq::error_msg(err);
+                    lines[nlines++] = "";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Press # to revisit";
+                    lines[nlines++] = "";
+                    interstitial_error(lines, nlines);
                 } else {
                     serial_assert(!g_master_seed);
                     g_master_seed = seed;
@@ -1252,28 +1339,57 @@ void enter_share() {
             state.word_up();
             break;
         case 'D':
-            // If 'D' and then '0' are typed, fill dummy data.
             do {
                 key = g_keypad.getKey();
             } while (key == NO_KEY);
             Serial.println("enter_share_D saw " + String(key));
             switch (key) {
             case '0':
+                // If 'D' and then '0' are typed, fill with valid dummy data.
                 Serial.println("Loading dummy slip39 data");
-                state.set_words(selftest_dummy_slip39(g_restore_slip39_selected));
+                state.set_words(selftest_dummy_slip39(
+                    g_restore_slip39_selected));
+                break;
+            case '9':
+                // If 'D' and then '9' are typed, fill with invalid
+                // share (but correct checksum).
+                Serial.println("Loading dummy slip39 data");
+                state.set_words(selftest_dummy_slip39_alt(
+                    g_restore_slip39_selected));
                 break;
             default:
                 break;
             }
             break;
+        case '*':
+            // Don't add this share, go back to enter restore_slip39 menu.
+            serial_assert(g_slip39_restore);
+            g_slip39_restore->del_share(g_restore_slip39_selected);
+            g_uistate = RESTORE_SLIP39;
+            return;
         case '#':	// done
             {
                 uint16_t words[SLIP39ShareSeq::WORDS_PER_SHARE];
                 state.get_words(words);
-                serial_assert(g_slip39_restore);
-                g_slip39_restore->set_share(g_restore_slip39_selected, words);
-                g_uistate = RESTORE_SLIP39;
-                return;
+                bool ok = SLIP39ShareSeq::verify_share_checksum(words);
+                if (!ok) {
+                    String lines[7];
+                    size_t nlines = 0;
+                    lines[nlines++] = "SLIP39 Share";
+                    lines[nlines++] = "Checksum Error";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Check your word";
+                    lines[nlines++] = "list carefully";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Press # to revisit";
+                    interstitial_error(lines, nlines);
+                } else {
+                    serial_assert(g_slip39_restore);
+                    g_slip39_restore->set_share(
+                        g_restore_slip39_selected, words);
+                    g_uistate = RESTORE_SLIP39;
+                    return;
+                }
             }
         default:
             break;

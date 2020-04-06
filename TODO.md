@@ -1,9 +1,3 @@
-* Add power-on-self test diagnostics to the screen.
-
-* Need better diagnsotics for BIP39 and SLIP39 restore operations.
-
-* Add negative tests to selftest.
-
 * Update to bc_bip32 (waiting for Wolf).
 
 * Remove the ESP32 code from lethe.ino?
@@ -14,7 +8,9 @@
 
 * Add compatibility instructions for https://iancoleman.io/bip39/
 
-* Add Security Considerations section to README.md, in particular talk about custody of device, evil maid attack, and tamper evident measures.
+* Add Security Considerations section to README.md, in particular talk
+  about custody of device, evil maid attack, and tamper evident
+  measures.
 
 #### Semantic Versioning Reminder
 

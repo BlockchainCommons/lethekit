@@ -60,6 +60,10 @@ Seed * BIP39Seq::restore_seed() const {
         : NULL;
 }
 
+bool SLIP39ShareSeq::verify_share_checksum(uint16_t const * share) {
+    return rs1024_verify_checksum(share, WORDS_PER_SHARE);
+}
+
 SLIP39ShareSeq * SLIP39ShareSeq::from_seed(Seed const * seed,
                                            size_t thresh,
                                            size_t nshares,
@@ -96,6 +100,20 @@ SLIP39ShareSeq * SLIP39ShareSeq::from_seed(Seed const * seed,
     return slip39;
 }
 
+char const * SLIP39ShareSeq::error_msg(int errval) {
+    char buffer[1024];
+    switch (errval) {
+        // max message size 18 chars                |----------------|
+    case ERROR_INVALID_SHARD_SET:			return "Invalid shard set";
+    case ERROR_DUPLICATE_MEMBER_INDEX:		return "Duplicate shard";
+    case ERROR_NOT_ENOUGH_MEMBER_SHARDS:	return "Not enough shards";
+    default:
+        snprintf(buffer, sizeof(buffer), 		   "unknown err %d", errval);
+        return buffer;
+        // max message size 18 chars                |----------------|
+    }
+}
+
 SLIP39ShareSeq::SLIP39ShareSeq() {
     nshares = 0;
     memset(shares, 0x00, sizeof(shares));
@@ -126,6 +144,16 @@ void SLIP39ShareSeq::set_share(size_t ndx, uint16_t const * share) {
     size_t sharesz = sizeof(uint16_t) * WORDS_PER_SHARE;
     shares[ndx] = (uint16_t *) malloc(sharesz);
     memcpy(shares[ndx], share, sharesz);
+}
+
+void SLIP39ShareSeq::del_share(size_t ndx) {
+    serial_assert(ndx < nshares);
+    if (shares[ndx])
+        free(shares[ndx]);
+    // Compact any created gap.
+    for (size_t ii = ndx; ii < nshares-1; ++ii)
+        shares[ii] = shares[ii+1];
+    nshares -= 1;
 }
 
 char * SLIP39ShareSeq::get_share_strings(size_t ndx) const {
