@@ -4,6 +4,7 @@
 #define USERINTERFACE_H
 
 enum UIState {
+    INVALID_STATE = -1,
     SELF_TEST,
     INTRO_SCREEN,
     SEEDLESS_MENU,

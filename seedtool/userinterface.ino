@@ -69,6 +69,52 @@ void display_printf(char *format, ...) {
     g_display.print(buff);
 }
 
+void interstitial_error(String const lines[], size_t nlines) {
+    serial_assert(nlines <= 7);
+    
+    int xoff = 16;
+    int yoff = 6;
+    
+    g_display.firstPage();
+    do
+    {
+        g_display.setPartialWindow(0, 0, 200, 200);
+        // g_display.fillScreen(GxEPD_WHITE);
+        g_display.setTextColor(GxEPD_BLACK);
+
+        int xx = xoff;
+        int yy = yoff;
+
+        for (size_t ii = 0; ii < nlines; ++ii) {
+            yy += H_FSB9 + YM_FSB9;
+            g_display.setFont(&FreeSansBold9pt7b);
+            g_display.setCursor(xx, yy);
+            serial_printf("%s", lines[ii].c_str());
+            display_printf("%s", lines[ii].c_str());
+        }
+
+        yy = 190; // Absolute, stuck to bottom
+        g_display.setFont(&FreeSansBold9pt7b);
+        g_display.setCursor(xx, yy);
+        display_printf("%", GIT_DESCRIBE);
+    }
+    while (g_display.nextPage());
+
+    while (true) {
+        char key;
+        do {
+            key = g_keypad.getKey();
+        } while (key == NO_KEY);
+        Serial.println("interstitial_error saw " + String(key));
+        switch (key) {
+        case '#':
+            return;
+        default:
+            break;
+        }
+    }
+}
+
 void self_test() {
     int xoff = 16;
     int yoff = 6;
@@ -121,7 +167,6 @@ void self_test() {
                 g_display.setFont(&FreeMonoBold9pt7b);
                 g_display.setCursor(xx, yy);
                 display_printf("%s", lines[ii].c_str());
-                // display_printf("OK");
             }
 
             yy = 190; // Absolute, stuck to bottom
@@ -204,15 +249,9 @@ void intro_screen() {
         do {
             key = g_keypad.getKey();
         } while (key == NO_KEY);
-        Serial.println("seedless_menu saw " + String(key));
-        switch (key) {
-        default:
-            g_uistate = SEEDLESS_MENU;
-            return;
-            break;
-        case NO_KEY:
-            break;
-        }
+        Serial.println("intro_screen saw " + String(key));
+        g_uistate = SEEDLESS_MENU;
+        return;
     }
 }
 
@@ -244,7 +283,8 @@ void seedless_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Restore SLIP39");
 
-        yy += 2*(H_FSB9 + 2*YM_FSB9);
+        yy = 190; // Absolute, stuck to bottom
+        g_display.setFont(&FreeSansBold9pt7b);
         g_display.setCursor(xx, yy);
         display_printf("%", GIT_DESCRIBE);
     }
@@ -268,7 +308,6 @@ void seedless_menu() {
             g_slip39_restore = new SLIP39ShareSeq();
             g_uistate = RESTORE_SLIP39;
             return;
-        case NO_KEY:
         default:
             break;
         }
@@ -379,7 +418,8 @@ void seedy_menu() {
         g_display.setCursor(xx, yy);
         g_display.println("C - Wipe Seed");
 
-        yy += 2*(H_FSB9 + 2*YM_FSB9);
+        yy = 190; // Absolute, stuck to bottom
+        g_display.setFont(&FreeSansBold9pt7b);
         g_display.setCursor(xx, yy);
         display_printf("%", GIT_DESCRIBE);
     }
@@ -402,7 +442,6 @@ void seedy_menu() {
             ui_reset_into_state(SEEDLESS_MENU);
             g_uistate = SEEDLESS_MENU;
             return;
-        case NO_KEY:
         default:
             break;
         }
@@ -1001,9 +1040,19 @@ void restore_bip39() {
                     g_uistate = SEEDY_MENU;
                     return;
                 } else {
-                // FIXME - need diagnostic here
                     delete bip39;
+                    String lines[7];
+                    size_t nlines = 0;
+                    lines[nlines++] = "BIP39 Word List";
+                    lines[nlines++] = "Checksum Error";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Check your word";
+                    lines[nlines++] = "list carefully";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Press # to revisit";
+                    interstitial_error(lines, nlines);
                 }
+                break;
             }
             break;
         default:
