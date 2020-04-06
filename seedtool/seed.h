@@ -75,6 +75,9 @@ public:
                                       size_t nshares,
                                       void(*randgen)(uint8_t *, size_t));
 
+    //  Read-only, don't free returned value.
+    static char const * error_msg(int errval);
+
     SLIP39ShareSeq();
 
     ~SLIP39ShareSeq();

@@ -116,7 +116,7 @@ void interstitial_error(String const lines[], size_t nlines) {
 }
 
 void self_test() {
-    int xoff = 16;
+    int xoff = 8;
     int yoff = 6;
 
     size_t const NLINES = 8;
@@ -130,7 +130,7 @@ void self_test() {
     // Loop, once for each test.  Need an extra trip at the end in
     // case we failed the last test.
     for (int ndx = 0; ndx < numtests+1; ++ndx) {
-        
+
         // Append each test name to the bottom of the displayed list.
         size_t row = ndx;
         if (row > NLINES - 1) {
@@ -1194,11 +1194,17 @@ void restore_slip39() {
                 }
                 Seed * seed = g_slip39_restore->restore_seed();
                 if (!seed) {
-                    // Something went wrong
-                    serial_printf("restore_seed failed: %d\n",
-                                  g_slip39_restore->last_restore_error());
-                    g_uistate = RESTORE_SLIP39;
-                    return;
+                    int err = g_slip39_restore->last_restore_error();
+                    String lines[7];
+                    size_t nlines = 0;
+                    lines[nlines++] = "SLIP39 Error";
+                    lines[nlines++] = "";
+                    lines[nlines++] = SLIP39ShareSeq::error_msg(err);
+                    lines[nlines++] = "";
+                    lines[nlines++] = "";
+                    lines[nlines++] = "Press # to revisit";
+                    lines[nlines++] = "";
+                    interstitial_error(lines, nlines);
                 } else {
                     serial_assert(!g_master_seed);
                     g_master_seed = seed;
@@ -1329,15 +1335,23 @@ void enter_share() {
             state.word_up();
             break;
         case 'D':
-            // If 'D' and then '0' are typed, fill dummy data.
             do {
                 key = g_keypad.getKey();
             } while (key == NO_KEY);
             Serial.println("enter_share_D saw " + String(key));
             switch (key) {
             case '0':
+                // If 'D' and then '0' are typed, fill with valid dummy data.
                 Serial.println("Loading dummy slip39 data");
-                state.set_words(selftest_dummy_slip39(g_restore_slip39_selected));
+                state.set_words(selftest_dummy_slip39(
+                    g_restore_slip39_selected));
+                break;
+            case '9':
+                // If 'D' and then '9' are typed, fill with invalid
+                // share (but correct checksum).
+                Serial.println("Loading dummy slip39 data");
+                state.set_words(selftest_dummy_slip39_alt(
+                    g_restore_slip39_selected));
                 break;
             default:
                 break;

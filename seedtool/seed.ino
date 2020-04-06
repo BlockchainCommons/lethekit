@@ -100,6 +100,20 @@ SLIP39ShareSeq * SLIP39ShareSeq::from_seed(Seed const * seed,
     return slip39;
 }
 
+char const * SLIP39ShareSeq::error_msg(int errval) {
+    char buffer[1024];
+    switch (errval) {
+        // max message size 18 chars                |----------------|
+    case ERROR_INVALID_SHARD_SET:			return "Invalid shard set";
+    case ERROR_DUPLICATE_MEMBER_INDEX:		return "Duplicate shard";
+    case ERROR_NOT_ENOUGH_MEMBER_SHARDS:	return "Not enough shards";
+    default:
+        snprintf(buffer, sizeof(buffer), 		   "unknown err %d", errval);
+        return buffer;
+        // max message size 18 chars                |----------------|
+    }
+}
+
 SLIP39ShareSeq::SLIP39ShareSeq() {
     nshares = 0;
     memset(shares, 0x00, sizeof(shares));

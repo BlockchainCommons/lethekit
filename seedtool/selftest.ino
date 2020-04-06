@@ -75,6 +75,44 @@ uint16_t ref_slip39_words[ref_slip39_nshares][SLIP39ShareSeq::WORDS_PER_SHARE] =
    0x026e, 0x00d3, 0x010d, 0x0043, 0x0020 }
 };
 
+// These shares are *also* generated from seed="123456", but they use
+// a different random seed so they are not compatible with the others.
+char* ref_slip39_shares_alt[ref_slip39_nshares] =
+{
+ "deny category academic acid buyer "
+ "miracle game discuss hobo decision "
+ "speak depend silver yield leaves "
+ "welcome increase vocal therapy burden",
+ 
+ "deny category academic agency club "
+ "sister freshman enjoy furl ancient "
+ "undergo cage unwrap enforce machine "
+ "swing check arena society language",
+ 
+ "deny category academic always damage "
+ "daisy froth gross march engage "
+ "plot slavery agree morning moisture "
+ "race snake task drink firm",
+};
+
+uint16_t ref_slip39_words_alt[ref_slip39_nshares][SLIP39ShareSeq::WORDS_PER_SHARE] =
+{ 
+ { 0x00cb,  0x0080,  0x0000,  0x0001,  0x0071,
+   0x0249,  0x017e,  0x00e1,  0x01b5,  0x00c4,
+   0x034d,  0x00cd,  0x032d,  0x03fd,  0x0203,
+   0x03e8,  0x01ce,  0x03db,  0x0390,  0x006e, },
+ 
+ { 0x00cb,  0x0080,  0x0000,  0x0011,  0x0099,
+   0x0331,  0x0172,  0x011f,  0x017b,  0x0029,
+   0x03b6,  0x0072,  0x03bf,  0x011d,  0x0225,
+   0x0374,  0x0088,  0x0033,  0x0345,  0x01fb, },
+ 
+ { 0x00cb,  0x0080,  0x0000,  0x0021,  0x00ba,
+   0x00b9,  0x0177,  0x019b,  0x0232,  0x011e,
+   0x02aa,  0x0335,  0x0012,  0x0251,  0x024f,
+   0x02d0,  0x0342,  0x037e,  0x00f4,  0x0159, },
+};
+
 uint16_t ref_slip39_share_bad_checksum[SLIP39ShareSeq::WORDS_PER_SHARE] =
 {
  // ref_slip39_words[0], 11th word is altered
@@ -249,6 +287,111 @@ bool test_slip39_del_share() {
     return true;
 }
 
+bool test_slip39_too_few() {
+    serial_printf("test_slip39_too_few starting\n");
+    SLIP39ShareSeq * slip39 = new SLIP39ShareSeq();
+    slip39->add_share(ref_slip39_words[2]);
+    Seed * seed = slip39->restore_seed();
+    if (seed)
+        return test_failed("test_slip39_too_few failed: restore worked\n");
+    int err = slip39->last_restore_error();
+    if (err != ERROR_NOT_ENOUGH_MEMBER_SHARDS)
+        return test_failed("test_slip39_too_few failed: saw err %d\n", err);
+    if (strcmp(SLIP39ShareSeq::error_msg(err), "Not enough shards") != 0)
+        return test_failed("test_slip39_too_few failed: wrong msg: %s\n",
+                           SLIP39ShareSeq::error_msg(err));
+    delete slip39;
+    serial_printf("test_slip39_too_few finished\n");
+    return true;
+}
+
+bool test_slip39_duplicate_share() {
+    serial_printf("test_slip39_duplicate_share starting\n");
+    SLIP39ShareSeq * slip39 = new SLIP39ShareSeq();
+    slip39->add_share(ref_slip39_words[2]);
+    slip39->add_share(ref_slip39_words[2]);
+    Seed * seed = slip39->restore_seed();
+    if (seed)
+        return test_failed("test_slip39_duplicate_share failed: "
+                           "restore worked\n");
+    int err = slip39->last_restore_error();
+    if (err != ERROR_DUPLICATE_MEMBER_INDEX)
+        return test_failed(
+            "test_slip39_duplicate_share failed: saw err %d\n", err);
+    if (strcmp(SLIP39ShareSeq::error_msg(err), "Duplicate shard") != 0)
+        return test_failed("test_slip39_duplicate_share failed: wrong msg: %s\n",
+                           SLIP39ShareSeq::error_msg(err));
+    delete slip39;
+    serial_printf("test_slip39_duplicate_share finished\n");
+    return true;
+}
+
+bool test_slip39_extra_valid_share() {
+    serial_printf("test_slip39_extra_valid_share starting\n");
+    SLIP39ShareSeq * slip39 = new SLIP39ShareSeq();
+    slip39->add_share(ref_slip39_words[1]);
+    slip39->add_share(ref_slip39_words[2]);
+    slip39->add_share(ref_slip39_words[0]);
+    Seed * seed = slip39->restore_seed();
+    if (!seed)
+        return test_failed(
+            "test_slip39_extra_valid_share failed: restore failed\n");
+    Seed * seed0 = Seed::from_rolls("123456");
+    if (*seed != *seed0)
+        return test_failed(
+            "test_slip39_extra_valid_share failed: seed mismatch\n");
+    delete seed0;
+    delete seed;
+    delete slip39;
+    serial_printf("test_slip39_extra_valid_share finished\n");
+    return true;
+}
+
+bool test_slip39_extra_dup_share() {
+    serial_printf("test_slip39_extra_dup_share starting\n");
+    SLIP39ShareSeq * slip39 = new SLIP39ShareSeq();
+    slip39->add_share(ref_slip39_words[1]);
+    slip39->add_share(ref_slip39_words[2]);
+    slip39->add_share(ref_slip39_words[2]);
+    Seed * seed = slip39->restore_seed();
+    if (seed)
+        return test_failed("test_slip39_duplicate_share failed: "
+                           "restore worked\n");
+    int err = slip39->last_restore_error();
+    if (err != ERROR_DUPLICATE_MEMBER_INDEX)
+        return test_failed(
+            "test_slip39_duplicate_share failed: saw err %d\n", err);
+    if (strcmp(SLIP39ShareSeq::error_msg(err), "Duplicate shard") != 0)
+        return test_failed("test_slip39_extra_dup_share failed: wrong msg: %s\n",
+                           SLIP39ShareSeq::error_msg(err));
+    delete slip39;
+    serial_printf("test_slip39_extra_dup_share finished\n");
+    return true;
+}
+
+bool test_slip39_invalid_share() {
+    // NOTE - the share has a valid checksum, but comes from
+    // a different recovery set (for the same seed).
+    serial_printf("test_slip39_invalid_share starting\n");
+    SLIP39ShareSeq * slip39 = new SLIP39ShareSeq();
+    slip39->add_share(ref_slip39_words[2]);
+    slip39->add_share(ref_slip39_words_alt[1]);
+    Seed * seed = slip39->restore_seed();
+    if (seed)
+        return test_failed("test_slip39_duplicate_share failed: "
+                           "restore worked\n");
+    int err = slip39->last_restore_error();
+    if (err != ERROR_INVALID_SHARD_SET)
+        return test_failed(
+            "test_slip39_duplicate_share failed: saw err %d\n", err);
+    if (strcmp(SLIP39ShareSeq::error_msg(err), "Invalid shard set") != 0)
+        return test_failed("test_slip39_invalid_share failed: wrong msg: %s\n",
+                           SLIP39ShareSeq::error_msg(err));
+    delete slip39;
+    serial_printf("test_slip39_invalid_share finished\n");
+    return true;
+}
+
 struct selftest_t {
     char const * testname;
     bool (*testfun)();
@@ -268,10 +411,11 @@ selftest_t g_selftests[] =
  { "SLIP39 share ok", test_slip39_verify_share_valid },
  { "SLIP39 share bad", test_slip39_verify_share_invalid },
  { "SLIP39 del share", test_slip39_del_share },
- // not enough shares
- // too many shares
- // same share twice
- // foreign share
+ { "SLIP39 too few", test_slip39_too_few },
+ { "SLIP39 dup share", test_slip39_duplicate_share },
+ { "SLIP39 extra val", test_slip39_extra_valid_share },
+ { "SLIP39 extra dup", test_slip39_extra_dup_share },
+ { "SLIP39 inv share", test_slip39_invalid_share },
  // |--------------|
 };
 
@@ -303,6 +447,13 @@ const uint16_t * selftest_dummy_slip39(size_t ndx) {
     if (ndx > ref_slip39_nshares - 1)
         ndx = ref_slip39_nshares - 1;
     return ref_slip39_words[ndx];
+}
+
+const uint16_t * selftest_dummy_slip39_alt(size_t ndx) {
+    using namespace selftest_internal;
+    if (ndx > ref_slip39_nshares - 1)
+        ndx = ref_slip39_nshares - 1;
+    return ref_slip39_words_alt[ndx];
 }
 
 size_t selftest_numtests() {
