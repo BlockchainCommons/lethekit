@@ -219,7 +219,7 @@ void intro_screen() {
 
         yy += 6;
         
-        xx = xoff + 20;
+        xx = xoff + 24;
         yy += H_FSB12 + YM_FSB12;
         g_display.setCursor(xx, yy);
         display_printf("Seedtool");
@@ -230,13 +230,13 @@ void intro_screen() {
         g_display.setCursor(xx, yy);
         display_printf("%s", GIT_LATEST_TAG);
 
-        xx = xoff + 14;
+        xx = xoff + 28;
         yy += 1*(H_FSB9 + 2*YM_FSB9);
         g_display.setFont(&FreeSansBold9pt7b);
         g_display.setCursor(xx, yy);
         g_display.println("Blockchain");
 
-        xx = xoff + 60;
+        xx = xoff + 30;
         yy += H_FSB9 + 4;
         g_display.setCursor(xx, yy);
         g_display.println("Commons");
