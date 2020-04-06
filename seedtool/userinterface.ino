@@ -76,8 +76,15 @@ void self_test() {
     size_t const NLINES = 8;
     String lines[NLINES];
 
+    // Turn the green LED on for the duration of the tests.
+    hw_green_led(HIGH);
+    
+    bool last_test_passed = true;
     size_t numtests = selftest_numtests();
-    for (int ndx = 0; ndx < numtests; ++ndx) {
+    // Loop, once for each test.  Need an extra trip at the end in
+    // case we failed the last test.
+    for (int ndx = 0; ndx < numtests+1; ++ndx) {
+        // Append each test name to the bottom of the displayed list.
         size_t row = ndx;
         if (row > NLINES - 1) {
             // slide all the lines up one
@@ -85,7 +92,13 @@ void self_test() {
                 lines[ii] = lines[ii+1];
             row = NLINES - 1;
         }
-        lines[row] = selftest_testname(ndx).c_str();
+        if (!last_test_passed) {
+            lines[row] = "TEST FAILED";
+        } else if (ndx < numtests) {
+            lines[row] = selftest_testname(ndx).c_str();
+        }
+
+        // Display the current list.
         g_display.firstPage();
         do
         {
@@ -117,9 +130,19 @@ void self_test() {
             display_printf("%", GIT_DESCRIBE);
         }
         while (g_display.nextPage());
-        selftest_testrun(ndx);
+
+        // If the test failed, abort (leaving status on screen).
+        if (!last_test_passed) {
+            hw_green_led(LOW);
+            abort();
+        }
+
+        // If this isn't the last pass run the next test.
+        if (ndx < numtests)
+            last_test_passed = selftest_testrun(ndx);
     }
-    // delay(1000);	// short pause ..
+    delay(1000);		// short pause ..
+    hw_green_led(LOW);	// Green LED back off until there is a seed.
     g_uistate = INTRO_SCREEN;
 }
 

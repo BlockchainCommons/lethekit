@@ -1,8 +1,6 @@
-* Add power-on-self test diagnostics to the screen.
+* Need better diagnsotics for SLIP39 restore operations.
 
-* Need better diagnsotics for BIP39 and SLIP39 restore operations.
-
-* Add negative tests to selftest.
+* Add negative SLIP39 tests to selftest.
 
 * Update to bc_bip32 (waiting for Wolf).
 
