@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#include <bip39.h>
+#include <bc-bip39.h>
 
 class Seed {
 public:
@@ -24,7 +24,7 @@ public:
     }
 
     void log() const;
-    
+
     uint8_t data[SIZE];
 };
 
@@ -33,43 +33,38 @@ public:
     static size_t const WORD_COUNT = 12;
 
     static BIP39Seq * from_words(uint16_t * words);
-    
-    BIP39Seq() { bip39.setPayloadBytes(Seed::SIZE); }
-    
+
+    BIP39Seq();
+
     BIP39Seq(Seed const * seed);
 
-    void set_word(size_t ndx, uint16_t word) {
-        bip39.setWord(ndx, word);
-    }
+    ~BIP39Seq();
+
+    void set_word(size_t ndx, uint16_t word);
 
     // Return the char string for a dictionary index.
-    char const * get_dict_string(size_t ndx) {
-        return bip39.getMnemonic(ndx);
-    }
+    static String get_dict_string(size_t ndx);
 
     // Return the word for a word list index.
-    uint16_t get_word(size_t ndx) const {
-        return bip39.getWord(ndx);
-    }
+    uint16_t get_word(size_t ndx) const;
 
     // Return the char string for a list index.
-    char const * get_string(size_t ndx) {
-        return bip39.getMnemonic(bip39.getWord(ndx));
-    }
+    String get_string(size_t ndx);
 
     // Returns NULL if restore fails (bad BIP39 checksum).
-    Seed * restore_seed() const ;
+    Seed * restore_seed() const;
 
-    Bip39 bip39;
+private:
+    void* ctx;
 };
 
 class SLIP39ShareSeq {
 public:
     static size_t const MAX_SHARES = 16;
     static size_t const WORDS_PER_SHARE = 20;
-    
+
     static bool verify_share_checksum(uint16_t const * share);
-    
+
     static SLIP39ShareSeq * from_seed(Seed const * seed,
                                       size_t thresh,
                                       size_t nshares,
@@ -98,10 +93,10 @@ public:
 
     // Free the returned value!
     char * get_share_strings(size_t ndx) const;
-    
+
     // Read only, don't free returned value.
     char const * get_share_word(size_t sndx, size_t wndx) const;
-    
+
     // Returns NULL if restore fails, use last_error for diagnostic.
     Seed * restore_seed() const;
 
@@ -109,10 +104,10 @@ public:
 
 private:
     size_t nshares;
-    
+
     uint16_t * shares[MAX_SHARES];
 
     mutable int last_rv;
 };
-    
+
 #endif // SEED_H
