@@ -6,6 +6,9 @@
 #include "util.h"
 
 #include "selftest.h"
+#include <bc-crypto-base.h>
+#include <bc-bip39.h>
+#include "prefix1.h"
 
 namespace selftest_internal {
 
@@ -45,12 +48,12 @@ const char* ref_slip39_shares[ref_slip39_nshares] =
  "both course legs visitor squeeze "
  "justice sack havoc elbow crunch "
  "scroll evoke civil exact vexed",
-  
+
  "check academic academic agency custody "
  "purple ceiling walnut garlic hearing "
  "daughter kind critical necklace boundary "
  "dish away obesity glen infant",
-  
+
  "check academic academic always check "
  "enemy fawn glimpse bulb rebound "
  "spelling plunge cover umbrella fused "
@@ -58,17 +61,17 @@ const char* ref_slip39_shares[ref_slip39_nshares] =
 };
 
 uint16_t ref_slip39_words[ref_slip39_nshares][SLIP39ShareSeq::WORDS_PER_SHARE] =
-{ 
+{
  { 0x0088, 0x0000, 0x0000, 0x0001, 0x00a2,
    0x005d, 0x00a3, 0x0207, 0x03d8, 0x035a,
    0x01ee, 0x0307, 0x01aa, 0x0108, 0x00b0,
    0x031a, 0x0131, 0x008e, 0x0132, 0x03d1 },
- 
+
  { 0x0088, 0x0000, 0x0000, 0x0011, 0x00b7,
    0x02ca, 0x0082, 0x03e0, 0x0181, 0x01af,
    0x00be, 0x01f2, 0x00ad, 0x0260, 0x005e,
    0x00e3, 0x0040, 0x026a, 0x018d, 0x01d2 },
- 
+
  { 0x0088, 0x0000, 0x0000, 0x0021, 0x0088,
    0x011b, 0x0151, 0x018e, 0x006a, 0x02dc,
    0x034f, 0x02ab, 0x00a4, 0x03b4, 0x017c,
@@ -83,30 +86,39 @@ const char* ref_slip39_shares_alt[ref_slip39_nshares] =
  "miracle game discuss hobo decision "
  "speak depend silver yield leaves "
  "welcome increase vocal therapy burden",
- 
+
  "deny category academic agency club "
  "sister freshman enjoy furl ancient "
  "undergo cage unwrap enforce machine "
  "swing check arena society language",
- 
+
  "deny category academic always damage "
  "daisy froth gross march engage "
  "plot slavery agree morning moisture "
  "race snake task drink firm",
 };
 
+char* ref_sha_input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
+
+uint8_t ref_sha256_output[] = {
+  0x24, 0x8d, 0x6a, 0x61, 0xd2, 0x06, 0x38, 0xb8,
+  0xe5, 0xc0, 0x26, 0x93, 0x0c, 0x3e, 0x60, 0x39,
+  0xa3, 0x3c, 0xe4, 0x59, 0x64, 0xff, 0x21, 0x67,
+  0xf6, 0xec, 0xed, 0xd4, 0x19, 0xdb, 0x06, 0xc1
+};
+
 uint16_t ref_slip39_words_alt[ref_slip39_nshares][SLIP39ShareSeq::WORDS_PER_SHARE] =
-{ 
+{
  { 0x00cb,  0x0080,  0x0000,  0x0001,  0x0071,
    0x0249,  0x017e,  0x00e1,  0x01b5,  0x00c4,
    0x034d,  0x00cd,  0x032d,  0x03fd,  0x0203,
    0x03e8,  0x01ce,  0x03db,  0x0390,  0x006e, },
- 
+
  { 0x00cb,  0x0080,  0x0000,  0x0011,  0x0099,
    0x0331,  0x0172,  0x011f,  0x017b,  0x0029,
    0x03b6,  0x0072,  0x03bf,  0x011d,  0x0225,
    0x0374,  0x0088,  0x0033,  0x0345,  0x01fb, },
- 
+
  { 0x00cb,  0x0080,  0x0000,  0x0021,  0x00ba,
    0x00b9,  0x0177,  0x019b,  0x0232,  0x011e,
    0x02aa,  0x0335,  0x0012,  0x0251,  0x024f,
@@ -121,7 +133,7 @@ uint16_t ref_slip39_share_bad_checksum[SLIP39ShareSeq::WORDS_PER_SHARE] =
  0x0132, 0x0307, 0x01aa, 0x0108, 0x00b0,
  0x031a, 0x0131, 0x008e, 0x0132, 0x03d1
 };
- 
+
 // Clearly not random. Only use for tests.
 void fake_random(uint8_t *buf, size_t count) {
     uint8_t b = 0;
@@ -142,6 +154,17 @@ bool test_failed(const char *format, ...) {
   return false;
 }
 
+bool test_sha256() {
+    serial_printf("test_sha256 starting\n");
+    uint8_t digest[SHA256_DIGEST_LENGTH];
+    sha256_Raw((const uint8_t*)ref_sha_input, strlen(ref_sha_input), digest);
+    if (memcmp(digest, ref_sha256_output, SHA256_DIGEST_LENGTH) != 0) {
+        return test_failed("test_sha256 failed\n");
+    }
+    serial_printf("test_sha256 finished\n");
+    return true;
+}
+
 bool test_seed_generate() {
     serial_printf("test_seed_generate starting\n");
     Seed * seed = Seed::from_rolls("123456");
@@ -154,6 +177,23 @@ bool test_seed_generate() {
     return true;
 }
 
+bool test_bip39_mnemonics() {
+    serial_printf("test_bip39_mnemonics starting\n");
+    void* ctx = bip39_new_context();
+    for(int i = 0; i < BIP39Seq::WORD_COUNT; i++) {
+        uint16_t word = ref_bip39_words_correct[i];
+        const char* mnemonic1 = ref_bip39_mnemonics[i];
+        const char* mnemonic2 = bip39_get_mnemonic(ctx, word);
+        //serial_printf("word: 0x%0hx, mnemonic1: \"%s\", mnemonic2: \"%s\"\n", word, mnemonic1, mnemonic2);
+        if(strcmp(mnemonic1, mnemonic2) != 0) {
+            return test_failed("test_bip39_mnemonics failed: mismatch\n");
+        }
+    }
+    bip39_dispose_context(ctx);
+    serial_printf("test_bip39_mnemonics finished\n");
+    return true;
+}
+
 bool test_bip39_generate() {
     serial_printf("test_bip39_generate starting\n");
     Seed * seed = Seed::from_rolls("123456");
@@ -161,7 +201,7 @@ bool test_bip39_generate() {
     for (size_t ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii) {
         if (bip39->get_word(ii) != ref_bip39_words_correct[ii])
             return test_failed("test_bip39_generate failed: word mismatch\n");
-        if (strcmp(bip39->get_string(ii), ref_bip39_mnemonics[ii]) != 0)
+        if (strcmp(bip39->get_string(ii).c_str(), ref_bip39_mnemonics[ii]) != 0)
             return test_failed("test_bip39_generate failed: mnemonic mismatch\n");
     }
     delete bip39;
@@ -207,7 +247,7 @@ bool test_slip39_generate() {
                                   ref_slip39_nshares, fake_random);
     for (size_t ii = 0; ii < ref_slip39_nshares; ++ii) {
         uint16_t const * words = slip39->get_share(ii);
-        char * strings = 
+        char * strings =
             slip39_strings_for_words(words, SLIP39ShareSeq::WORDS_PER_SHARE);
         if (strcmp(strings, ref_slip39_shares[ii]) != 0)
             return test_failed("test_slip39_generate failed: share mismatch\n");
@@ -273,7 +313,7 @@ bool test_slip39_del_share() {
     slip39->del_share(2);
     if (slip39->numshares() != 2)
         return test_failed("test_slip39_del_share failed: bad numshares\n");
-    
+
     Seed * seed = slip39->restore_seed();
     if (!seed)
         return test_failed("test_slip39_del_share failed: restore failed\n");
@@ -401,7 +441,9 @@ selftest_t g_selftests[] =
 {
  // Max test name display length is ~16 chars.
  // |--------------|
+ { "SHA256", test_sha256 },
  { "seed generate", test_seed_generate },
+ { "BIP39 mnemonics", test_bip39_mnemonics },
  { "BIP39 generate", test_bip39_generate },
  { "BIP39 restore", test_bip39_restore },
  { "SLIP39 generate", test_slip39_generate },
