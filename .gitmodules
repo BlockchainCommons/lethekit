@@ -10,3 +10,6 @@
 [submodule "deps/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-"]
 	path = deps/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
 	url = git@github.com:SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-.git
+[submodule "deps/bc-bip39"]
+	path = deps/bc-bip39
+	url = git@github.com:BlockchainCommons/bc-bip39.git
