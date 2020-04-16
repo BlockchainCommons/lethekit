@@ -1,9 +1,3 @@
-[submodule "deps/Cryptosuite"]
-	path = deps/Cryptosuite
-	url = git@github.com:ksedgwic/Cryptosuite.git
-[submodule "deps/bip39"]
-	path = deps/bip39
-	url = git@github.com:ksedgwic/bip39.git
 [submodule "deps/bc-crypto-base"]
 	path = deps/bc-crypto-base
 	url = git@github.com:BlockchainCommons/bc-crypto-base.git

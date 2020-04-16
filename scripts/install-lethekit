@@ -48,11 +48,10 @@ aroot=${args[1]}
 libpath="${aroot}/libraries"
 
 declare -a libs=(
-    Cryptosuite
     bc-crypto-base
     bc-shamir
     bc-slip39
-    bip39
+    bc-bip39
     TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
 )
 
