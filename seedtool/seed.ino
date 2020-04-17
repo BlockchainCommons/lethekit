@@ -2,11 +2,8 @@
 
 #include <stdarg.h>
 
-extern "C" {
 #include <bc-slip39.h>
 #include <bc-crypto-base.h>
-#include <wordlist-english.h>
-}
 
 #include "util.h"
 #include "seed.h"
