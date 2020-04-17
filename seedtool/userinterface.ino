@@ -486,7 +486,7 @@ void display_bip39() {
             for (int rr = 0; rr < nrows; ++rr) {
                 int wndx = scroll + rr;
                 g_display.setCursor(xx, yy);
-                display_printf("%2d %s", wndx+1, g_bip39->get_string(wndx));
+                display_printf("%2d %s", wndx+1, g_bip39->get_string(wndx).c_str());
                 yy += H_FMB12 + YM_FMB12;
             }
             
@@ -902,7 +902,7 @@ struct BIP39WordlistState : WordListState {
         , bip39(i_bip39)
     {}
     virtual char const * refword(int ndx) {
-        return bip39->get_dict_string(ndx);
+        return BIP39Seq::get_dict_string(ndx).c_str();
     }
 };
 

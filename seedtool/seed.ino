@@ -2,10 +2,8 @@
 
 #include <stdarg.h>
 
-extern "C" {
 #include <bc-slip39.h>
-#include <wordlist-english.h>
-}
+#include <bc-crypto-base.h>
 
 #include "util.h"
 #include "seed.h"
@@ -16,19 +14,23 @@ namespace seed_internal {
 
 Seed * Seed::from_rolls(String const & rolls) {
     using namespace seed_internal;
-    
-    // Convert supplied entropy into master secret.
-    Sha256Class sha256;
-    sha256.init();
-    for(uint8_t ii=0; ii < rolls.length(); ii++) {
-        sha256.write(rolls[ii]);
-    }
-    return new Seed(sha256.result(), SIZE);
+
+    uint8_t digest[SHA256_DIGEST_LENGTH];
+    sha256_Raw((const uint8_t*)rolls.c_str(), rolls.length(), digest);
+    return new Seed(digest, SIZE);
+
+//    // Convert supplied entropy into master secret.
+//    Sha256Class sha256;
+//    sha256.init();
+//    for(uint8_t ii=0; ii < rolls.length(); ii++) {
+//        sha256.write(rolls[ii]);
+//    }
+//    return new Seed(sha256.result(), SIZE);
 }
 
 Seed::Seed(uint8_t const * i_data, size_t len) {
     using namespace seed_internal;
-    
+
     serial_assert(len == sizeof(data));
     memcpy(data, i_data, len);
 }
@@ -47,16 +49,47 @@ BIP39Seq * BIP39Seq::from_words(uint16_t * words) {
     return retval;
 }
 
+BIP39Seq::BIP39Seq() {
+    ctx = bip39_new_context();
+    bip39_set_byte_count(ctx, Seed::SIZE);
+}
+
 BIP39Seq::BIP39Seq(Seed const * seed) {
     using namespace seed_internal;
 
-    bip39.setPayloadBytes(Seed::SIZE);
-    bip39.setPayload(Seed::SIZE, const_cast<uint8_t *>(seed->data));
+    ctx = bip39_new_context();
+    bip39_set_byte_count(ctx, Seed::SIZE);
+    bip39_set_payload(ctx, Seed::SIZE, seed->data);
+}
+
+BIP39Seq::~BIP39Seq() {
+    bip39_dispose_context(ctx);
+}
+
+void BIP39Seq::set_word(size_t ndx, uint16_t word) {
+    bip39_set_word(ctx, ndx, word);
+}
+
+String BIP39Seq::get_dict_string(size_t ndx) {
+    char mnemonic[20];
+    bip39_mnemonic_from_word(ndx, mnemonic);
+    return String(mnemonic);
+}
+
+uint16_t BIP39Seq::get_word(size_t ndx) const {
+    return bip39_get_word(ctx, ndx);
+}
+
+String BIP39Seq::get_string(size_t ndx) {
+    uint16_t word = bip39_get_word(ctx, ndx);
+    char mnemonic[20];
+    bip39_mnemonic_from_word(word, mnemonic);
+    return String(mnemonic);
 }
 
 Seed * BIP39Seq::restore_seed() const {
-    return bip39.verifyChecksum()
-        ? new Seed(bip39.getPayload(), Seed::SIZE)
+    return bip39_verify_checksum(ctx)
+        ? new Seed(bip39_get_bytes(ctx), Seed::SIZE)
         : NULL;
 }
 
