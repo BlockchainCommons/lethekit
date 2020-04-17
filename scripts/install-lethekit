@@ -59,11 +59,3 @@ for lib in "${libs[@]}"
 do
     ln -fs ${lkroot}/deps/${lib} ${aroot}/libraries/
 done
-
-# FIXME - remove this when we fix how this is done ...
-if [ ! -L "${lkroot}/deps/bc-slip39/src/bc-crypto-base" ]; then
-    ln -fs ../../bc-crypto-base/src ${lkroot}/deps/bc-slip39/src/bc-crypto-base
-fi
-if [ ! -L "${lkroot}/deps/bc-slip39/src/bc-shamir" ]; then
-    ln -fs ../../bc-shamir/src ${lkroot}/deps/bc-slip39/src/bc-shamir
-fi
