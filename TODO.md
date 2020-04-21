@@ -22,3 +22,17 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 #### Punchlist
 
 Mark ksedgwic/seedtool (my old repo) as deprecated, point to lethekit.
+
+#### Quality Checklist
+
+* Correct version.
+
+* Display alignment (selftest is most critical).
+
+* Passes self-test.
+
+* Both LEDs work.
+
+* All keypad keys functional.
+
+* No rattles.
