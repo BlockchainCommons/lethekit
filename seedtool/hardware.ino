@@ -66,17 +66,17 @@ extern "C" {
 
 // Display
 #if defined(ESP32)
-GxEPD2_BW<GxEPD2_154, GxEPD2_154::HEIGHT>
-    g_display(GxEPD2_154(/*CS=*/   21,
-                         /*DC=*/   17,
-                         /*RST=*/  16,
-                         /*BUSY=*/ 4));
+GxEPD2_BW<EPD_DRIVER, EPD_DRIVER::HEIGHT>
+g_display(EPD_DRIVER(/*CS=*/   21,
+                     /*DC=*/   17,
+                     /*RST=*/  16,
+                     /*BUSY=*/ 4));
 #elif defined(SAMD51)
-GxEPD2_BW<GxEPD2_154, GxEPD2_154::HEIGHT>
-    g_display(GxEPD2_154(/*CS=*/   PIN_A4,
-                         /*DC=*/   PIN_A3,
-                         /*RST=*/  PIN_A2,
-                         /*BUSY=*/ PIN_A1));
+GxEPD2_BW<EPD_DRIVER, EPD_DRIVER::HEIGHT>
+g_display(EPD_DRIVER(/*CS=*/   PIN_A4,
+                     /*DC=*/   PIN_A3,
+                     /*RST=*/  PIN_A2,
+                     /*BUSY=*/ PIN_A1));
 #endif
 
 // Keypad
