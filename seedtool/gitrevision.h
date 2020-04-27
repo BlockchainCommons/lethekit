@@ -13,10 +13,10 @@
 #ifndef GITREVISION_H
 #define GITREVISION_H
 
-#define GIT_BRANCH "waveshare-v2.1"
-#define GIT_SHORT_HASH "b88bff5"
+#define GIT_BRANCH "gxepd2-sw-spi"
+#define GIT_SHORT_HASH "81a3aff"
 #define GIT_LATEST_TAG "v0.4.5"
-#define GIT_REVS_SINCE 7
-#define GIT_DESCRIBE "v0.4.5-7-gb88bff5"
+#define GIT_REVS_SINCE 8
+#define GIT_DESCRIBE "v0.4.5-8-g81a3aff"
 
 #endif // GITREVISION_H

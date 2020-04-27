@@ -50,13 +50,13 @@ int const H_FMB12 = 21;	// height
 int const YM_FMB12 = 4;	// y-margin
 
 void full_window_clear() {
-    g_display.firstPage();
+    g_display->firstPage();
     do
     {
-        g_display.setFullWindow();
-        g_display.fillScreen(GxEPD_WHITE);
+        g_display->setFullWindow();
+        g_display->fillScreen(GxEPD_WHITE);
     }
-    while (g_display.nextPage());
+    while (g_display->nextPage());
 }
 
 void display_printf(char *format, ...) {
@@ -66,7 +66,7 @@ void display_printf(char *format, ...) {
     vsnprintf(buff, sizeof(buff), format, args);
     va_end(args);
     buff[sizeof(buff)/sizeof(buff[0])-1]='\0';
-    g_display.print(buff);
+    g_display->print(buff);
 }
 
 void interstitial_error(String const lines[], size_t nlines) {
@@ -75,30 +75,30 @@ void interstitial_error(String const lines[], size_t nlines) {
     int xoff = 16;
     int yoff = 6;
     
-    g_display.firstPage();
+    g_display->firstPage();
     do
     {
-        g_display.setPartialWindow(0, 0, 200, 200);
-        // g_display.fillScreen(GxEPD_WHITE);
-        g_display.setTextColor(GxEPD_BLACK);
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
 
         int xx = xoff;
         int yy = yoff;
 
         for (size_t ii = 0; ii < nlines; ++ii) {
             yy += H_FSB9 + YM_FSB9;
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
             serial_printf("%s", lines[ii].c_str());
             display_printf("%s", lines[ii].c_str());
         }
 
         yy = 190; // Absolute, stuck to bottom
-        g_display.setFont(&FreeSansBold9pt7b);
-        g_display.setCursor(xx, yy);
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
         display_printf("%", GIT_DESCRIBE);
     }
-    while (g_display.nextPage());
+    while (g_display->nextPage());
 
     while (true) {
         char key;
@@ -154,36 +154,36 @@ void self_test() {
         }
 
         // Display the current list.
-        g_display.firstPage();
+        g_display->firstPage();
         do
         {
-            g_display.setPartialWindow(0, 0, 200, 200);
-            // g_display.fillScreen(GxEPD_WHITE);
-            g_display.setTextColor(GxEPD_BLACK);
+            g_display->setPartialWindow(0, 0, 200, 200);
+            // g_display->fillScreen(GxEPD_WHITE);
+            g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
             int yy = yoff;
         
             yy += 1*(H_FSB9 + YM_FSB9);
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
-            g_display.println("Running self tests:");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
+            g_display->println("Running self tests:");
 
             yy += 10;
 
             for (size_t ii = 0; ii < NLINES; ++ii) {
                 yy += 1*(H_FMB9 + YM_FMB9);
-                g_display.setFont(&FreeMonoBold9pt7b);
-                g_display.setCursor(xx, yy);
+                g_display->setFont(&FreeMonoBold9pt7b);
+                g_display->setCursor(xx, yy);
                 display_printf("%s", lines[ii].c_str());
             }
 
             yy = 190; // Absolute, stuck to bottom
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
             display_printf("%", GIT_DESCRIBE);
         }
-        while (g_display.nextPage());
+        while (g_display->nextPage());
 
         // If the test failed, abort (leaving status on screen).
         if (!last_test_passed) {
@@ -204,54 +204,54 @@ void intro_screen() {
     int xoff = 16;
     int yoff = 6;
     
-    g_display.firstPage();
+    g_display->firstPage();
     do
     {
-        g_display.setPartialWindow(0, 0, 200, 200);
-        // g_display.fillScreen(GxEPD_WHITE);
-        g_display.setTextColor(GxEPD_BLACK);
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
 
         int xx = xoff + 14;
         int yy = yoff + (H_FSB12 + YM_FSB12);
-        g_display.setFont(&FreeSansBold12pt7b);
-        g_display.setCursor(xx, yy);
-        g_display.println("LetheKit v0");
+        g_display->setFont(&FreeSansBold12pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("LetheKit v0");
 
         yy += 6;
         
         xx = xoff + 24;
         yy += H_FSB12 + YM_FSB12;
-        g_display.setCursor(xx, yy);
+        g_display->setCursor(xx, yy);
         display_printf("Seedtool");
 
         xx = xoff + 50;
         yy += H_FSB9;
-        g_display.setFont(&FreeSansBold9pt7b);
-        g_display.setCursor(xx, yy);
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
         display_printf("%s", GIT_LATEST_TAG);
 
         xx = xoff + 28;
         yy += 1*(H_FSB9 + 2*YM_FSB9);
-        g_display.setFont(&FreeSansBold9pt7b);
-        g_display.setCursor(xx, yy);
-        g_display.println("Blockchain");
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("Blockchain");
 
         xx = xoff + 30;
         yy += H_FSB9 + 4;
-        g_display.setCursor(xx, yy);
-        g_display.println("Commons");
+        g_display->setCursor(xx, yy);
+        g_display->println("Commons");
 
         xx = xoff + 18;
         yy += H_FSB9 + YM_FSB9 + 10;
-        g_display.setCursor(xx, yy);
-        g_display.println("Press any key");
+        g_display->setCursor(xx, yy);
+        g_display->println("Press any key");
         
         xx = xoff + 24;
         yy += H_FSB9;
-        g_display.setCursor(xx, yy);
-        g_display.println("to continue");
+        g_display->setCursor(xx, yy);
+        g_display->println("to continue");
     }
-    while (g_display.nextPage());
+    while (g_display->nextPage());
 
     while (true) {
         char key;
@@ -268,36 +268,36 @@ void seedless_menu() {
     int xoff = 16;
     int yoff = 10;
     
-    g_display.firstPage();
+    g_display->firstPage();
     do
     {
-        g_display.setPartialWindow(0, 0, 200, 200);
-        // g_display.fillScreen(GxEPD_WHITE);
-        g_display.setTextColor(GxEPD_BLACK);
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
 
         int xx = xoff;
         int yy = yoff + (H_FSB12 + YM_FSB12);
-        g_display.setFont(&FreeSansBold12pt7b);
-        g_display.setCursor(xx, yy);
-        g_display.println("No Seed");
+        g_display->setFont(&FreeSansBold12pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("No Seed");
 
         yy = yoff + 3*(H_FSB9 + YM_FSB9);
-        g_display.setFont(&FreeSansBold9pt7b);
-        g_display.setCursor(xx, yy);
-        g_display.println("A - Generate Seed");
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("A - Generate Seed");
         yy += H_FSB9 + 2*YM_FSB9;
-        g_display.setCursor(xx, yy);
-        g_display.println("B - Restore BIP39");
+        g_display->setCursor(xx, yy);
+        g_display->println("B - Restore BIP39");
         yy += H_FSB9 + 2*YM_FSB9;
-        g_display.setCursor(xx, yy);
-        g_display.println("C - Restore SLIP39");
+        g_display->setCursor(xx, yy);
+        g_display->println("C - Restore SLIP39");
 
         yy = 190; // Absolute, stuck to bottom
-        g_display.setFont(&FreeSansBold9pt7b);
-        g_display.setCursor(xx, yy);
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
         display_printf("%", GIT_DESCRIBE);
     }
-    while (g_display.nextPage());
+    while (g_display->nextPage());
 
     while (true) {
         char key;
@@ -328,47 +328,47 @@ void generate_seed() {
         int xoff = 14;
         int yoff = 8;
     
-        g_display.firstPage();
+        g_display->firstPage();
         do
         {
-            g_display.setPartialWindow(0, 0, 200, 200);
-            // g_display.fillScreen(GxEPD_WHITE);
-            g_display.setTextColor(GxEPD_BLACK);
+            g_display->setPartialWindow(0, 0, 200, 200);
+            // g_display->fillScreen(GxEPD_WHITE);
+            g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
             int yy = yoff + (H_FSB12 + YM_FSB12);
-            g_display.setFont(&FreeSansBold12pt7b);
-            g_display.setCursor(xx, yy);
-            g_display.println("Generate Seed");
+            g_display->setFont(&FreeSansBold12pt7b);
+            g_display->setCursor(xx, yy);
+            g_display->println("Generate Seed");
 
             yy += 10;
         
             yy += H_FSB9 + YM_FSB9;
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
-            g_display.println("Enter Dice Rolls");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
+            g_display->println("Enter Dice Rolls");
 
             yy += 10;
         
             yy += H_FMB12 + YM_FMB12;
-            g_display.setFont(&FreeMonoBold12pt7b);
-            g_display.setCursor(xx, yy);
+            g_display->setFont(&FreeMonoBold12pt7b);
+            g_display->setCursor(xx, yy);
             display_printf("Rolls: %d\n", g_rolls.length());
             yy += H_FMB12 + YM_FMB12;
-            g_display.setCursor(xx, yy);
+            g_display->setCursor(xx, yy);
             display_printf(" Bits: %0.1f\n", g_rolls.length() * 2.5850);
 
             // bottom-relative position
             xx = xoff + 10;
             yy = Y_MAX - 2*(H_FSB9 + YM_FSB9);
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
-            g_display.println("Press * to clear");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
+            g_display->println("Press * to clear");
             yy += H_FSB9 + YM_FSB9;
-            g_display.setCursor(xx, yy);
-            g_display.println("Press # to submit");
+            g_display->setCursor(xx, yy);
+            g_display->println("Press # to submit");
         }
-        while (g_display.nextPage());
+        while (g_display->nextPage());
     
         char key;
         do {
@@ -403,36 +403,36 @@ void seedy_menu() {
     int xoff = 16;
     int yoff = 10;
     
-    g_display.firstPage();
+    g_display->firstPage();
     do
     {
-        g_display.setPartialWindow(0, 0, 200, 200);
-        // g_display.fillScreen(GxEPD_WHITE);
-        g_display.setTextColor(GxEPD_BLACK);
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
 
         int xx = xoff;
         int yy = yoff + (H_FSB12 + YM_FSB12);
-        g_display.setFont(&FreeSansBold12pt7b);
-        g_display.setCursor(xx, yy);
-        g_display.println("Seed Present");
+        g_display->setFont(&FreeSansBold12pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("Seed Present");
 
         yy = yoff + 3*(H_FSB9 + YM_FSB9);
-        g_display.setFont(&FreeSansBold9pt7b);
-        g_display.setCursor(xx, yy);
-        g_display.println("A - Display BIP39");
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("A - Display BIP39");
         yy += H_FSB9 + 2*YM_FSB9;
-        g_display.setCursor(xx, yy);
-        g_display.println("B - Generate SLIP39");
+        g_display->setCursor(xx, yy);
+        g_display->println("B - Generate SLIP39");
         yy += H_FSB9 + 2*YM_FSB9;
-        g_display.setCursor(xx, yy);
-        g_display.println("C - Wipe Seed");
+        g_display->setCursor(xx, yy);
+        g_display->println("C - Wipe Seed");
 
         yy = 190; // Absolute, stuck to bottom
-        g_display.setFont(&FreeSansBold9pt7b);
-        g_display.setCursor(xx, yy);
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
         display_printf("%", GIT_DESCRIBE);
     }
-    while (g_display.nextPage());
+    while (g_display->nextPage());
 
     while (true) {
         char key;
@@ -466,26 +466,26 @@ void display_bip39() {
         int const yoff = 0;
         int const nrows = 5;
     
-        g_display.firstPage();
+        g_display->firstPage();
         do
         {
-            g_display.setPartialWindow(0, 0, 200, 200);
-            // g_display.fillScreen(GxEPD_WHITE);
-            g_display.setTextColor(GxEPD_BLACK);
+            g_display->setPartialWindow(0, 0, 200, 200);
+            // g_display->fillScreen(GxEPD_WHITE);
+            g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
             int yy = yoff + (H_FSB9 + YM_FSB9);
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
-            g_display.println("BIP39 Mnemonic");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
+            g_display->println("BIP39 Mnemonic");
             yy += H_FSB9 + YM_FSB9;
             
             yy += 6;
         
-            g_display.setFont(&FreeMonoBold12pt7b);
+            g_display->setFont(&FreeMonoBold12pt7b);
             for (int rr = 0; rr < nrows; ++rr) {
                 int wndx = scroll + rr;
-                g_display.setCursor(xx, yy);
+                g_display->setCursor(xx, yy);
                 display_printf("%2d %s", wndx+1, g_bip39->get_string(wndx).c_str());
                 yy += H_FMB12 + YM_FMB12;
             }
@@ -493,11 +493,11 @@ void display_bip39() {
             // bottom-relative position
             xx = xoff + 2;
             yy = Y_MAX - (H_FSB9) + 2;
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
-            g_display.println("1,7-Up,Down #-Done");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
+            g_display->println("1,7-Up,Down #-Done");
         }
-        while (g_display.nextPage());
+        while (g_display->nextPage());
         
         char key;
         do {
@@ -548,75 +548,75 @@ void config_slip39() {
         int xoff = 20;
         int yoff = 8;
     
-        g_display.firstPage();
+        g_display->firstPage();
         do
         {
-            g_display.setPartialWindow(0, 0, 200, 200);
-            // g_display.fillScreen(GxEPD_WHITE);
-            g_display.setTextColor(GxEPD_BLACK);
+            g_display->setPartialWindow(0, 0, 200, 200);
+            // g_display->fillScreen(GxEPD_WHITE);
+            g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
             int yy = yoff + (H_FSB9 + YM_FSB9);
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
-            g_display.println("Configure SLIP39");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
+            g_display->println("Configure SLIP39");
 
             yy += 10;
 
             yy += H_FMB12 + 2*YM_FMB12;
-            g_display.setFont(&FreeMonoBold12pt7b);
-            g_display.setCursor(xx, yy);
+            g_display->setFont(&FreeMonoBold12pt7b);
+            g_display->setCursor(xx, yy);
             display_printf(" Thresh: %s", threshstr.c_str());
 
             if (!thresh_done) {
                 int xxx = xx + (9 * W_FMB12);
                 int yyy = yy - H_FMB12;
-                g_display.fillRect(xxx,
+                g_display->fillRect(xxx,
                                    yyy,
                                    W_FMB12 * threshstr.length(),
                                    H_FMB12 + YM_FMB12,
                                    GxEPD_BLACK);
-                g_display.setTextColor(GxEPD_WHITE);
-                g_display.setCursor(xxx, yy);
+                g_display->setTextColor(GxEPD_WHITE);
+                g_display->setCursor(xxx, yy);
                 display_printf("%s", threshstr.c_str());
-                g_display.setTextColor(GxEPD_BLACK);
+                g_display->setTextColor(GxEPD_BLACK);
             }
             
             yy += H_FMB12 + 2*YM_FMB12;
-            g_display.setCursor(xx, yy);
+            g_display->setCursor(xx, yy);
             display_printf("NShares: %s", nsharestr.c_str());
 
             if (thresh_done) {
                 int xxx = xx + (9 * W_FMB12);
                 int yyy = yy - H_FMB12;
-                g_display.fillRect(xxx,
+                g_display->fillRect(xxx,
                                    yyy,
                                    W_FMB12 * nsharestr.length(),
                                    H_FMB12 + YM_FMB12,
                                    GxEPD_BLACK);
-                g_display.setTextColor(GxEPD_WHITE);
-                g_display.setCursor(xxx, yy);
+                g_display->setTextColor(GxEPD_WHITE);
+                g_display->setCursor(xxx, yy);
                 display_printf("%s", nsharestr.c_str());
-                g_display.setTextColor(GxEPD_BLACK);
+                g_display->setTextColor(GxEPD_BLACK);
             }
 
             // bottom-relative position
             xx = xoff + 2;
             yy = Y_MAX - (H_FSB9) + 2;
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
 
             if (!thresh_done) {
-                g_display.println("*-Clear    #-Next");
+                g_display->println("*-Clear    #-Next");
             } else {
                 // If nsharestr field is empty its a prev
                 if (nsharestr == " ")
-                    g_display.println("*-Prev     #-Done");
+                    g_display->println("*-Prev     #-Done");
                 else
-                    g_display.println("*-Clear    #-Done");
+                    g_display->println("*-Clear    #-Done");
             }
         }
-        while (g_display.nextPage());
+        while (g_display->nextPage());
             
         char key;
         do {
@@ -686,29 +686,29 @@ void display_slip39() {
         int yoff = 0;
         int nrows = 5;
     
-        g_display.firstPage();
+        g_display->firstPage();
         do
         {
-            g_display.setPartialWindow(0, 0, 200, 200);
-            // g_display.fillScreen(GxEPD_WHITE);
-            g_display.setTextColor(GxEPD_BLACK);
+            g_display->setPartialWindow(0, 0, 200, 200);
+            // g_display->fillScreen(GxEPD_WHITE);
+            g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
             int yy = yoff + (H_FSB9 + YM_FSB9);
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
             display_printf("SLIP39 %d/%d",
                            sharendx+1, g_slip39_generate->numshares());
             yy += H_FSB9 + YM_FSB9;
             
             yy += 8;
         
-            g_display.setFont(&FreeMonoBold12pt7b);
+            g_display->setFont(&FreeMonoBold12pt7b);
             for (int rr = 0; rr < nrows; ++rr) {
                 int wndx = scroll + rr;
                 char const * word =
                     g_slip39_generate->get_share_word(sharendx, wndx);
-                g_display.setCursor(xx, yy);
+                g_display->setCursor(xx, yy);
                 display_printf("%2d %s", wndx+1, word);
                 yy += H_FMB12 + YM_FMB12;
             }
@@ -716,14 +716,14 @@ void display_slip39() {
             // bottom-relative position
             xx = xoff + 2;
             yy = Y_MAX - (H_FSB9) + 2;
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
             if (sharendx < (g_slip39_generate->numshares()-1))
-                g_display.println("1,7-Up,Down #-Next");
+                g_display->println("1,7-Up,Down #-Next");
             else
-                g_display.println("1,7-Up,Down #-Done");
+                g_display->println("1,7-Up,Down #-Done");
         }
-        while (g_display.nextPage());
+        while (g_display->nextPage());
         
         char key;
         do {
@@ -916,21 +916,21 @@ void restore_bip39() {
 
         state.compute_scroll();
 
-        g_display.firstPage();
+        g_display->firstPage();
         do
         {
-            g_display.setPartialWindow(0, 0, 200, 200);
-            // g_display.fillScreen(GxEPD_WHITE);
-            g_display.setTextColor(GxEPD_BLACK);
+            g_display->setPartialWindow(0, 0, 200, 200);
+            // g_display->fillScreen(GxEPD_WHITE);
+            g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
             int yy = yoff + (H_FSB9 + YM_FSB9);
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
             display_printf("BIP39 Mnemonic");
             yy += H_FSB9 + YM_FSB9;
 
-            g_display.setFont(&FreeMonoBold12pt7b);
+            g_display->setFont(&FreeMonoBold12pt7b);
             yy += 2;
 
             for (int rr = 0; rr < state.nrows; ++rr) {
@@ -940,39 +940,39 @@ void restore_bip39() {
 
                 if (wndx != state.selected) {
                     // Regular entry, not being edited
-                    g_display.setTextColor(GxEPD_BLACK);
-                    g_display.setCursor(xx, yy);
+                    g_display->setTextColor(GxEPD_BLACK);
+                    g_display->setCursor(xx, yy);
                     display_printf("%2d %s\n", wndx+1, word.c_str());
                 } else {
                     // Edited entry
                     if (state.unique_match()) {
                         // Unique, highlight entire word.
-                        g_display.fillRect(xx - 1,
+                        g_display->fillRect(xx - 1,
                                            yy - H_FMB12 + YM_FMB12,
                                            W_FMB12 * (word.length() + 3) + 3,
                                            H_FMB12 + YM_FMB12,
                                            GxEPD_BLACK);
         
-                        g_display.setTextColor(GxEPD_WHITE);
-                        g_display.setCursor(xx, yy);
+                        g_display->setTextColor(GxEPD_WHITE);
+                        g_display->setCursor(xx, yy);
 
                         display_printf("%2d %s\n", wndx+1, word.c_str());
 
                     } else {
                         // Not unique, highlight cursor.
-                        g_display.setTextColor(GxEPD_BLACK);
-                        g_display.setCursor(xx, yy);
+                        g_display->setTextColor(GxEPD_BLACK);
+                        g_display->setCursor(xx, yy);
             
                         display_printf("%2d %s\n", wndx+1, word.c_str());
 
-                        g_display.fillRect(xx + (state.pos+3)*W_FMB12,
+                        g_display->fillRect(xx + (state.pos+3)*W_FMB12,
                                            yy - H_FMB12 + YM_FMB12,
                                            W_FMB12,
                                            H_FMB12 + YM_FMB12,
                                            GxEPD_BLACK);
         
-                        g_display.setTextColor(GxEPD_WHITE);
-                        g_display.setCursor(xx + (state.pos+3)*W_FMB12, yy);
+                        g_display->setTextColor(GxEPD_WHITE);
+                        g_display->setCursor(xx + (state.pos+3)*W_FMB12, yy);
                         display_printf("%c", word.c_str()[state.pos]);
                     }
                 }
@@ -983,15 +983,15 @@ void restore_bip39() {
             // bottom-relative position
             xx = xoff;
             yy = Y_MAX - 2*(H_FSB9) + 2;
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setTextColor(GxEPD_BLACK);
-            g_display.setCursor(xx, yy);
-            g_display.println("4,6-L,R 2,8-chr-,chr+");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setTextColor(GxEPD_BLACK);
+            g_display->setCursor(xx, yy);
+            g_display->println("4,6-L,R 2,8-chr-,chr+");
             yy += H_FSB9 + 2;
-            g_display.setCursor(xx, yy);
-            g_display.println("1,7-Up,Down #-Done");
+            g_display->setCursor(xx, yy);
+            g_display->println("1,7-Up,Down #-Done");
         }
-        while (g_display.nextPage());
+        while (g_display->nextPage());
         
         char key;
         do {
@@ -1096,24 +1096,24 @@ void restore_slip39() {
             scroll = selected - 2;
         serial_printf("scroll = %d\n", scroll);
         
-        g_display.firstPage();
+        g_display->firstPage();
         do
         {
-            g_display.setPartialWindow(0, 0, 200, 200);
-            // g_display.fillScreen(GxEPD_WHITE);
-            g_display.setTextColor(GxEPD_BLACK);
+            g_display->setPartialWindow(0, 0, 200, 200);
+            // g_display->fillScreen(GxEPD_WHITE);
+            g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
             int yy = yoff + (H_FSB9 + YM_FSB9);
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
-            g_display.println("Enter SLIP39 Shares");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
+            g_display->println("Enter SLIP39 Shares");
             yy += H_FSB9 + YM_FSB9;
 
             xx = xoff + 20;
             yy += 16;
 
-            g_display.setFont(&FreeMonoBold12pt7b);
+            g_display->setFont(&FreeMonoBold12pt7b);
             for (int rr = 0; rr < disprows; ++rr) {
                 int sharendx = scroll + rr;
                 char buffer[32];
@@ -1125,18 +1125,18 @@ void restore_slip39() {
                     sprintf(buffer, "Restore");
                 }
                 
-                g_display.setCursor(xx, yy);
+                g_display->setCursor(xx, yy);
                 if (sharendx != selected) {
-                    g_display.println(buffer);
+                    g_display->println(buffer);
                 } else {
-                    g_display.fillRect(xx,
+                    g_display->fillRect(xx,
                                        yy - H_FMB12,
                                        W_FMB12 * strlen(buffer),
                                        H_FMB12 + YM_FMB12,
                                        GxEPD_BLACK);
-                    g_display.setTextColor(GxEPD_WHITE);
-                    g_display.println(buffer);
-                    g_display.setTextColor(GxEPD_BLACK);
+                    g_display->setTextColor(GxEPD_WHITE);
+                    g_display->println(buffer);
+                    g_display->setTextColor(GxEPD_BLACK);
                 }
 
                 yy += H_FMB12 + YM_FMB12;
@@ -1145,11 +1145,11 @@ void restore_slip39() {
             // bottom-relative position
             xx = xoff + 2;
             yy = Y_MAX - (H_FSB9) + 2;
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
-            g_display.println("1,7-Up,Down #-Do");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
+            g_display->println("1,7-Up,Down #-Do");
         }
-        while (g_display.nextPage());
+        while (g_display->nextPage());
         
         char key;
         do {
@@ -1237,21 +1237,21 @@ void enter_share() {
 
         state.compute_scroll();
 
-        g_display.firstPage();
+        g_display->firstPage();
         do
         {
-            g_display.setPartialWindow(0, 0, 200, 200);
-            // g_display.fillScreen(GxEPD_WHITE);
-            g_display.setTextColor(GxEPD_BLACK);
+            g_display->setPartialWindow(0, 0, 200, 200);
+            // g_display->fillScreen(GxEPD_WHITE);
+            g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
             int yy = yoff + (H_FSB9 + YM_FSB9);
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setCursor(xx, yy);
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setCursor(xx, yy);
             display_printf("SLIP39 Share %d", g_restore_slip39_selected+1);
             yy += H_FSB9 + YM_FSB9;
 
-            g_display.setFont(&FreeMonoBold12pt7b);
+            g_display->setFont(&FreeMonoBold12pt7b);
             yy += 2;
 
             for (int rr = 0; rr < state.nrows; ++rr) {
@@ -1261,39 +1261,39 @@ void enter_share() {
 
                 if (wndx != state.selected) {
                     // Regular entry, not being edited
-                    g_display.setTextColor(GxEPD_BLACK);
-                    g_display.setCursor(xx, yy);
+                    g_display->setTextColor(GxEPD_BLACK);
+                    g_display->setCursor(xx, yy);
                     display_printf("%2d %s\n", wndx+1, word.c_str());
                 } else {
                     // Edited entry
                     if (state.unique_match()) {
                         // Unique, highlight entire word.
-                        g_display.fillRect(xx - 1,
+                        g_display->fillRect(xx - 1,
                                            yy - H_FMB12 + YM_FMB12,
                                            W_FMB12 * (word.length() + 3) + 3,
                                            H_FMB12 + YM_FMB12,
                                            GxEPD_BLACK);
         
-                        g_display.setTextColor(GxEPD_WHITE);
-                        g_display.setCursor(xx, yy);
+                        g_display->setTextColor(GxEPD_WHITE);
+                        g_display->setCursor(xx, yy);
 
                         display_printf("%2d %s\n", wndx+1, word.c_str());
 
                     } else {
                         // Not unique, highlight cursor.
-                        g_display.setTextColor(GxEPD_BLACK);
-                        g_display.setCursor(xx, yy);
+                        g_display->setTextColor(GxEPD_BLACK);
+                        g_display->setCursor(xx, yy);
             
                         display_printf("%2d %s\n", wndx+1, word.c_str());
 
-                        g_display.fillRect(xx + (state.pos+3)*W_FMB12,
+                        g_display->fillRect(xx + (state.pos+3)*W_FMB12,
                                            yy - H_FMB12 + YM_FMB12,
                                            W_FMB12,
                                            H_FMB12 + YM_FMB12,
                                            GxEPD_BLACK);
         
-                        g_display.setTextColor(GxEPD_WHITE);
-                        g_display.setCursor(xx + (state.pos+3)*W_FMB12, yy);
+                        g_display->setTextColor(GxEPD_WHITE);
+                        g_display->setCursor(xx + (state.pos+3)*W_FMB12, yy);
                         display_printf("%c", word.c_str()[state.pos]);
                     }
                 }
@@ -1304,15 +1304,15 @@ void enter_share() {
             // bottom-relative position
             xx = xoff;
             yy = Y_MAX - 2*(H_FSB9) + 2;
-            g_display.setFont(&FreeSansBold9pt7b);
-            g_display.setTextColor(GxEPD_BLACK);
-            g_display.setCursor(xx, yy);
-            g_display.println("4,6-L,R 2,8-chr-,chr+");
+            g_display->setFont(&FreeSansBold9pt7b);
+            g_display->setTextColor(GxEPD_BLACK);
+            g_display->setCursor(xx, yy);
+            g_display->println("4,6-L,R 2,8-chr-,chr+");
             yy += H_FSB9 + 2;
-            g_display.setCursor(xx, yy);
-            g_display.println("1,7-Up,Down #-Done");
+            g_display->setCursor(xx, yy);
+            g_display->println("1,7-Up,Down #-Done");
         }
-        while (g_display.nextPage());
+        while (g_display->nextPage());
         
         char key;
         do {

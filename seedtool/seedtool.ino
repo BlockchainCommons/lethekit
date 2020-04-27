@@ -17,7 +17,7 @@ void setup() {
     // monitor launched before the tests run.
     //
     // delay(5000);
-    
+
     ui_reset_into_state(SELF_TEST);
 
     Serial.println("seedtool starting");
