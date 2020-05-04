@@ -44,8 +44,12 @@ fi
 
 lkroot=${args[0]}
 aroot=${args[1]}
-
 libpath="${aroot}/libraries"
+
+# First, check if GxEPD2 is already installed (as a directory), warn
+# and stop in this case.
+gxepd2_path="${aroot}/libraries/GxEPD2"
+[ -d ${gxepd2_path} ] && ! [ -L ${gxepd2_path} ] && echo "GxEPD2 already installed in ${libpath}. Please remove it; we need to replace with SW SPI enabled version." && exit 1
 
 declare -a libs=(
     bc-crypto-base
@@ -53,9 +57,10 @@ declare -a libs=(
     bc-slip39
     bc-bip39
     TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
+    GxEPD2
 )
 
 for lib in "${libs[@]}"
 do
-    ln -fs ${lkroot}/deps/${lib} ${aroot}/libraries/
+    ln -fs ${lkroot}/deps/${lib} ${libpath}
 done
