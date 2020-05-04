@@ -1,4 +1,4 @@
-* Update to bc_bip32 (waiting for Wolf).
+* Maybe update bc-crypto-base version.
 
 * Remove the ESP32 code from lethe.ino?
 
