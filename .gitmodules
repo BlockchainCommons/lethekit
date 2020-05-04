@@ -13,3 +13,6 @@
 [submodule "deps/bc-bip39"]
 	path = deps/bc-bip39
 	url = git@github.com:BlockchainCommons/bc-bip39.git
+[submodule "deps/GxEPD2"]
+	path = deps/GxEPD2
+	url = git@github.com:BlockchainCommons/GxEPD2.git
