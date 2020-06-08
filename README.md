@@ -22,6 +22,9 @@ The following files contain everything you need to set up your *LetheKit* hardwa
 
 *LetheKit* is currently under active development and in the late alpha testing phase. It should not be used for production tasks until it has had further testing and auditing.
 
+**There is a known problem with BIP39/SLIP39 interoperability.  The problem
+is being tracked as [Issue #38](https://github.com/BlockchainCommons/bc-lethekit/issues/38).**
+
 ## Origin, Authors, Copyright & Licenses
 
 Unless otherwise noted (either in this [/README.md](./README.md) or in the file's header comments) the contents of this repository are Copyright © 2020 by Blockchain Commons, LLC, and are [licensed](./LICENSE) under the [spdx:BSD-2-Clause Plus Patent License](https://spdx.org/licenses/BSD-2-Clause-Patent.html).
