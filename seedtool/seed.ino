@@ -35,8 +35,8 @@ Seed::Seed(uint8_t const * i_data, size_t len) {
 
 void Seed::log() const {
     serial_printf("seed: ");
-    for (int ii = 0; ii < sizeof(data); ++ii)
-        serial_printf("%02x", (int) data[ii]);
+    for (size_t ii = 0; ii < sizeof(data); ++ii)
+        serial_printf("%02x", data[ii]);
     serial_printf("\n");
 }
 
@@ -65,10 +65,10 @@ bool SLIP39ShareSeq::verify_share_checksum(uint16_t const * share) {
 }
 
 SLIP39ShareSeq * SLIP39ShareSeq::from_seed(Seed const * seed,
-                                           size_t thresh,
-                                           size_t nshares,
+                                           uint8_t thresh,
+                                           uint8_t nshares,
                                            void(*randgen)(uint8_t *, size_t)) {
-    char * password = "";
+    const char * password = "";
     uint8_t group_threshold = 1;
     uint8_t group_count = 1;
     group_descriptor group = { thresh, nshares, NULL };
@@ -91,7 +91,7 @@ SLIP39ShareSeq * SLIP39ShareSeq::from_seed(Seed const * seed,
                              shares_buffer,
                              shares_buffer_size,
                              randgen);
-    serial_assert(rv == nshares);
+    serial_assert(rv == (int)nshares);
     serial_assert(words_in_each_share == WORDS_PER_SHARE);
 
     SLIP39ShareSeq * slip39 = new SLIP39ShareSeq();
@@ -101,7 +101,7 @@ SLIP39ShareSeq * SLIP39ShareSeq::from_seed(Seed const * seed,
 }
 
 char const * SLIP39ShareSeq::error_msg(int errval) {
-    char buffer[1024];
+    static char buffer[1024];
     switch (errval) {
         // max message size 18 chars                |----------------|
     case ERROR_INVALID_SHARD_SET:			return "Invalid shard set";
@@ -169,7 +169,7 @@ char const * SLIP39ShareSeq::get_share_word(size_t sndx, size_t wndx) const {
 
 Seed * SLIP39ShareSeq::restore_seed() const {
     uint8_t seed_data[Seed::SIZE];
-    char * password = "";
+    const char * password = "";
     last_rv = slip39_combine(const_cast<const uint16_t **>(shares),
                              WORDS_PER_SHARE,
                              nshares,

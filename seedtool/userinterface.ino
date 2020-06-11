@@ -59,7 +59,7 @@ void full_window_clear() {
     while (g_display.nextPage());
 }
 
-void display_printf(char *format, ...) {
+void display_printf(const char *format, ...) {
     char buff[1024];
     va_list args;
     va_start(args, format);
@@ -129,7 +129,7 @@ void self_test() {
     size_t numtests = selftest_numtests();
     // Loop, once for each test.  Need an extra trip at the end in
     // case we failed the last test.
-    for (int ndx = 0; ndx < numtests+1; ++ndx) {
+    for (size_t ndx = 0; ndx < numtests+1; ++ndx) {
 
         // If any key is pressed, skip remaining self test.
         if (g_keypad.getKey() != NO_KEY)
@@ -718,7 +718,7 @@ void display_slip39() {
             yy = Y_MAX - (H_FSB9) + 2;
             g_display.setFont(&FreeSansBold9pt7b);
             g_display.setCursor(xx, yy);
-            if (sharendx < (g_slip39_generate->numshares()-1))
+            if (sharendx < (int)(g_slip39_generate->numshares()-1))
                 g_display.println("1,7-Up,Down #-Next");
             else
                 g_display.println("1,7-Up,Down #-Done");
@@ -746,7 +746,7 @@ void display_slip39() {
             }
             break;
         case '#':	// next / done
-            if (sharendx < (g_slip39_generate->numshares()-1)) {
+            if (sharendx < (int)(g_slip39_generate->numshares()-1)) {
                 ++sharendx;
                 scroll = 0;
             } else {
@@ -829,7 +829,7 @@ struct WordListState {
     }
 
     void cursor_right() {
-        if (pos < strlen(refword(wordndx[selected])) - 1)
+        if (pos < (int)strlen(refword(wordndx[selected])) - 1)
             ++pos;
     }
     
@@ -1035,7 +1035,7 @@ void restore_bip39() {
         case '#':	// done
             {
                 uint16_t bip39_words[BIP39Seq::WORD_COUNT];
-                for (int ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii)
+                for (size_t ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii)
                     bip39_words[ii] = state.wordndx[ii];
                 BIP39Seq * bip39 = BIP39Seq::from_words(bip39_words);
                 Seed * seed = bip39->restore_seed();
@@ -1090,7 +1090,7 @@ void restore_slip39() {
         // Adjust the scroll to center the selection.
         if (selected < 2)
             scroll = 0;
-        else if (selected > g_slip39_restore->numshares())
+        else if (selected > (int)g_slip39_restore->numshares())
             scroll = g_slip39_restore->numshares() + 2 - disprows;
         else
             scroll = selected - 2;
@@ -1117,9 +1117,9 @@ void restore_slip39() {
             for (int rr = 0; rr < disprows; ++rr) {
                 int sharendx = scroll + rr;
                 char buffer[32];
-                if (sharendx < g_slip39_restore->numshares()) {
+                if (sharendx < (int)g_slip39_restore->numshares()) {
                     sprintf(buffer, "Share %d", sharendx+1);
-                } else if (sharendx == g_slip39_restore->numshares()) {
+                } else if (sharendx == (int)g_slip39_restore->numshares()) {
                     sprintf(buffer, "Add Share");
                 } else {
                     sprintf(buffer, "Restore");
@@ -1162,19 +1162,19 @@ void restore_slip39() {
                 selected -= 1;
             break;
         case '7':
-            if (selected < g_slip39_restore->numshares() + 1 + showrestore - 1)
+            if (selected < (int)g_slip39_restore->numshares() + 1 + showrestore - 1)
                 selected += 1;
             break;
         case '*':
             g_uistate = SEEDLESS_MENU;
             return;
         case '#':
-            if (selected < g_slip39_restore->numshares()) {
+            if (selected < (int)g_slip39_restore->numshares()) {
                 // Edit existing share
                 g_restore_slip39_selected = selected;
                 g_uistate = ENTER_SHARE;
                 return;
-            } else if (selected == g_slip39_restore->numshares()) {
+            } else if (selected == (int)g_slip39_restore->numshares()) {
                 // Add new (zeroed) share
                 uint16_t share[SLIP39ShareSeq::WORDS_PER_SHARE] =
                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1190,7 +1190,7 @@ void restore_slip39() {
                 // happening ..
                 full_window_clear();
                 
-                for (int ii = 0; ii < g_slip39_restore->numshares(); ++ii) {
+                for (size_t ii = 0; ii < g_slip39_restore->numshares(); ++ii) {
                     char * strings =
                         g_slip39_restore->get_share_strings(ii);
                     serial_printf("%d %s\n", ii+1, strings);

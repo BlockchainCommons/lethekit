@@ -3,7 +3,7 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
-void serial_printf(char *format, ...);
+void serial_printf(const char *format, ...);
 
 #define serial_assert(_exp) \
     do {                                                                \
