@@ -71,8 +71,8 @@ public:
     static bool verify_share_checksum(uint16_t const * share);
     
     static SLIP39ShareSeq * from_seed(Seed const * seed,
-                                      size_t thresh,
-                                      size_t nshares,
+                                      uint8_t thresh,
+                                      uint8_t nshares,
                                       void(*randgen)(uint8_t *, size_t));
 
     //  Read-only, don't free returned value.

@@ -2,7 +2,7 @@
 
 #include "util.h"
 
-void serial_printf(char *format, ...) {
+void serial_printf(const char *format, ...) {
   char buff[1024];
   va_list args;
   va_start(args, format);
