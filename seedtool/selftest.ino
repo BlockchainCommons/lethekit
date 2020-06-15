@@ -98,7 +98,7 @@ const char* ref_slip39_shares_alt[ref_slip39_nshares] =
  "race snake task drink firm",
 };
 
-char* ref_sha_input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
+const char* ref_sha_input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
 
 uint8_t ref_sha256_output[] = {
   0x24, 0x8d, 0x6a, 0x61, 0xd2, 0x06, 0x38, 0xb8,
@@ -180,7 +180,7 @@ bool test_seed_generate() {
 bool test_bip39_mnemonics() {
     serial_printf("test_bip39_mnemonics starting\n");
     void* ctx = bip39_new_context();
-    for(int i = 0; i < BIP39Seq::WORD_COUNT; i++) {
+    for(size_t i = 0; i < BIP39Seq::WORD_COUNT; i++) {
         uint16_t word = ref_bip39_words_correct[i];
         const char* mnemonic1 = ref_bip39_mnemonics[i];
         const char* mnemonic2 = bip39_get_mnemonic(ctx, word);
