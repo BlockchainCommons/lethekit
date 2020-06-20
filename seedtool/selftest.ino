@@ -199,10 +199,16 @@ bool test_bip39_generate() {
     Seed * seed = Seed::from_rolls("123456");
     BIP39Seq * bip39 = new BIP39Seq(seed);
     for (size_t ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii) {
-        if (bip39->get_word(ii) != ref_bip39_words_correct[ii])
+        uint16_t word = bip39->get_word(ii);
+        if (word != ref_bip39_words_correct[ii])
             return test_failed("test_bip39_generate failed: word mismatch\n");
+        if (strcmp(BIP39Seq::get_dict_string(word).c_str(),
+                   ref_bip39_mnemonics[ii]) != 0)
+            return test_failed("test_bip39_generate failed: "
+                               "dict_string mismatch\n");
         if (strcmp(bip39->get_string(ii).c_str(), ref_bip39_mnemonics[ii]) != 0)
-            return test_failed("test_bip39_generate failed: mnemonic mismatch\n");
+            return test_failed("test_bip39_generate failed: "
+                               "mnemonic mismatch\n");
     }
     delete bip39;
     delete seed;

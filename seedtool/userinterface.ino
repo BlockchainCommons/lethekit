@@ -786,7 +786,7 @@ struct WordListState {
         free(wordndx);
     }
 
-    virtual char const * refword(int ndx) = 0;
+    virtual String refword(int ndx) = 0;
     
     void set_words(uint16_t const * wordlist) {
         for (int ii = 0; ii < nwords; ++ii)
@@ -829,7 +829,7 @@ struct WordListState {
     }
 
     void cursor_right() {
-        if (pos < (int)strlen(refword(wordndx[selected])) - 1)
+        if (pos < (int)refword(wordndx[selected]).length() - 1)
             ++pos;
     }
     
@@ -868,7 +868,7 @@ struct WordListState {
     }
 
     String prefix(int word) {
-        return String(refword(word)).substring(0, pos);
+        return refword(word).substring(0, pos);
     }
 
     char current(int word) {
@@ -890,8 +890,8 @@ struct WordListState {
 
 struct SLIP39WordlistState : WordListState {
     SLIP39WordlistState(int i_nwords) : WordListState(i_nwords, 1024) {}
-    virtual char const * refword(int ndx) {
-        return slip39_string_for_word(ndx);
+    virtual String refword(int ndx) {
+        return String(slip39_string_for_word(ndx));
     }
 };
 
@@ -901,8 +901,8 @@ struct BIP39WordlistState : WordListState {
         : WordListState(i_nwords, 2048)
         , bip39(i_bip39)
     {}
-    virtual char const * refword(int ndx) {
-        return BIP39Seq::get_dict_string(ndx).c_str();
+    virtual String refword(int ndx) {
+        return BIP39Seq::get_dict_string(ndx);
     }
 };
 
@@ -935,7 +935,7 @@ void restore_bip39() {
 
             for (int rr = 0; rr < state.nrows; ++rr) {
                 int wndx = state.scroll + rr;
-                String word = String(state.refword(state.wordndx[wndx]));
+                String word = state.refword(state.wordndx[wndx]);
                 Serial.println(String(wndx) + " " + word);
 
                 if (wndx != state.selected) {
@@ -1256,7 +1256,7 @@ void enter_share() {
 
             for (int rr = 0; rr < state.nrows; ++rr) {
                 int wndx = state.scroll + rr;
-                String word = String(state.refword(state.wordndx[wndx]));
+                String word = state.refword(state.wordndx[wndx]);
                 Serial.println(String(wndx) + " " + word);
 
                 if (wndx != state.selected) {
