@@ -141,7 +141,7 @@ char const * SLIP39ShareSeq::error_msg(int errval) {
     case ERROR_DUPLICATE_MEMBER_INDEX:		return "Duplicate shard";
     case ERROR_NOT_ENOUGH_MEMBER_SHARDS:	return "Not enough shards";
     default:
-        snprintf(buffer, sizeof(buffer), 		   "unknown err %d", errval);
+        snprintf(buffer, sizeof(buffer),           "unknown err %d", errval);
         return buffer;
         // max message size 18 chars                |----------------|
     }

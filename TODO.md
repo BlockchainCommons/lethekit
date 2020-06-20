@@ -1,5 +1,3 @@
-* Whitespace cleanup in userinterface.ino, also "1 2 3 4"
-
 * Remove the ESP32 code from lethe.ino?
 
 * Find a new supplier for keypads, costs $150 to ship $20 worth ...

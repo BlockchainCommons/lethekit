@@ -159,7 +159,7 @@ void hw_setup() {
 
 void hw_green_led(int value) {
     digitalWrite(GREEN_LED, value);  // turn off the green LED
-}    
+}
 
 extern "C" {
 

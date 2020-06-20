@@ -71,10 +71,10 @@ void display_printf(const char *format, ...) {
 
 void interstitial_error(String const lines[], size_t nlines) {
     serial_assert(nlines <= 7);
-    
+
     int xoff = 16;
     int yoff = 6;
-    
+
     g_display->firstPage();
     do
     {
@@ -124,7 +124,7 @@ void self_test() {
 
     // Turn the green LED on for the duration of the tests.
     hw_green_led(HIGH);
-    
+
     bool last_test_passed = true;
     size_t numtests = selftest_numtests();
     // Loop, once for each test.  Need an extra trip at the end in
@@ -134,7 +134,7 @@ void self_test() {
         // If any key is pressed, skip remaining self test.
         if (g_keypad.getKey() != NO_KEY)
             break;
-        
+
         // Append each test name to the bottom of the displayed list.
         size_t row = ndx;
         if (row > NLINES - 1) {
@@ -143,7 +143,7 @@ void self_test() {
                 lines[ii] = lines[ii+1];
             row = NLINES - 1;
         }
-        
+
         if (!last_test_passed) {
             lines[row] = "TEST FAILED";
         } else if (ndx < numtests) {
@@ -163,7 +163,7 @@ void self_test() {
 
             int xx = xoff;
             int yy = yoff;
-        
+
             yy += 1*(H_FSB9 + YM_FSB9);
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
@@ -203,7 +203,7 @@ void self_test() {
 void intro_screen() {
     int xoff = 16;
     int yoff = 6;
-    
+
     g_display->firstPage();
     do
     {
@@ -218,7 +218,7 @@ void intro_screen() {
         g_display->println("LetheKit v0");
 
         yy += 6;
-        
+
         xx = xoff + 24;
         yy += H_FSB12 + YM_FSB12;
         g_display->setCursor(xx, yy);
@@ -245,7 +245,7 @@ void intro_screen() {
         yy += H_FSB9 + YM_FSB9 + 10;
         g_display->setCursor(xx, yy);
         g_display->println("Press any key");
-        
+
         xx = xoff + 24;
         yy += H_FSB9;
         g_display->setCursor(xx, yy);
@@ -267,7 +267,7 @@ void intro_screen() {
 void seedless_menu() {
     int xoff = 16;
     int yoff = 10;
-    
+
     g_display->firstPage();
     do
     {
@@ -327,7 +327,7 @@ void generate_seed() {
     while (true) {
         int xoff = 14;
         int yoff = 8;
-    
+
         g_display->firstPage();
         do
         {
@@ -342,14 +342,14 @@ void generate_seed() {
             g_display->println("Generate Seed");
 
             yy += 10;
-        
+
             yy += H_FSB9 + YM_FSB9;
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
             g_display->println("Enter Dice Rolls");
 
             yy += 10;
-        
+
             yy += H_FMB12 + YM_FMB12;
             g_display->setFont(&FreeMonoBold12pt7b);
             g_display->setCursor(xx, yy);
@@ -369,7 +369,7 @@ void generate_seed() {
             g_display->println("Press # to submit");
         }
         while (g_display->nextPage());
-    
+
         char key;
         do {
             key = g_keypad.getKey();
@@ -402,7 +402,7 @@ void generate_seed() {
 void seedy_menu() {
     int xoff = 16;
     int yoff = 10;
-    
+
     g_display->firstPage();
     do
     {
@@ -460,12 +460,12 @@ void seedy_menu() {
 void display_bip39() {
     int const nwords = BIP39Seq::WORD_COUNT;
     int scroll = 0;
-    
+
     while (true) {
         int const xoff = 12;
         int const yoff = 0;
         int const nrows = 5;
-    
+
         g_display->firstPage();
         do
         {
@@ -479,9 +479,9 @@ void display_bip39() {
             g_display->setCursor(xx, yy);
             g_display->println("BIP39 Mnemonic");
             yy += H_FSB9 + YM_FSB9;
-            
+
             yy += 6;
-        
+
             g_display->setFont(&FreeMonoBold12pt7b);
             for (int rr = 0; rr < nrows; ++rr) {
                 int wndx = scroll + rr;
@@ -489,7 +489,7 @@ void display_bip39() {
                 display_printf("%2d %s", wndx+1, g_bip39->get_string(wndx).c_str());
                 yy += H_FMB12 + YM_FMB12;
             }
-            
+
             // bottom-relative position
             xx = xoff + 2;
             yy = Y_MAX - (H_FSB9) + 2;
@@ -498,7 +498,7 @@ void display_bip39() {
             g_display->println("1,7-Up,Down #-Done");
         }
         while (g_display->nextPage());
-        
+
         char key;
         do {
             key = g_keypad.getKey();
@@ -543,11 +543,11 @@ void config_slip39() {
     bool thresh_done = false;
     String threshstr = "3";
     String nsharestr = "5";
-    
+
     while (true) {
         int xoff = 20;
         int yoff = 8;
-    
+
         g_display->firstPage();
         do
         {
@@ -581,7 +581,7 @@ void config_slip39() {
                 display_printf("%s", threshstr.c_str());
                 g_display->setTextColor(GxEPD_BLACK);
             }
-            
+
             yy += H_FMB12 + 2*YM_FMB12;
             g_display->setCursor(xx, yy);
             display_printf("NShares: %s", nsharestr.c_str());
@@ -617,7 +617,7 @@ void config_slip39() {
             }
         }
         while (g_display->nextPage());
-            
+
         char key;
         do {
             key = g_keypad.getKey();
@@ -661,7 +661,7 @@ void config_slip39() {
                 // immediately to let the user know something is
                 // happening ..
                 full_window_clear();
-                
+
                 g_slip39_generate =
                     SLIP39ShareSeq::from_seed(g_master_seed,
                                               threshstr.toInt(),
@@ -680,12 +680,12 @@ void display_slip39() {
     int const nwords = SLIP39ShareSeq::WORDS_PER_SHARE;
     int sharendx = 0;
     int scroll = 0;
-    
+
     while (true) {
         int xoff = 12;
         int yoff = 0;
         int nrows = 5;
-    
+
         g_display->firstPage();
         do
         {
@@ -700,9 +700,9 @@ void display_slip39() {
             display_printf("SLIP39 %d/%d",
                            sharendx+1, g_slip39_generate->numshares());
             yy += H_FSB9 + YM_FSB9;
-            
+
             yy += 8;
-        
+
             g_display->setFont(&FreeMonoBold12pt7b);
             for (int rr = 0; rr < nrows; ++rr) {
                 int wndx = scroll + rr;
@@ -712,7 +712,7 @@ void display_slip39() {
                 display_printf("%2d %s", wndx+1, word);
                 yy += H_FMB12 + YM_FMB12;
             }
-            
+
             // bottom-relative position
             xx = xoff + 2;
             yy = Y_MAX - (H_FSB9) + 2;
@@ -724,7 +724,7 @@ void display_slip39() {
                 g_display->println("1,7-Up,Down #-Done");
         }
         while (g_display->nextPage());
-        
+
         char key;
         do {
             key = g_keypad.getKey();
@@ -765,7 +765,7 @@ struct WordListState {
     int nrefwords;			// number of words in the total word list
 
     int* wordndx;			// ref index for each word in list
-    
+
     int nrows;				// number of words visible
     int selected;			// index of selected word
     int pos;				// char index of cursor
@@ -787,7 +787,7 @@ struct WordListState {
     }
 
     virtual String refword(int ndx) = 0;
-    
+
     void set_words(uint16_t const * wordlist) {
         for (int ii = 0; ii < nwords; ++ii)
             wordndx[ii] = wordlist ? wordlist[ii] : 0;
@@ -806,7 +806,7 @@ struct WordListState {
         else
             scroll = selected - 2;
     }
-    
+
     void select_prev() {
         if (selected == 0)
             selected = nwords - 1;
@@ -822,7 +822,7 @@ struct WordListState {
             ++selected;
         pos = 0;
     }
-    
+
     void cursor_left() {
         if (pos >= 1)
             --pos;
@@ -832,7 +832,7 @@ struct WordListState {
         if (pos < (int)refword(wordndx[selected]).length() - 1)
             ++pos;
     }
-    
+
     void word_down() {
         // Find the previous word that differs in the cursor position.
         int wordndx0 = wordndx[selected];	// remember starting wordndx
@@ -952,7 +952,7 @@ void restore_bip39() {
                                            W_FMB12 * (word.length() + 3) + 3,
                                            H_FMB12 + YM_FMB12,
                                            GxEPD_BLACK);
-        
+
                         g_display->setTextColor(GxEPD_WHITE);
                         g_display->setCursor(xx, yy);
 
@@ -962,7 +962,7 @@ void restore_bip39() {
                         // Not unique, highlight cursor.
                         g_display->setTextColor(GxEPD_BLACK);
                         g_display->setCursor(xx, yy);
-            
+
                         display_printf("%2d %s\n", wndx+1, word.c_str());
 
                         g_display->fillRect(xx + (state.pos+3)*W_FMB12,
@@ -970,7 +970,7 @@ void restore_bip39() {
                                            W_FMB12,
                                            H_FMB12 + YM_FMB12,
                                            GxEPD_BLACK);
-        
+
                         g_display->setTextColor(GxEPD_WHITE);
                         g_display->setCursor(xx + (state.pos+3)*W_FMB12, yy);
                         display_printf("%c", word.c_str()[state.pos]);
@@ -992,7 +992,7 @@ void restore_bip39() {
             g_display->println("1,7-Up,Down #-Done");
         }
         while (g_display->nextPage());
-        
+
         char key;
         do {
             key = g_keypad.getKey();
@@ -1073,12 +1073,12 @@ void restore_bip39() {
 void restore_slip39() {
     int scroll = 0;
     int selected = g_slip39_restore->numshares();	// selects "add" initially
-    
+
     while (true) {
         int const xoff = 12;
         int const yoff = 0;
         int const nrows = 4;
-    
+
         // Are we showing the restore action?
         int showrestore = g_slip39_restore->numshares() > 0 ? 1 : 0;
 
@@ -1086,7 +1086,7 @@ void restore_slip39() {
         int disprows = g_slip39_restore->numshares() + 1 + showrestore;
         if (disprows > nrows)
             disprows = nrows;
-            
+
         // Adjust the scroll to center the selection.
         if (selected < 2)
             scroll = 0;
@@ -1095,7 +1095,7 @@ void restore_slip39() {
         else
             scroll = selected - 2;
         serial_printf("scroll = %d\n", scroll);
-        
+
         g_display->firstPage();
         do
         {
@@ -1124,7 +1124,7 @@ void restore_slip39() {
                 } else {
                     sprintf(buffer, "Restore");
                 }
-                
+
                 g_display->setCursor(xx, yy);
                 if (sharendx != selected) {
                     g_display->println(buffer);
@@ -1141,7 +1141,7 @@ void restore_slip39() {
 
                 yy += H_FMB12 + YM_FMB12;
             }
-            
+
             // bottom-relative position
             xx = xoff + 2;
             yy = Y_MAX - (H_FSB9) + 2;
@@ -1150,7 +1150,7 @@ void restore_slip39() {
             g_display->println("1,7-Up,Down #-Do");
         }
         while (g_display->nextPage());
-        
+
         char key;
         do {
             key = g_keypad.getKey();
@@ -1184,12 +1184,12 @@ void restore_slip39() {
                 return;
             } else {
                 // Attempt restoration
-                
+
                 // This will take a few seconds; clear the screen
                 // immediately to let the user know something is
                 // happening ..
                 full_window_clear();
-                
+
                 for (size_t ii = 0; ii < g_slip39_restore->numshares(); ++ii) {
                     char * strings =
                         g_slip39_restore->get_share_strings(ii);
@@ -1273,7 +1273,7 @@ void enter_share() {
                                            W_FMB12 * (word.length() + 3) + 3,
                                            H_FMB12 + YM_FMB12,
                                            GxEPD_BLACK);
-        
+
                         g_display->setTextColor(GxEPD_WHITE);
                         g_display->setCursor(xx, yy);
 
@@ -1283,7 +1283,7 @@ void enter_share() {
                         // Not unique, highlight cursor.
                         g_display->setTextColor(GxEPD_BLACK);
                         g_display->setCursor(xx, yy);
-            
+
                         display_printf("%2d %s\n", wndx+1, word.c_str());
 
                         g_display->fillRect(xx + (state.pos+3)*W_FMB12,
@@ -1291,7 +1291,7 @@ void enter_share() {
                                            W_FMB12,
                                            H_FMB12 + YM_FMB12,
                                            GxEPD_BLACK);
-        
+
                         g_display->setTextColor(GxEPD_WHITE);
                         g_display->setCursor(xx + (state.pos+3)*W_FMB12, yy);
                         display_printf("%c", word.c_str()[state.pos]);
@@ -1313,7 +1313,7 @@ void enter_share() {
             g_display->println("1,7-Up,Down #-Done");
         }
         while (g_display->nextPage());
-        
+
         char key;
         do {
             key = g_keypad.getKey();
@@ -1428,9 +1428,9 @@ void ui_reset_into_state(UIState state) {
 
 void ui_dispatch() {
     using namespace userinterface_internal;
-    
+
     full_window_clear();
-    
+
     switch (g_uistate) {
     case SELF_TEST:
         self_test();
