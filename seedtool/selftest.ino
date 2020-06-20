@@ -9,6 +9,7 @@
 #include <bc-crypto-base.h>
 #include <bc-bip39.h>
 #include "prefix1.h"
+#include "ur.h"
 
 namespace selftest_internal {
 
@@ -464,6 +465,7 @@ selftest_t g_selftests[] =
  { "SLIP39 extra val", test_slip39_extra_valid_share },
  { "SLIP39 extra dup", test_slip39_extra_dup_share },
  { "SLIP39 inv share", test_slip39_invalid_share },
+ { "UR", test_ur },
  // |--------------|
 };
 
