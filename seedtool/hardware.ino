@@ -4,6 +4,9 @@
 #undef ESP32
 #define SAMD51	1
 
+#define ENABLE_GxEPD2_GFX 1
+#include <GxEPD2_BW.h>
+
 #include "hardware.h"
 #include "util.h"
 
@@ -64,19 +67,38 @@ extern "C" {
 #define GREEN_LED	4
 #endif
 
+GxEPD2_GFX *g_display;
+
 // Display
 #if defined(ESP32)
-GxEPD2_BW<GxEPD2_154, GxEPD2_154::HEIGHT>
-    g_display(GxEPD2_154(/*CS=*/   21,
-                         /*DC=*/   17,
-                         /*RST=*/  16,
-                         /*BUSY=*/ 4));
+GxEPD2_BW<EPD_DRIVER, EPD_DRIVER::HEIGHT>
+g_display(EPD_DRIVER(/*CS=*/   21,
+                     /*DC=*/   17,
+                     /*RST=*/  16,
+                     /*BUSY=*/ 4));
 #elif defined(SAMD51)
+
+// Around April 2020 Waveshare started shipping a new version of the
+// "Waveshare 200x200, 1.54inch E-Ink display module".  The new
+// versions have "Rev2.1" printed under the title on the circuit side
+// of the display.  This new version requires a different driver
+// module from GxEPD2 (GxEPD2_154_D67).
+//
+// We declare and initialize both modules and then probe the
+// controller at runtime to see which is connected.
+//
 GxEPD2_BW<GxEPD2_154, GxEPD2_154::HEIGHT>
-    g_display(GxEPD2_154(/*CS=*/   PIN_A4,
-                         /*DC=*/   PIN_A3,
-                         /*RST=*/  PIN_A2,
-                         /*BUSY=*/ PIN_A1));
+display_legacy(GxEPD2_154(/*CS=*/   PIN_A4,
+                          /*DC=*/   PIN_A3,
+                          /*RST=*/  PIN_A2,
+                          /*BUSY=*/ PIN_A1));
+GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT>
+display_modern(GxEPD2_154_D67(/*CS=*/   PIN_A4,
+                              /*DC=*/   PIN_A3,
+                              /*RST=*/  PIN_A2,
+                              /*BUSY=*/ PIN_A1));
+#define SW_SCK 24
+#define SW_MOSI 23
 #endif
 
 // Keypad
@@ -101,15 +123,30 @@ Keypad g_keypad = Keypad(makeKeymap(keys_), rowPins_, colPins_, rows_, cols_);
 void hw_setup() {
     pinMode(BLUE_LED, OUTPUT);	// Blue LED
     digitalWrite(BLUE_LED, HIGH);
-    
+
     pinMode(GREEN_LED, OUTPUT);	// Green LED
     digitalWrite(GREEN_LED, LOW);
-    
-    g_display.init(115200);
-    g_display.setRotation(1);
 
     Serial.begin(115200);
-    
+
+    // Initialize both versions of the display instance.
+    display_modern.epd2.init(SW_SCK, SW_MOSI, 115200, true, false);
+    display_modern.init(115200);
+    display_legacy.epd2.init(SW_SCK, SW_MOSI, 115200, true, false);
+    display_legacy.init(115200);
+
+    // Read a byte from the display instance to pick a version.
+    uint8_t read_legacy = display_legacy.epd2._readData();
+    serial_printf("read_legacy: readData=0x%02x\n", read_legacy);
+    g_display = read_legacy
+        ? static_cast<GxEPD2_GFX *>(&display_legacy)
+        : static_cast<GxEPD2_GFX *>(&display_modern);
+
+    // Switch back to HW SPI for performance.
+    g_display->epd2.init(-1, -1, 115200, true, false);
+
+    g_display->setRotation(1);
+
 #if defined(SAMD51)
     trngInit();
 #endif
@@ -122,7 +159,7 @@ void hw_setup() {
 
 void hw_green_led(int value) {
     digitalWrite(GREEN_LED, value);  // turn off the green LED
-}    
+}
 
 extern "C" {
 

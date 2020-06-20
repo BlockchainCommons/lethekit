@@ -3,11 +3,11 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-#include <GxEPD2_BW.h>
+#include <GxEPD2_GFX.h>
 #include <Keypad.h>
 
 // This is hard to hide/encapsulate.
-extern GxEPD2_BW<GxEPD2_154, GxEPD2_154::HEIGHT> g_display;
+extern GxEPD2_GFX *g_display;
 
 void hw_setup();
 void hw_green_led(int value);

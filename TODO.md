@@ -1,5 +1,3 @@
-* Update to bc_bip32 (waiting for Wolf).
-
 * Remove the ESP32 code from lethe.ino?
 
 * Find a new supplier for keypads, costs $150 to ship $20 worth ...
