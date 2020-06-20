@@ -3,11 +3,7 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void serial_printf(char *format, ...);
+void serial_printf(const char *format, ...);
 
 #ifdef __cplusplus
 }

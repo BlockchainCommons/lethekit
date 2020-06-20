@@ -1,3 +1,50 @@
+# Warning!  There is a problem with LetheKit/seedtool BIP39/SLIP39 interoperability.
+
+### The following is being tracked as [Issue #38](https://github.com/BlockchainCommons/bc-lethekit/issues/38):
+
+#### What is the problem?
+
+The LetheKit seedtool application generates new wallets using dice
+entropy to create BIP39 and SLIP39 recovery mnemonics. The BIP39 and
+SLIP39 mnemonics represent valid wallets, but they are not the same
+wallet.
+
+This is a serious problem.  If both BIP39 and SLIP39 backups are
+created at the same time and funds are placed in the BIP39 wallet the
+SLIP39 backup will fail to recover the same wallet and the funds would
+be lost.
+
+#### Why is this the case?
+
+Andrew Kozlik explains it well in this [GitHub comment]
+(https://github.com/iancoleman/slip39/issues/1#issuecomment-563213494)
+
+#### How can matching BIP39 and SLIP39 backups be made?
+
+Andrew Kozlik explains (above) that in principle, SLIP39 shares which
+are 59 words long could match a BIP39 mnemonic.  In practice SLIP39
+shares of this length are non-standard and unlikely to be supported by
+any devices or applications.  The extreme length is also significantly
+painful to record and enter.
+
+#### Impact on LetheKit/seedtool:
+
+The desired feature of (standard) matching BIP39 and SLIP39 backups is
+not possible.
+
+The conversion of a BIP39 backup into a SLIP39 backup is not possible.
+
+The conversion of a SLIP39 backup into a BIP39 backup is not possible.
+
+LetheKit/seedtool can generate valid BIP39 and SLIP39 wallets but
+should not allow generation of both at the same time or suggest it
+can convert between the two.
+
+LetheKit can restore SLIP39 backups, but a mechanism to export the
+master secret (likely via QR code) would need to be added.
+
+## The original (invalid) directions follow:
+
 # Seedtool Application Instructions
 
 The *seedtool* utility allows you to generate and recover

@@ -33,7 +33,7 @@ uint16_t ref_bip39_words_bad_checksum[BIP39Seq::WORD_COUNT] =
  0x0494, 0x0039, 0x050d, 0x04f1
 };
 
-char* ref_bip39_mnemonics[BIP39Seq::WORD_COUNT] =
+const char* ref_bip39_mnemonics[BIP39Seq::WORD_COUNT] =
 {
  "mirror", "reject", "rookie", "talk",
  "pudding", "throw", "happy", "era",
@@ -42,7 +42,7 @@ char* ref_bip39_mnemonics[BIP39Seq::WORD_COUNT] =
 
 size_t const ref_slip39_thresh = 2;
 size_t const ref_slip39_nshares = 3;
-char* ref_slip39_shares[ref_slip39_nshares] =
+const char* ref_slip39_shares[ref_slip39_nshares] =
 {
  "check academic academic acid counter "
  "both course legs visitor squeeze "
@@ -80,7 +80,7 @@ uint16_t ref_slip39_words[ref_slip39_nshares][SLIP39ShareSeq::WORDS_PER_SHARE] =
 
 // These shares are *also* generated from seed="123456", but they use
 // a different random seed so they are not compatible with the others.
-char* ref_slip39_shares_alt[ref_slip39_nshares] =
+const char* ref_slip39_shares_alt[ref_slip39_nshares] =
 {
  "deny category academic acid buyer "
  "miracle game discuss hobo decision "
@@ -137,13 +137,13 @@ uint16_t ref_slip39_share_bad_checksum[SLIP39ShareSeq::WORDS_PER_SHARE] =
 // Clearly not random. Only use for tests.
 void fake_random(uint8_t *buf, size_t count) {
     uint8_t b = 0;
-    for(int i = 0; i < count; i++) {
+    for(size_t i = 0; i < count; i++) {
         buf[i] = b;
         b = b + 17;
     }
 }
 
-bool test_failed(char *format, ...) {
+bool test_failed(const char *format, ...) {
   char buff[8192];
   va_list args;
   va_start(args, format);
@@ -512,5 +512,5 @@ String selftest_testname(size_t ndx) {
 bool selftest_testrun(size_t ndx) {
     using namespace selftest_internal;
     serial_assert(ndx < g_numtests);
-    g_selftests[ndx].testfun();
+    return g_selftests[ndx].testfun();
 }
