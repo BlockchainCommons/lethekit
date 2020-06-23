@@ -15,11 +15,27 @@ namespace seed_internal {
 
 } // namespace seed_internal
 
-Seed * Seed::from_rolls(String const & rolls) {
+Seed * Seed::from_rolls(String const & rolls, uint8_t *trng_entropy, uint8_t trng_entropy_size) {
     using namespace seed_internal;
-
+    uint8_t *entropy = NULL;
     uint8_t digest[SHA256_DIGEST_LENGTH];
-    sha256_Raw((const uint8_t*)rolls.c_str(), rolls.length(), digest);
+
+    if (trng_entropy) {
+        /* mix trng entropy into dice rolling. Trng entropy is appended. */
+        entropy = (uint8_t *)malloc(trng_entropy_size + rolls.length());
+        memcpy(entropy, (const uint8_t*)rolls.c_str(), rolls.length());
+        memcpy(entropy + rolls.length(), trng_entropy, trng_entropy_size);
+        sha256_Raw(entropy, trng_entropy_size + rolls.length(), digest);
+    }
+    else {
+        /* entropy from dice rolling alone */
+        sha256_Raw((const uint8_t*)rolls.c_str(), rolls.length(), digest);
+    }
+
+    if (entropy != NULL) {
+        free(entropy);
+    }
+
     return new Seed(digest, SIZE);
 
 //    // Convert supplied entropy into master secret.

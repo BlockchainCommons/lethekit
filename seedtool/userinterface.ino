@@ -25,6 +25,15 @@ String g_rolls;
 bool g_submitted;
 String g_error_string;
 
+/**
+ *  A structure holding 128 bits of TRNG entropy which can be
+ *  used as an additional source of entropy when dicing
+ */
+struct {
+  bool rdy;  /* true: entropy is available for mixing */
+  uint8_t buff[16];
+}g_trng128;
+
 Seed * g_master_seed = NULL;
 BIP39Seq * g_bip39 = NULL;
 SSKRShareSeq * g_sskr_generate = NULL;
@@ -428,7 +437,7 @@ void seedless_menu() {
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         // TODO: only for demonstration purposes, to be deleted
-        //g_display->println("0 - UR Demo");
+        g_display->println("0 - UR Demo");
 
         yy = 190; // Absolute, stuck to bottom
         g_display->setFont(&FreeSansBold9pt7b);
@@ -478,7 +487,7 @@ void generate_seed() {
             g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
-            int yy = yoff + (H_FSB12 + YM_FSB12);
+            int yy = yoff + (H_FSB12 + YM_FSB12) - 4;
             g_display->setFont(&FreeSansBold12pt7b);
             g_display->setCursor(xx, yy);
             g_display->println("Generate Seed");
@@ -498,17 +507,22 @@ void generate_seed() {
             display_printf("Rolls: %d\n", g_rolls.length());
             yy += H_FMB12 + YM_FMB12;
             g_display->setCursor(xx, yy);
-            display_printf(" Bits: %0.1f\n", g_rolls.length() * 2.5850);
+            if (g_trng128.rdy) {
+                display_printf(" Bits: %0.1f\n       +128\n", g_rolls.length() * 2.5850);
+            }
+            else {
+                display_printf(" Bits: %0.1f\n", g_rolls.length() * 2.5850);
+            }
 
             // bottom-relative position
-            xx = xoff + 10;
-            yy = Y_MAX - 2*(H_FSB9 + YM_FSB9);
+            xx = xoff;
+            yy = Y_MAX - 2*(H_FSB9 + YM_FSB9) + 15;
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
-            g_display->println("Press * to clear");
+            g_display->println("Add 128b TRNG:   C");
             yy += H_FSB9 + YM_FSB9;
             g_display->setCursor(xx, yy);
-            g_display->println("Press # to submit");
+            g_display->println("Clear: *      Submit: #");
         }
         while (g_display->nextPage());
 
@@ -524,13 +538,19 @@ void generate_seed() {
             break;
         case '*':
             g_rolls = "";
+            g_trng128.rdy = false;
             break;
         case '#': {
             g_submitted = true;
             serial_assert(!g_master_seed);
             if (g_master_seed)
                 delete g_master_seed;
-            g_master_seed = Seed::from_rolls(g_rolls);
+            if (g_trng128.rdy) {
+                g_master_seed = Seed::from_rolls(g_rolls, g_trng128.buff, sizeof(g_trng128.buff));
+            }
+            else {
+                g_master_seed = Seed::from_rolls(g_rolls);
+            }
             g_master_seed->log();
             serial_assert(!g_bip39);
             if (g_bip39)
@@ -546,6 +566,10 @@ void generate_seed() {
             g_uistate = DISPLAY_BIP39;
         }
             return;
+        case 'C':
+            hw_random_buffer(g_trng128.buff, sizeof(g_trng128.buff));
+            g_trng128.rdy = true;
+            break;
         default:
             break;
         }
