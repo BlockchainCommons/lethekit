@@ -18,6 +18,13 @@
 #include "wally_address.h"
 #include "test_bc_ur.hpp"
 
+/** This caps entropy obtained from dice rolling to
+ *  MAX_DICE_ENTROPY + 2.6. 128 bits of trng entropy
+ *  can be mixed in. So the total entropy may yield
+ *  in maximum MAX_DICE_ENTROPY + 2.6 + 128 bits
+ */
+#define MAX_DICE_ENTROPY 256 // [bits]
+
 namespace userinterface_internal {
 
 UIState g_uistate;
@@ -497,7 +504,12 @@ void generate_seed() {
             yy += H_FSB9 + YM_FSB9;
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
-            g_display->println("Enter Dice Rolls");
+            if (g_rolls.length() * 2.5850 >= MAX_DICE_ENTROPY) {
+                g_display->println("Max rolls reached!");
+            }
+            else {
+                g_display->println("Enter Dice Rolls");
+            }
 
             yy += 10;
 
@@ -519,7 +531,12 @@ void generate_seed() {
             yy = Y_MAX - 2*(H_FSB9 + YM_FSB9) + 15;
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
-            g_display->println("Add 128b TRNG:   C");
+            if (g_trng128.rdy) {
+                g_display->println("");
+            }
+            else {
+                g_display->println("Add 128b TRNG:   C");
+            }
             yy += H_FSB9 + YM_FSB9;
             g_display->setCursor(xx, yy);
             g_display->println("Clear: *      Submit: #");
@@ -534,7 +551,9 @@ void generate_seed() {
         switch (key) {
         case '1': case '2': case '3':
         case '4': case '5': case '6':
-            g_rolls += key;
+            if (g_rolls.length() * 2.5850 < MAX_DICE_ENTROPY) {
+                g_rolls += key;
+            }
             break;
         case '*':
             g_rolls = "";
@@ -567,6 +586,7 @@ void generate_seed() {
         }
             return;
         case 'C':
+            /* Allow mixing 128 bits of trng entropy regardless of the size of dice entropy */
             hw_random_buffer(g_trng128.buff, sizeof(g_trng128.buff));
             g_trng128.rdy = true;
             break;
