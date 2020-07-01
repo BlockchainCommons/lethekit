@@ -3,11 +3,11 @@
 #include "ur.h"
 #include "util.h"
 #include "bc-bech32.h"
-#include <bc-crypto-base.h>
+#include "bc-crypto-base.h"
+#include "bc-bytewords.h"
 
-// source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md
+// source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md 174f1f99
 
-/* allocate at least 5 bytes more for byte_out than byte_in */
 size_t cbor_encode(uint8_t *byte_in, uint32_t size_in, uint8_t *byte_out, uint32_t byte_out_size)
 {
     size_t size_out = 0;
@@ -47,7 +47,6 @@ size_t cbor_encode(uint8_t *byte_in, uint32_t size_in, uint8_t *byte_out, uint32
     return size_out + size_in;
 }
 
-/* allocate at least 5 bytes more for byte_out than byte_in */
 size_t cbor_decode(uint8_t *byte_in, uint32_t size_in, uint8_t *byte_out, uint32_t byte_out_size)
 {
     size_t size_out = 0;
@@ -154,38 +153,38 @@ size_t fromHex(const char * hex, size_t hexLen, uint8_t * array, size_t arraySiz
 
 size_t ur_encode(String type, uint8_t *cbor, uint32_t cbor_size, String *ur_fragments, size_t max_fragments, size_t max_fragment_len)
 {
-    // Encode cbor payload as bc32
-    char *payload_bc32 = bc32_encode(cbor, cbor_size);
-    if(payload_bc32 == NULL) {
-      serial_printf("BC32 encode fails.\n");
+    // Encode cbor payload as bytewords
+    char *payload_bytewords = bytewords_encode(bw_minimal, cbor, cbor_size);
+    if(payload_bytewords == NULL) {
+      serial_printf("payload bytewords encode fails.\n");
       return 0;
     }
-    String payload_bc32_str = String(payload_bc32);
-    free(payload_bc32);
+    String payload_bytewords_str = String(payload_bytewords);
+    free(payload_bytewords);
 
     // Compute the SHA256 digest of the CBOR-encoded payload
     uint8_t digest[SHA256_DIGEST_LENGTH];
     sha256_Raw(cbor, cbor_size, digest);
 
-    // Encode digest as BC32
-    char *digest_bc32 = bc32_encode(digest, SHA256_DIGEST_LENGTH);
-    if(digest_bc32 == NULL) {
-      serial_printf("BC32 encode fails.\n");
+    // Encode digest as bytewords
+    char *digest_bytewords = bytewords_encode(bw_minimal, digest, sizeof(digest));
+    if(digest_bytewords == NULL) {
+      serial_printf("digest bytewords encode fails.\n");
       return 0;
     }
-    String digest_bc32_str = String(digest_bc32);
-    free(digest_bc32);
+    String digest_bytewords_str = String(digest_bytewords);
+    free(digest_bytewords);
 
-    if (payload_bc32_str.length() > max_fragments*max_fragment_len)
+    if (payload_bytewords_str.length() > max_fragments*max_fragment_len)
     {
       serial_printf("memory: string partitioning failed.\n");
       return 0;
     }
 
-    // Partition the BC32-encoded payload into a sequence of fragments
+    // Partition the bytewords-encoded payload into a sequence of fragments
     size_t fragments_len = 0;
     for (size_t i=0; i < max_fragments; i++) {
-        ur_fragments[i] = payload_bc32_str.substring(i*max_fragment_len, i*max_fragment_len + max_fragment_len);
+        ur_fragments[i] = payload_bytewords_str.substring(i*max_fragment_len, i*max_fragment_len + max_fragment_len);
         if (ur_fragments[i].length() < max_fragment_len)
         {
           fragments_len = i + 1;
@@ -196,7 +195,7 @@ size_t ur_encode(String type, uint8_t *cbor, uint32_t cbor_size, String *ur_frag
     // Prepend each fragment with a header that includes scheme, type, sequencing, and digest
     for (size_t i = 0; i < fragments_len; i++) {
       ur_fragments[i] = "ur:" + type + "/" + String(i+1) + "of" + String(fragments_len) + "/" +  \
-                         digest_bc32_str + "/" + ur_fragments[i];
+                         digest_bytewords_str + "/" + ur_fragments[i];
       ur_fragments[i].toUpperCase();
     }
 
@@ -252,10 +251,11 @@ bool test_ur()
     }
 
     const char *expected_result = ("UR:BYTES/1OF1/"
-                                   "5Y69MT2LNMP0GWCJ65LL60TLGNZUSQ0HKC9573G22L5PT87YJNLQGL34HU/"
-                                   "TPJYT9HAGE7FGNW4JKHEK6FKTY3HR667AXGHTPQW4JM8VTTZ0863YPUMYT56GCSCQT4772"
-                                   "8N6YE5TAGYKF5GP5LXQR983QMPEF8F65CKT8YEQQJURCFYG6057QR543FAPKRMYMYE6DHF"
-                                   "5C7F60V88VZT800U3ESDXS8QNC9R93");
+                                   "OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCN"
+                                   "GE/HDIEFEMTZEFGKEMWGTTLMDPENDINENHKCNJSWMHYWLMEKPLRBAPSRPKODPIDKKYKBGA"
+                                   "TNDCPWLOXIDCSAOWMWSDEWFTTEOFEYKAAPRISLATEVAAESGKSLSHSSGGLNTGUCMHKSOMHA"
+                                   "OHHCKBGFYINWKWTATGESKFSBTLNPRJZNLTEJTNYIASOTETPJKPFGRFRURSPVABTEEBAOYH"
+                                   "KFHZC");
     String ur_fragments[15];
     size_t size_fragments = ur_encode("bytes", payload_cbor.buff, payload_cbor.len, ur_fragments, 15, 400);
 
@@ -271,15 +271,18 @@ bool test_ur()
       return false;
     }
 
-    String expected_res[5] = {"UR:BYTES/1OF5/5Y69MT2LNMP0GWCJ65LL60TLGNZUSQ0HKC9573G22L5PT87YJNLQGL34HU/TPJYT9HAGE7FGNW4JKHEK6FKTY3HR667AXGHTPQW",
-                              "UR:BYTES/2OF5/5Y69MT2LNMP0GWCJ65LL60TLGNZUSQ0HKC9573G22L5PT87YJNLQGL34HU/4JM8VTTZ0863YPUMYT56GCSCQT47728N6YE5TAGY",
-                              "UR:BYTES/3OF5/5Y69MT2LNMP0GWCJ65LL60TLGNZUSQ0HKC9573G22L5PT87YJNLQGL34HU/KF5GP5LXQR983QMPEF8F65CKT8YEQQJURCFYG605",
-                              "UR:BYTES/4OF5/5Y69MT2LNMP0GWCJ65LL60TLGNZUSQ0HKC9573G22L5PT87YJNLQGL34HU/7QR543FAPKRMYMYE6DHF5C7F60V88VZT800U3ESD",
-                              "UR:BYTES/5OF5/5Y69MT2LNMP0GWCJ65LL60TLGNZUSQ0HKC9573G22L5PT87YJNLQGL34HU/XS8QNC9R93"};
+    /* Test case: change maximumFragmentCharacters to 40 */
+    String expected_res[6] =
+    {"UR:BYTES/1OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/HDIEFEMTZEFGKEMWGTTLMDPENDINENHKCNJSWMHY",
+      "UR:BYTES/2OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/WLMEKPLRBAPSRPKODPIDKKYKBGATNDCPWLOXIDCS",
+      "UR:BYTES/3OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/AOWMWSDEWFTTEOFEYKAAPRISLATEVAAESGKSLSHS",
+      "UR:BYTES/4OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/SGGLNTGUCMHKSOMHAOHHCKBGFYINWKWTATGESKFS",
+      "UR:BYTES/5OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/BTLNPRJZNLTEJTNYIASOTETPJKPFGRFRURSPVABT",
+      "UR:BYTES/6OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/EEBAOYHKFHZC"};
 
     size_fragments = ur_encode("bytes", payload_cbor.buff, payload_cbor.len, ur_fragments, 15, 40);
 
-    if (size_fragments != 5)
+    if (size_fragments != 6)
     {
         serial_printf("ur encode: fragment size incorrect \n");
         return false;
