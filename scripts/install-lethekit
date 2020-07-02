@@ -56,6 +56,7 @@ declare -a libs=(
     bc-shamir
     bc-slip39
     bc-bip39
+    bc-bytewords
     TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
     GxEPD2
 )

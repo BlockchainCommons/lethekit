@@ -16,3 +16,6 @@
 [submodule "deps/GxEPD2"]
 	path = deps/GxEPD2
 	url = git@github.com:BlockchainCommons/GxEPD2.git
+[submodule "deps/bc-bytewords"]
+	path = deps/bc-bytewords
+	url = git@github.com:BlockchainCommons/bc-bytewords.git
