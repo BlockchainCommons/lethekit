@@ -2,11 +2,11 @@
 
 #include "ur.h"
 #include "util.h"
-#include "bc-bech32.h"
 #include "bc-crypto-base.h"
 #include "bc-bytewords.h"
+#include "crc32.h"
 
-// source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md 174f1f99
+// source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md acd286b
 
 size_t cbor_encode(uint8_t *byte_in, uint32_t size_in, uint8_t *byte_out, uint32_t byte_out_size)
 {
@@ -162,18 +162,19 @@ size_t ur_encode(String type, uint8_t *cbor, uint32_t cbor_size, String *ur_frag
     String payload_bytewords_str = String(payload_bytewords);
     free(payload_bytewords);
 
-    // Compute the SHA256 digest of the CBOR-encoded payload
-    uint8_t digest[SHA256_DIGEST_LENGTH];
-    sha256_Raw(cbor, cbor_size, digest);
+    // Compute the crc32 digest of the CBOR-encoded payload
+    uint32_t checksum = crc32(cbor, cbor_size);
 
-    // Encode digest as bytewords
-    char *digest_bytewords = bytewords_encode(bw_minimal, digest, sizeof(digest));
-    if(digest_bytewords == NULL) {
+    checksum = __builtin_bswap32(checksum);
+
+    // Encode checksum as bytewords
+    char *crc32_bytewords = bytewords_encode(bw_minimal, (uint8_t *)&checksum, sizeof(checksum));
+    if(crc32_bytewords == NULL) {
       serial_printf("digest bytewords encode fails.\n");
       return 0;
     }
-    String digest_bytewords_str = String(digest_bytewords);
-    free(digest_bytewords);
+    String crc32_bytewords_str = String(crc32_bytewords);
+    free(crc32_bytewords);
 
     if (payload_bytewords_str.length() > max_fragments*max_fragment_len)
     {
@@ -181,11 +182,24 @@ size_t ur_encode(String type, uint8_t *cbor, uint32_t cbor_size, String *ur_frag
       return 0;
     }
 
+    uint32_t max_fragment_count = payload_bytewords_str.length() / 10;
+    uint32_t fragment_len = max_fragment_len;
+
+    if (payload_bytewords_str.length() > max_fragment_len) {
+        // Find even nominal fragment length:
+        for (size_t fragment_count=1; fragment_count <= max_fragment_count; fragment_count++) {
+          fragment_len = ceil((float)payload_bytewords_str.length() / (float)fragment_count);
+          if (fragment_len <= max_fragment_len && fragment_len % 2 == 0)
+              break;
+        }
+    }
+    uint32_t nominal_fragment_characters = fragment_len;
+
     // Partition the bytewords-encoded payload into a sequence of fragments
     size_t fragments_len = 0;
     for (size_t i=0; i < max_fragments; i++) {
-        ur_fragments[i] = payload_bytewords_str.substring(i*max_fragment_len, i*max_fragment_len + max_fragment_len);
-        if (ur_fragments[i].length() < max_fragment_len)
+        ur_fragments[i] = payload_bytewords_str.substring(i*nominal_fragment_characters, i*nominal_fragment_characters + nominal_fragment_characters);
+        if (ur_fragments[i].length() < nominal_fragment_characters)
         {
           fragments_len = i + 1;
           break;
@@ -195,7 +209,7 @@ size_t ur_encode(String type, uint8_t *cbor, uint32_t cbor_size, String *ur_frag
     // Prepend each fragment with a header that includes scheme, type, sequencing, and digest
     for (size_t i = 0; i < fragments_len; i++) {
       ur_fragments[i] = "ur:" + type + "/" + String(i+1) + "of" + String(fragments_len) + "/" +  \
-                         digest_bytewords_str + "/" + ur_fragments[i];
+                         crc32_bytewords_str + "/" + ur_fragments[i];
       ur_fragments[i].toUpperCase();
     }
 
@@ -251,8 +265,8 @@ bool test_ur()
     }
 
     const char *expected_result = ("UR:BYTES/1OF1/"
-                                   "OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCN"
-                                   "GE/HDIEFEMTZEFGKEMWGTTLMDPENDINENHKCNJSWMHYWLMEKPLRBAPSRPKODPIDKKYKBGA"
+                                   "OYHKFHZCHPDNCXFD/"
+                                   "HDIEFEMTZEFGKEMWGTTLMDPENDINENHKCNJSWMHYWLMEKPLRBAPSRPKODPIDKKYKBGA"
                                    "TNDCPWLOXIDCSAOWMWSDEWFTTEOFEYKAAPRISLATEVAAESGKSLSHSSGGLNTGUCMHKSOMHA"
                                    "OHHCKBGFYINWKWTATGESKFSBTLNPRJZNLTEJTNYIASOTETPJKPFGRFRURSPVABTEEBAOYH"
                                    "KFHZC");
@@ -260,7 +274,8 @@ bool test_ur()
     size_t size_fragments = ur_encode("bytes", payload_cbor.buff, payload_cbor.len, ur_fragments, 15, 400);
 
     if (size_fragments != 1) {
-        serial_printf("cbor encode: size fragments \n");
+        serial_printf("cbor encode failed: size fragments \n");
+        Serial.println(size_fragments); Serial.println(ur_fragments[0]);
         return false;
     }
 
@@ -273,12 +288,12 @@ bool test_ur()
 
     /* Test case: change maximumFragmentCharacters to 40 */
     String expected_res[6] =
-    {"UR:BYTES/1OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/HDIEFEMTZEFGKEMWGTTLMDPENDINENHKCNJSWMHY",
-      "UR:BYTES/2OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/WLMEKPLRBAPSRPKODPIDKKYKBGATNDCPWLOXIDCS",
-      "UR:BYTES/3OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/AOWMWSDEWFTTEOFEYKAAPRISLATEVAAESGKSLSHS",
-      "UR:BYTES/4OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/SGGLNTGUCMHKSOMHAOHHCKBGFYINWKWTATGESKFS",
-      "UR:BYTES/5OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/BTLNPRJZNLTEJTNYIASOTETPJKPFGRFRURSPVABT",
-      "UR:BYTES/6OF6/OYEEHLPMHENNSAWKFRBGTLFHZEFSLBFYSKSPADYLRPBDGWFEBKHGVSBZNESSMWZMIAKKCNGE/EEBAOYHKFHZC"};
+    {"UR:BYTES/1OF6/OYHKFHZCHPDNCXFD/HDIEFEMTZEFGKEMWGTTLMDPENDINENHKCNJS",
+     "UR:BYTES/2OF6/OYHKFHZCHPDNCXFD/WMHYWLMEKPLRBAPSRPKODPIDKKYKBGATNDCP",
+     "UR:BYTES/3OF6/OYHKFHZCHPDNCXFD/WLOXIDCSAOWMWSDEWFTTEOFEYKAAPRISLATE",
+     "UR:BYTES/4OF6/OYHKFHZCHPDNCXFD/VAAESGKSLSHSSGGLNTGUCMHKSOMHAOHHCKBG",
+     "UR:BYTES/5OF6/OYHKFHZCHPDNCXFD/FYINWKWTATGESKFSBTLNPRJZNLTEJTNYIASO",
+     "UR:BYTES/6OF6/OYHKFHZCHPDNCXFD/TETPJKPFGRFRURSPVABTEEBAOYHKFHZC"};
 
     size_fragments = ur_encode("bytes", payload_cbor.buff, payload_cbor.len, ur_fragments, 15, 40);
 

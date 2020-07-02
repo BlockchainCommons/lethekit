@@ -19,13 +19,14 @@ size_t cbor_encode(uint8_t *byte_in, uint32_t size_in, uint8_t *byte_out);
  * @param[in]   size_in: size of byte_in
  * @param[out]  byte_out: cbor decoded string
  * @return      size of cbor decoded string
- * @pre         allocate at least 5 bytes more for byte_out than byte_in
+ * @pre         allocate the same size for byte_out and byte_in
  */
 size_t cbor_decode(uint8_t *byte_in, uint32_t size_in, uint8_t *byte_out);
 
 /**
  * @brief       UR encode
- * @pre         max_fragment_len * max_fragments >= 4*cbor_size + 8
+ * @pre         max_fragment_len * max_fragments >= 2*cbor_size + 8
+ * @pre         max_fragment_len > 10
  * @param[in]   type: UR type
  * @param[in]   cbor: cbor encoded string
  * @param[in]   cbor_size: size of cbor
