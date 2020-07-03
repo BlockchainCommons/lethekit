@@ -56,6 +56,7 @@ Temporary Items
 *.a
 *.la
 *.lo
+libwally-embedded/
 
 # Shared objects (inc. Windows DLLs)
 *.dll
