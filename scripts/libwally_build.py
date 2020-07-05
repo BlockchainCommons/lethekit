@@ -15,6 +15,8 @@ alias_blacklist = [
     "test.c",
     "run.c",
     "bench.c",
+    "wally_bip39.h",
+    "bip39.c"
 ]
 
 def create_alias(in_path, out_path, fname):
