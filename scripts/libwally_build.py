@@ -85,6 +85,24 @@ def patch():
             f.write("#include \"wally_config.h\"\n")
             f.write(content)
 
+def create_arduino_lib_properties():
+
+    with open(os.path.join(os.getcwd(), "library.properties"), "w") as f:
+        content = ("name=libwally\n"
+          "version=1.0.0 \n"
+          "author=Blockstream people \n"
+          "maintainer=\n"
+          "sentence=Bitcoin library\n"
+          "paragraph=Bitcoin library\n"
+          "category=Uncategorized\n"
+          "url=\n"
+          "architectures=*\n"
+          "depends=secp256k1\n"
+          "includes=secp256k1.h,wally_core.h,wally_crypto.h,"
+          "wally_address,wally_bip32.h,wally_bip39.h,wally_psbt.h,wally_script.h,wally_transaction.h")
+        f.write(content)
+
+
 def main():
     for in_path, out_path, extensions, fn, recursive in rules:
         in_path = os.path.join(ROOT, in_path)
@@ -123,6 +141,7 @@ def main():
                     else:
                         print("skip", os.path.join(out, f))
     patch()
+    create_arduino_lib_properties()
 
 if __name__ == '__main__':
     main()
