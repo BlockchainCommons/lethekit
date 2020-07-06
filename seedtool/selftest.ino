@@ -10,6 +10,10 @@
 #include <bc-bip39.h>
 #include "prefix1.h"
 
+#include "secp256k1.h"
+#include "wally_core.h"
+#include "wally_bip32.h"
+
 namespace selftest_internal {
 
 uint8_t ref_secret[16] =
@@ -438,6 +442,41 @@ bool test_slip39_invalid_share() {
     return true;
 }
 
+bool test_libwally(void) {
+    int res;
+    ext_key root;
+    // test vector from: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#test-vector-1
+    uint8_t seed[] ={0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    const char* expected_xprv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi";
+
+    res = wally_init(0);
+    if (res != WALLY_OK) {
+        serial_printf("test_libwally init failed\n");
+        return false;
+    }
+
+    res = bip32_key_from_seed(seed, sizeof(seed), BIP32_VER_MAIN_PRIVATE, 0, &root);
+    if (res != WALLY_OK) {
+        serial_printf("test_libwally bip32 failed\n");
+        return false;
+    }
+
+    char *xprv = NULL;
+    res = bip32_key_to_base58(&root, BIP32_FLAG_KEY_PRIVATE, &xprv);
+    if (res != WALLY_OK) {
+        serial_printf("test_libwally base58 failed\n");
+        return false;
+    }
+    if (strcmp(xprv, expected_xprv) != 0) {
+        serial_printf("test_libwally xprv derivation failed\n");
+        return false;
+    }
+
+    wally_free_string(xprv);
+    wally_cleanup(0);
+    return true;
+}
+
 struct selftest_t {
     char const * testname;
     bool (*testfun)();
@@ -464,6 +503,7 @@ selftest_t g_selftests[] =
  { "SLIP39 extra val", test_slip39_extra_valid_share },
  { "SLIP39 extra dup", test_slip39_extra_dup_share },
  { "SLIP39 inv share", test_slip39_invalid_share },
+ { "Libwally", test_libwally },
  // |--------------|
 };
 
