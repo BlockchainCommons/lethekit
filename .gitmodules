@@ -19,3 +19,6 @@
 [submodule "deps/libwally-core"]
 	path = deps/libwally-core
 	url = git@github.com:ElementsProject/libwally-core.git
+[submodule "deps/secp256k1-embedded"]
+	path = deps/secp256k1-embedded
+	url = git@github.com:BlockchainCommons/secp256k1-embedded.git
