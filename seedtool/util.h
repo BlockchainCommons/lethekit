@@ -22,4 +22,10 @@ void serial_printf(const char *format, ...);
         }                                                               \
     } while (false)
 
+
+struct Point {
+  int x;
+  int y;
+};
+
 #endif // _UTIL_H

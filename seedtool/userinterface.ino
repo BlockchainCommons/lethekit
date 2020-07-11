@@ -3,6 +3,7 @@
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
+#include <Fonts/FreeMono9pt7b.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
 #include <Fonts/FreeMonoBold12pt7b.h>
 
@@ -11,6 +12,7 @@
 #include "userinterface.h"
 #include "selftest.h"	// Used to fetch dummy data for UI testing.
 #include "util.h"
+#include "qrcode.h"
 
 namespace userinterface_internal {
 
@@ -20,6 +22,7 @@ String g_rolls;
 bool g_submitted;
 
 Seed * g_master_seed = NULL;
+Keystore keystore = Keystore();
 BIP39Seq * g_bip39 = NULL;
 SLIP39ShareSeq * g_slip39_generate = NULL;
 SLIP39ShareSeq * g_slip39_restore = NULL;
@@ -29,6 +32,8 @@ int g_pos = 0;		// char position of cursor
 int g_scroll = 0;	// index of scrolled window
 
 int g_restore_slip39_selected;
+
+enum xpub_encoding_e xpub_encoding = BASE58;
 
 int const Y_MAX = 200;
 
@@ -48,6 +53,22 @@ int const YM_FMB9 = 2;	// y-margin
 int const W_FMB12 = 14;	// width
 int const H_FMB12 = 21;	// height
 int const YM_FMB12 = 4;	// y-margin
+
+Point text_center(const char * txt) {
+    int16_t tbx, tby; uint16_t tbw, tbh;
+    Point p;
+    g_display->getTextBounds(txt, 0, 0, &tbx, &tby, &tbw, &tbh);
+    // center bounding box by transposition of origin:
+    p.x = ((g_display->width() - tbw) / 2) - tbx;
+    p.y = ((g_display->height() - tbh) / 2) - tby;
+    return p;
+}
+
+int text_right(const char * txt) {
+    int16_t tbx, tby; uint16_t tbw, tbh;
+    g_display->getTextBounds(txt, 0, 0, &tbx, &tby, &tbw, &tbh);
+    return ((g_display->width() - tbw) - tbx);
+}
 
 void full_window_clear() {
     g_display->firstPage();
@@ -113,6 +134,71 @@ void interstitial_error(String const lines[], size_t nlines) {
             break;
         }
     }
+}
+
+
+/**
+ *   @brief       draw a qr code
+ *   @pre         g_display->firstPage();
+ *   @post        while (g_display->nextPage());
+ *   @param[in]   text: text to be qr encoded
+ */
+bool displayQR(char * text) {
+    // source: https://github.com/arcbtc/koopa/blob/master/main.ino
+
+    // auto detect best qr code size
+    int qrSize = 10;
+    int ec_lvl = 0;
+    int const sizes[18][4] = {
+                        /* https://github.com/ricmoo/QRCode */
+                        /* 1 */ { 17, 14, 11, 7 },
+                        /* 2 */ { 32, 26, 20, 14 },
+                        /* 3 */ { 53, 42, 32, 24 },
+                        /* 4 */ { 78, 62, 46, 34 },
+                        /* 5 */ { 106, 84, 60, 44 },
+                        /* 6 */ { 134, 106, 74, 58 },
+                        /* 7 */ { 154, 122, 86, 64 },
+                        /* 8 */ { 192, 152, 108, 84 },
+                        /* 9 */ { 230, 180, 130, 98 },      // OPN:0 LND:0 good
+                        /* 10 */ { 271, 213, 151, 119 },    // BTP:0 OPN:1 good
+                        /* 11 */ { 321, 251, 177, 137 },
+                        /* 12 */ { 367, 287, 203, 155 },    // BTP:1 bad
+                        /* 13 */ { 425, 331, 241, 177 },    // BTP:2 meh
+                        /* 14 */ { 458, 362, 258, 194 },
+                        /* 15 */ { 520, 412, 292, 220 },
+                        /* 16 */ { 586, 450, 322, 250 },
+                        /* 17 */ { 644, 504, 364, 280 },
+    };
+    int len = strlen(text);
+    for(int ii=0; ii<17; ii++){
+        qrSize = ii+1;
+        if(sizes[ii][ec_lvl] > len){
+            break;
+        }
+    }
+
+    // Create the QR code
+    QRCode qrcode;
+    uint8_t qrcodeData[qrcode_getBufferSize(qrSize)];
+    qrcode_initText(&qrcode, qrcodeData, qrSize, ec_lvl,
+                    text);
+
+    int width = 17 + 4*qrSize;
+    int scale = 130/width;
+    int padding = (200 - width*scale)/2;
+
+    // for every pixel in QR code we draw a rectangle with size `scale`
+    for (uint8_t y = 0; y < qrcode.size; y++) {
+        for (uint8_t x = 0; x < qrcode.size; x++) {
+            if(qrcode_getModule(&qrcode, x, y)){
+                g_display->fillRect(padding+scale*x,
+                                   padding+scale*y,
+                                   scale, scale, GxEPD_BLACK);
+            }
+        }
+    }
+
+    return true;
 }
 
 void self_test() {
@@ -387,6 +473,7 @@ void generate_seed() {
             g_submitted = true;
             serial_assert(!g_master_seed);
             g_master_seed = Seed::from_rolls(g_rolls);
+            keystore.update(g_master_seed->data, sizeof(g_master_seed->data));
             g_master_seed->log();
             serial_assert(!g_bip39);
             g_bip39 = new BIP39Seq(g_master_seed);
@@ -426,6 +513,9 @@ void seedy_menu() {
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         g_display->println("C - Wipe Seed");
+        yy += H_FSB9 + 2*YM_FSB9;
+        g_display->setCursor(xx, yy);
+        g_display->println("D - Show xpub");
 
         yy = 190; // Absolute, stuck to bottom
         g_display->setFont(&FreeSansBold9pt7b);
@@ -450,6 +540,10 @@ void seedy_menu() {
         case 'C':
             ui_reset_into_state(SEEDLESS_MENU);
             g_uistate = SEEDLESS_MENU;
+            return;
+        case 'D':
+            ui_reset_into_state(DISPLAY_XPUBS);
+            g_uistate = DISPLAY_XPUBS;
             return;
         default:
             break;
@@ -1397,6 +1491,92 @@ void enter_share() {
     }
 }
 
+void display_xpub(void) {
+    String encoding_type;
+    // @FIXME: derivation path currently fixed
+    String derivation_path = "m/84h/1h/0h";
+    ext_key key;
+
+    // @FIXME: return value checks
+    (void)keystore.update(g_master_seed->data, sizeof(g_master_seed->data));
+    (void)keystore.get_xpub(derivation_path.c_str(), &keystore.root, &key);
+
+    char *xpub = NULL;
+    bip32_key_to_base58(&key, BIP32_FLAG_KEY_PUBLIC, &xpub);
+
+    while (true) {
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          const char * title = "Master pubkey";
+          int yy = 18;
+          g_display->setFont(&FreeSansBold9pt7b);
+          Point p = text_center(title);
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+
+          switch(xpub_encoding) {
+            case BASE58:
+                g_display->setFont(&FreeMonoBold9pt7b);
+                g_display->setCursor(0, yy + 30);
+                g_display->println(xpub);
+                encoding_type = "Base58";
+                break;
+            case QR_BASE58:
+                displayQR(xpub);
+                encoding_type = "QrBase58";
+                break;
+            case UR:
+                encoding_type = "UR";
+                break;
+            case QR_UR:
+                encoding_type = "QrUR";
+                break;
+            default:
+                break;
+          }
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "Back #";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          String left_option = encoding_type + " *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      Serial.println("show_xpus saw " + String(key));
+      switch (key) {
+        case '#':
+            g_uistate = SEEDY_MENU;
+            if (xpub != NULL) {
+              free(xpub);
+              xpub = NULL;
+            }
+            return;
+        case '*':
+            xpub_encoding = (xpub_encoding_e)((int)xpub_encoding + 1);
+            if ((int)xpub_encoding >= XPUB_ENCODINGS)
+                xpub_encoding = (xpub_encoding_e)0;
+            break;
+        default:
+            break;
+      }
+    }
+  }
 } // namespace userinterface_internal
 
 void ui_reset_into_state(UIState state) {
@@ -1464,6 +1644,9 @@ void ui_dispatch() {
         break;
     case DISPLAY_SLIP39:
         display_slip39();
+        break;
+    case DISPLAY_XPUBS:
+        display_xpub();
         break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));

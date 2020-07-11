@@ -32,6 +32,7 @@ Launch the Arduino IDE in the `seedtool` subdirectory:
 Open `Tools` -> `Manage Libraries...`, install the following:
 * `Adafruit GFX Library`
 * `Keypad`
+* `QRCode`
 
 ### Build and Upload *seedtool*
 
