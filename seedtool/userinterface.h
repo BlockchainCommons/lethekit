@@ -17,6 +17,8 @@ enum UIState {
     CONFIG_SLIP39,
     DISPLAY_SLIP39,
     DISPLAY_XPUBS,
+    XPUB_MENU,
+    DERIVATION_PATH,
 };
 
 enum xpub_encoding_e {
@@ -32,5 +34,11 @@ enum xpub_encoding_e {
 extern void ui_reset_into_state(UIState state);
 
 extern void ui_dispatch();
+
+struct UiOption {
+    String _name;
+    String value;
+    String tip;
+};
 
 #endif // USERINTERFACE_H

@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
+
 void serial_printf(const char *format, ...);
 
 #ifdef __cplusplus

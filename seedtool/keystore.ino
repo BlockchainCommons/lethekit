@@ -2,6 +2,18 @@
 
 #define HARDENED_INDEX 0x80000000
 
+Keystore::Keystore(void) {
+    // set default path for single native segwit key
+    set_derivation_path();
+}
+
+void Keystore::set_derivation_path(String path) {
+    derivation_path = path;
+}
+
+String Keystore::get_derivation_path(void) {
+    return derivation_path;
+}
 
 bool Keystore::update(uint8_t *seed, size_t len)
 {
@@ -12,8 +24,8 @@ bool Keystore::update(uint8_t *seed, size_t len)
     return true;
 }
 
-bool Keystore::get_xpub(const char *path, ext_key *root, ext_key *key_out)
-{
+bool Keystore::derivation_path_from_str(const char *path) {
+
     // source: https://github.com/micro-bitcoin/uBitcoin/blob/master/src/HDWallet.cpp
     static const char VALID_CHARS[] = "0123456789/'h";
     size_t len = strlen(path);
@@ -25,7 +37,7 @@ bool Keystore::get_xpub(const char *path, ext_key *root, ext_key *key_out)
     if(cur[len-1] == '/'){ // remove trailing "/"
         len--;
     }
-    size_t derivationLen = 1;
+    derivationLen = 1;
     // checking if all chars are valid and counting derivation length
     for(size_t i=0; i<len; i++){
         const char * pch = strchr(VALID_CHARS, cur[i]);
@@ -36,7 +48,7 @@ bool Keystore::get_xpub(const char *path, ext_key *root, ext_key *key_out)
             derivationLen++;
         }
     }
-    uint32_t * derivation = (uint32_t *)calloc(derivationLen, sizeof(uint32_t));
+    derivation = (uint32_t *)calloc(derivationLen, sizeof(uint32_t));
     size_t current = 0;
     for(size_t i=0; i<len; i++){
         if(cur[i] == '/'){ // next
@@ -55,7 +67,13 @@ bool Keystore::get_xpub(const char *path, ext_key *root, ext_key *key_out)
             derivation[current] += HARDENED_INDEX;
         }
     }
+    return true;
+}
 
+bool Keystore::get_xpub(const char *path, ext_key *root, ext_key *key_out)
+{
+    if (derivation_path_from_str(path) == false)
+        return false;
     res = bip32_key_from_parent_path(root, derivation, derivationLen, BIP32_FLAG_KEY_PRIVATE, key_out);
     if (res != WALLY_OK) {
         return false;
