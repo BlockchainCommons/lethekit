@@ -18,6 +18,8 @@ namespace userinterface_internal {
 
 UIState g_uistate;
 
+Network network = Network();
+
 String g_rolls;
 bool g_submitted;
 
@@ -32,8 +34,6 @@ int g_pos = 0;		// char position of cursor
 int g_scroll = 0;	// index of scrolled window
 
 int g_restore_slip39_selected;
-
-enum xpub_encoding_e xpub_encoding = BASE58;
 
 int const Y_MAX = 200;
 
@@ -53,6 +53,8 @@ int const YM_FMB9 = 2;	// y-margin
 int const W_FMB12 = 14;	// width
 int const H_FMB12 = 21;	// height
 int const YM_FMB12 = 4;	// y-margin
+
+bool clear_full_window = true;
 
 Point text_center(const char * txt) {
     int16_t tbx, tby; uint16_t tbw, tbh;
@@ -486,6 +488,69 @@ void generate_seed() {
     }
 }
 
+void set_network() {
+    int xoff = 5, yoff = 5;
+    String title = "Set network";
+    g_display->firstPage();
+    do
+    {
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
+
+        int xx = xoff;
+        int yy = yoff + (H_FSB9 + YM_FSB9);
+        g_display->setFont(&FreeSansBold9pt7b);
+        Point p = text_center(title.c_str());
+        g_display->setCursor(p.x, yy);
+        g_display->println(title);
+
+        yy += H_FSB9 + 2*YM_FSB9 + 15;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("A: Regtest");
+
+        yy += H_FSB9 + 2*YM_FSB9 + 5;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("B: Testnet");
+
+
+        yy += H_FSB9 + 2*YM_FSB9 + 5;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("C: Mainnet");
+
+        // bottom-relative position
+        xx = xoff + 2;
+        yy = Y_MAX - (H_FSB9) + 2;
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("*-Cancel");
+    }
+    while (g_display->nextPage());
+
+    char key;
+    do {
+        key = g_keypad.getKey();
+    } while (key == NO_KEY);
+    g_uistate = XPUB_MENU;
+    clear_full_window = false;
+    switch (key) {
+    case 'A':
+        network.set_network(REGTEST);
+        return;
+    case 'B':
+        network.set_network(TESTNET);
+        return;
+    case 'C':
+        network.set_network(MAINNET);
+        return;
+    case '*':
+        return;
+    default:
+        g_uistate = SET_NETWORK;
+        break;
+    }
+}
+
 void seedy_menu() {
     int xoff = 16;
     int yoff = 10;
@@ -513,6 +578,11 @@ void seedy_menu() {
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         g_display->println("C - Display XPUB");
+        yy += H_FSB9 + 2*YM_FSB9;
+        g_display->setCursor(xx, yy);
+        g_display->println("D - Display seed");
+        yy += H_FSB9 + 2*YM_FSB9;
+        // TODO: Wipe seed will probably be in Display Seed
 
         yy = 190; // Absolute, stuck to bottom
         g_display->setFont(&FreeSansBold9pt7b);
@@ -535,13 +605,16 @@ void seedy_menu() {
             g_uistate = CONFIG_SLIP39;
             return;
         case 'C':
-            ui_reset_into_state(SEEDLESS_MENU);
-            g_uistate = SEEDLESS_MENU;
-            return;
-        case 'D':
-            ui_reset_into_state(XPUB_MENU);
+            clear_full_window = false;
             g_uistate = XPUB_MENU;
             return;
+        case 'D':
+            // @TODO
+            break;
+        case '*':
+           ui_reset_into_state(SEEDLESS_MENU);
+           g_uistate = SEEDLESS_MENU;
+           return;
         default:
             break;
         }
@@ -1811,22 +1884,20 @@ void display_xpub(void) {
           g_display->setCursor(p.x, yy);
           g_display->println(title);
 
-          switch(xpub_encoding) {
+          switch(keystore.get_xpub_format()) {
             case BASE58:
                 g_display->setFont(&FreeMonoBold9pt7b);
                 g_display->setCursor(0, yy + 30);
                 g_display->println(xpub);
-                encoding_type = "Base58";
                 break;
             case QR_BASE58:
                 displayQR(xpub);
-                encoding_type = "QrBase58";
                 break;
             case UR:
-                encoding_type = "UR";
+                // @TODO
                 break;
             case QR_UR:
-                encoding_type = "QrUR";
+                // @TODO
                 break;
             default:
                 break;
@@ -1834,12 +1905,12 @@ void display_xpub(void) {
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);
-          String right_option = "Back #";
+          String right_option = "Done #";
           int x_r = text_right(right_option.c_str());
           g_display->setCursor(x_r, yy);
           g_display->println(right_option);
 
-          String left_option = encoding_type + " *";
+          String left_option = "Back *";
           g_display->setCursor(0, yy);
           g_display->println(left_option);
       }
@@ -1850,7 +1921,6 @@ void display_xpub(void) {
           key = g_keypad.getKey();
       } while (key == NO_KEY);
 
-      Serial.println("show_xpus saw " + String(key));
       switch (key) {
         case '#':
             g_uistate = SEEDY_MENU;
@@ -1860,10 +1930,8 @@ void display_xpub(void) {
             }
             return;
         case '*':
-            xpub_encoding = (xpub_encoding_e)((int)xpub_encoding + 1);
-            if ((int)xpub_encoding >= XPUB_ENCODINGS)
-                xpub_encoding = (xpub_encoding_e)0;
-            break;
+            g_uistate = XPUB_MENU;
+            return;
         default:
             break;
       }
@@ -1901,7 +1969,10 @@ void ui_reset_into_state(UIState state) {
 void ui_dispatch() {
     using namespace userinterface_internal;
 
-    full_window_clear();
+    if (clear_full_window) {
+        full_window_clear();
+        clear_full_window = true;
+    }
 
     switch (g_uistate) {
     case SELF_TEST:
@@ -1945,6 +2016,12 @@ void ui_dispatch() {
         break;
     case DERIVATION_PATH:
         derivation_path();
+        break;
+    case SET_NETWORK:
+        set_network();
+        break;
+    case SET_XPUB_FORMAT:
+        set_xpub_format();
         break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));

@@ -5,6 +5,8 @@
 Keystore::Keystore(void) {
     // set default path for single native segwit key
     set_derivation_path();
+    // set default format as QR_BASE58
+    set_xpub_format();
 }
 
 void Keystore::set_derivation_path(String path) {
@@ -80,4 +82,25 @@ bool Keystore::get_xpub(const char *path, ext_key *root, ext_key *key_out)
     }
 
     return true;
+}
+
+void Keystore::set_xpub_format(xpub_encoding_e _format) {
+    format = _format;
+}
+
+xpub_encoding_e Keystore::get_xpub_format(void) {
+    return format;
+}
+
+String Keystore::get_xpub_format_as_string(void) {
+    switch(format) {
+        case BASE58:
+            return "base58";
+        case QR_BASE58:
+            return "qr-base58";
+        case UR:
+            return "ur";
+        case QR_UR:
+            return "qr_ur";
+    }
 }
