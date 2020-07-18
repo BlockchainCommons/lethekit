@@ -29,9 +29,25 @@ bool Keystore::update(uint8_t *seed, size_t len)
 bool Keystore::derivation_path_from_str(const char *path) {
 
     // source: https://github.com/micro-bitcoin/uBitcoin/blob/master/src/HDWallet.cpp
-    static const char VALID_CHARS[] = "0123456789/'h";
+    // char ' excluded as keypad will support only 'h'
+    static const char VALID_CHARS[] = "0123456789/h";
     size_t len = strlen(path);
     const char * cur = path;
+
+    // first check for weird char sequences
+    for (int i=0; i<len; i++) {
+        if(path[i] == '/'){
+            if (i+1 < len && (path[i+1] == 'h' || path[i+1] == '/')) {
+                // 'h' or '/' must not follow '/'
+                return false;
+            }
+            if (i+2 < len && path[i+1] == '0' && isDigit(path[i+2])) {
+                // e.g. /01 is invalid
+                return false;
+            }
+        }
+    }
+
     if(path[0] == 'm'){ // remove leading "m/"
         cur+=2;
         len-=2;
@@ -39,6 +55,7 @@ bool Keystore::derivation_path_from_str(const char *path) {
     if(cur[len-1] == '/'){ // remove trailing "/"
         len--;
     }
+
     derivationLen = 1;
     // checking if all chars are valid and counting derivation length
     for(size_t i=0; i<len; i++){
