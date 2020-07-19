@@ -475,7 +475,7 @@ void generate_seed() {
             g_submitted = true;
             serial_assert(!g_master_seed);
             g_master_seed = Seed::from_rolls(g_rolls);
-            keystore.update(g_master_seed->data, sizeof(g_master_seed->data));
+            keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data));
             g_master_seed->log();
             serial_assert(!g_bip39);
             g_bip39 = new BIP39Seq(g_master_seed);
@@ -1655,7 +1655,7 @@ void derivation_path(void) {
             break;
       }
 
-      if (keystore.get_xpub((path_start + path_entered).c_str(), &keystore.root, &xpubkey)) {
+      if (keystore.check_derivation_path((path_start + path_entered).c_str())) {
           path_is_valid = true;
       }
       else {
@@ -1828,7 +1828,6 @@ void xpub_menu(void) {
 
       clear_full_window = false;
       switch (key) {
-        //@FIXME: dont allow pressing keys when not on the right screen
         case '#':
             g_uistate = DISPLAY_XPUBS;
             return;
@@ -1863,8 +1862,8 @@ void display_xpub(void) {
     String derivation_path = keystore.get_derivation_path();
 
     // @FIXME: return value checks
-    (void)keystore.update(g_master_seed->data, sizeof(g_master_seed->data));
-    (void)keystore.get_xpub(derivation_path.c_str(), &keystore.root, &key);
+    (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data));
+    (void)keystore.get_xpub(&key);
 
     char *xpub = NULL;
     bip32_key_to_base58(&key, BIP32_FLAG_KEY_PUBLIC, &xpub);

@@ -17,7 +17,7 @@ String Keystore::get_derivation_path(void) {
     return derivation_path;
 }
 
-bool Keystore::update(uint8_t *seed, size_t len)
+bool Keystore::update_root_key(uint8_t *seed, size_t len)
 {
     res = bip32_key_from_seed(seed, len, BIP32_VER_MAIN_PRIVATE, 0, &root);
     if (res != WALLY_OK) {
@@ -26,7 +26,7 @@ bool Keystore::update(uint8_t *seed, size_t len)
     return true;
 }
 
-bool Keystore::derivation_path_from_str(const char *path) {
+bool Keystore::check_derivation_path(const char *path) {
 
     // source: https://github.com/micro-bitcoin/uBitcoin/blob/master/src/HDWallet.cpp
     // char ' excluded as keypad will support only 'h'
@@ -89,11 +89,11 @@ bool Keystore::derivation_path_from_str(const char *path) {
     return true;
 }
 
-bool Keystore::get_xpub(const char *path, ext_key *root, ext_key *key_out)
+bool Keystore::get_xpub(ext_key *key_out)
 {
-    if (derivation_path_from_str(path) == false)
+    if (check_derivation_path(derivation_path.c_str()) == false)
         return false;
-    res = bip32_key_from_parent_path(root, derivation, derivationLen, BIP32_FLAG_KEY_PRIVATE, key_out);
+    res = bip32_key_from_parent_path(&root, derivation, derivationLen, BIP32_FLAG_KEY_PRIVATE, key_out);
     if (res != WALLY_OK) {
         return false;
     }
@@ -101,11 +101,11 @@ bool Keystore::get_xpub(const char *path, ext_key *root, ext_key *key_out)
     return true;
 }
 
-void Keystore::set_xpub_format(xpub_encoding_e _format) {
+void Keystore::set_xpub_format(xpubEnc _format) {
     format = _format;
 }
 
-xpub_encoding_e Keystore::get_xpub_format(void) {
+xpubEnc Keystore::get_xpub_format(void) {
     return format;
 }
 

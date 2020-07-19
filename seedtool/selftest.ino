@@ -442,7 +442,7 @@ bool test_slip39_invalid_share() {
     return true;
 }
 
-bool test_libwally(void) {
+bool test_bip32(void) {
     int res;
     ext_key root;
     // test vector from: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#test-vector-1
@@ -451,24 +451,42 @@ bool test_libwally(void) {
 
     res = wally_init(0);
     if (res != WALLY_OK) {
-        serial_printf("test_libwally init failed\n");
+        serial_printf("test_bip32 libwally init failed\n");
         return false;
     }
 
     res = bip32_key_from_seed(seed, sizeof(seed), BIP32_VER_MAIN_PRIVATE, 0, &root);
     if (res != WALLY_OK) {
-        serial_printf("test_libwally bip32 failed\n");
+        serial_printf("test_bip32 bip32 failed\n");
         return false;
     }
 
     char *xprv = NULL;
     res = bip32_key_to_base58(&root, BIP32_FLAG_KEY_PRIVATE, &xprv);
     if (res != WALLY_OK) {
-        serial_printf("test_libwally base58 failed\n");
+        serial_printf("test_bip32 base58 failed\n");
         return false;
     }
     if (strcmp(xprv, expected_xprv) != 0) {
-        serial_printf("test_libwally xprv derivation failed\n");
+        serial_printf("test_bip32 xprv derivation failed\n");
+        return false;
+    }
+    wally_free_string(xprv);
+
+    // The last example in #test-vector-1:
+    const char *derivation_path = "m/0h/1/2h/2/1000000000";
+    const char * expected_xpub = "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy";
+    ext_key key;
+    char *xpub = NULL;
+    Keystore keystore = Keystore();
+    keystore.update_root_key(seed, sizeof(seed));
+    keystore.set_derivation_path(derivation_path);
+    keystore.get_xpub(&key);
+
+    bip32_key_to_base58(&key, BIP32_FLAG_KEY_PUBLIC, &xpub); // todo put into keystore
+
+    if (strcmp(xpub, expected_xpub) != 0) {
+        serial_printf("test_bip32 xpub derivation failed\n");
         return false;
     }
 
@@ -503,7 +521,7 @@ selftest_t g_selftests[] =
  { "SLIP39 extra val", test_slip39_extra_valid_share },
  { "SLIP39 extra dup", test_slip39_extra_dup_share },
  { "SLIP39 inv share", test_slip39_invalid_share },
- { "Libwally", test_libwally },
+ { "BIP32", test_bip32 },
  // |--------------|
 };
 
