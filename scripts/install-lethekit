@@ -73,6 +73,7 @@ gxepd2_path="${aroot}/libraries/GxEPD2"
 declare -a libs=(
     secp256k1-embedded
     libwally-embedded
+    bc-bytewords
     bc-crypto-base
     bc-shamir
     bc-slip39
