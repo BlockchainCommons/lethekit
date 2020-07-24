@@ -48,6 +48,7 @@ This table below also establishes provenance (repository of origin, permalink, a
 | bip39 | [https://github.com/ksedgwic/bip39](https://github.com/ksedgwic/bip39) | 9b8fa3c7d145c39558c2534f6cf40879477d93a1 | 2018 Chris Howe | [MIT License](https://github.com/ksedgwic/bip39/blob/master/LICENSE) |
 | TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4- | [https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-](https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-) | 17d5e36cd922ce7df8047d9c89633dca9b5ae122 | 2019 Ron Sutton | [MIT License](https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-/blob/master/LICENSE.txt) |
 | libwally-core | [https://github.com/ElementsProject/libwally-core](https://github.com/ElementsProject/libwally-core) | e0d0634aea716d813744326ea6c7590eb9fc381c | Jon Griffiths (Blockstream) 2016 | [BSD/MIT license](https://github.com/ElementsProject/libwally-core/blob/master/LICENSE) |
+| Library-arduino-cbor | [https://github.com/jjtara/Library-Arduino-Cbor](https://github.com/jjtara/Library-Arduino-Cbor) | 996bf4a853513ee1fb94286691209a067c915bfb | jjtara 20014 | [Apache license](https://github.com/jjtara/Library-Arduino-Cbor/blob/master/LICENSE) |
 
 ### Dependencies
 

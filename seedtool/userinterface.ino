@@ -13,6 +13,7 @@
 #include "selftest.h"	// Used to fetch dummy data for UI testing.
 #include "util.h"
 #include "qrcode.h"
+#include "ur.h"
 
 namespace userinterface_internal {
 
@@ -1719,7 +1720,12 @@ void set_xpub_format() {
     case 'B':
         keystore.set_xpub_format(BASE58);
         return;
-    // @TODO UR and QR-UR
+    case 'C':
+        keystore.set_xpub_format(QR_UR);
+        return;
+    case 'D':
+        keystore.set_xpub_format(UR);
+        return;
     case '*':
         return;
     default:
@@ -1858,6 +1864,8 @@ void xpub_menu(void) {
 
 void display_xpub(void) {
     ext_key key;
+    uint8_t cbor_xpub[50];
+    String ur_string;
     String encoding_type;
     String derivation_path = keystore.get_derivation_path();
 
@@ -1867,6 +1875,9 @@ void display_xpub(void) {
 
     char *xpub = NULL;
     bip32_key_to_base58(&key, BIP32_FLAG_KEY_PUBLIC, &xpub);
+
+    //size_t cbor_size = cbor_encode((uint8_t *)key.pub_key, sizeof(key.pub_key), cbor_xpub, sizeof(cbor_xpub));
+    //(void)ur_encode("bytes", cbor_xpub, cbor_size, ur_string);
 
     while (true) {
       g_display->firstPage();
@@ -1924,12 +1935,14 @@ void display_xpub(void) {
         case '#':
             g_uistate = SEEDY_MENU;
             if (xpub != NULL) {
-              free(xpub);
-              xpub = NULL;
+              wally_free_string(xpub);
             }
             return;
         case '*':
             g_uistate = XPUB_MENU;
+            if (xpub != NULL) {
+              wally_free_string(xpub);
+            }
             return;
         default:
             break;

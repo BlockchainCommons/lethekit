@@ -522,6 +522,7 @@ selftest_t g_selftests[] =
  { "SLIP39 extra dup", test_slip39_extra_dup_share },
  { "SLIP39 inv share", test_slip39_invalid_share },
  { "BIP32", test_bip32 },
+ { "CBOR", test_cbor },
  // |--------------|
 };
 
