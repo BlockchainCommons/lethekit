@@ -479,10 +479,16 @@ bool test_bip32(void) {
     ext_key key;
     char *xpub = NULL;
     Keystore keystore = Keystore();
-    keystore.update_root_key(seed, sizeof(seed));
-    keystore.set_derivation_path(derivation_path);
-    keystore.get_xpub(&key);
 
+    keystore.update_root_key(seed, sizeof(seed));
+
+    bool retval = keystore.save_derivation_path(derivation_path);
+    if (retval == false) {
+        Serial.println("save derivation path failed");
+        return false;
+    }
+
+    keystore.get_xpub(&key);
     bip32_key_to_base58(&key, BIP32_FLAG_KEY_PUBLIC, &xpub); // todo put into keystore
 
     if (strcmp(xpub, expected_xpub) != 0) {
@@ -522,7 +528,7 @@ selftest_t g_selftests[] =
  { "SLIP39 extra dup", test_slip39_extra_dup_share },
  { "SLIP39 inv share", test_slip39_invalid_share },
  { "BIP32", test_bip32 },
- { "CBOR", test_cbor },
+ { "UR", test_ur },
  // |--------------|
 };
 

@@ -6,12 +6,61 @@
 #include "bc-bytewords.h"
 #include "CborEncoder.h"
 #include "wally_core.h"
+#include "crc32.h"
+#include "wally_bip32.h"
+#include "keystore.h"
+#include "network.h"
 
 // source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md
 //         f68d54efd0cf6f9943801412e273167c558c8189 (Single part UR only)
 
+size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint=0) {
 
-size_t ur_encode_crypto_seed(uint8_t *seed, size_t len, uint8_t **buff_out, uint32_t *unix_timestamp=NULL) {
+    CborDynamicOutput output;
+    CborWriter writer(output);
+
+    writer.writeMap(4);
+    writer.writeInt(3);
+    writer.writeBytes(key->pub_key, sizeof(key->pub_key));
+    writer.writeInt(4);
+    writer.writeBytes(key->chain_code, sizeof(key->chain_code));
+    writer.writeInt(5);
+    writer.writeTag(305);
+      writer.writeMap(1);
+      writer.writeInt(2);
+      if (network.get_network() == MAINNET)
+        writer.writeInt(0);
+      else
+        writer.writeInt(1);
+    writer.writeInt(6);
+    // @FIXME write function:
+    writer.writeTag(304);
+    writer.writeMap(2);
+      writer.writeInt(1);
+      writer.writeArray(keystore.derivationLen*2);
+      uint32_t indx;
+      for (int i=0; i<keystore.derivationLen; i++) {
+        indx = keystore.derivation[i] & ~BIP32_INITIAL_HARDENED_CHILD;
+        writer.writeInt(indx);
+        if (keystore.is_bip32_indx_hardened(keystore.derivation[i])) {
+          uint32_t cbor_true = 21;
+          writer.writeSpecial(cbor_true);
+        }
+        else {
+          uint32_t cbor_false = 20;
+          writer.writeSpecial(cbor_false);
+        }
+      }
+      writer.writeInt(2);
+      writer.writeInt(parent_fingerprint);
+
+    *buff_out = output.getData();
+
+    return output.getSize();
+
+}
+
+size_t cbor_encode_crypto_seed(uint8_t *seed, size_t len, uint8_t **buff_out, uint32_t *unix_timestamp=NULL) {
 
     CborDynamicOutput output;
     CborWriter writer(output);
@@ -39,7 +88,7 @@ bool ur_encode(String ur_type, uint8_t *cbor, uint32_t cbor_size, String &ur_str
     // Encode cbor payload as bytewords
     char *payload_bytewords = bytewords_encode(bw_minimal, cbor, cbor_size);
     if(payload_bytewords == NULL) {
-      Serial.println("ur_encode bytewords failed.\n");
+      Serial.println("ur_encode bytewords failed");
       return false;
     }
 
@@ -50,29 +99,92 @@ bool ur_encode(String ur_type, uint8_t *cbor, uint32_t cbor_size, String &ur_str
     return true;
 }
 
-bool test_cbor(void) {
-    // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-006-urtypes.md#exampletest-vector-1
-    uint8_t payload[] = {0xC7, 0x09, 0x85, 0x80, 0x12, 0x5E, 0x2A, 0xB0, 0x98, 0x12, 0x53, 0x46, 0x8B, 0x2D, 0xBC, 0x52};
-    uint32_t timestamp = 18394;
-    char *expected = "a20150c7098580125e2ab0981253468b2dbc5202d8641947da";
+bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords) {
+    bool retval;
+    ext_key xpub;
+    uint8_t *cbor_xpub = NULL;
+
+    retval = keystore.get_xpub(&xpub);
+    if (retval == false) {
+       return false;
+    }
+
+    size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub);
+    if (cbor_xpub_size == 0) {
+        return false;
+    }
+
+    retval = ur_encode("crypto-hdkey", cbor_xpub, cbor_xpub_size, xpub_bytewords);
+    if (retval == false) {
+        return false;
+    }
+
+    xpub_bytewords.toUpperCase();
+
+    // @FIXME: free also on premature exit
+    free(cbor_xpub);
+
+    return true;
+}
+
+bool test_ur(void) {
+
+    // source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-012-bytewords.md#exampletest-vector
     int ret;
-    uint8_t *cbor;
-    char *cbor_as_hex;
+    uint8_t seed[] = {0xd9, 0x01, 0x2c, 0xa2, 0x01, 0x50, 0xc7, 0x09, 0x85, 0x80, 0x12, 0x5e, 0x2a, 0xb0, 0x98,
+                                   0x12, 0x53, 0x46, 0x8b, 0x2d, 0xbc, 0x52, 0x02, 0xd8, 0x64, 0x19, 0x47, 0xda};
+    const char *seed_bytewords_expected = "taaddwoeadgdstasltlabghydrpfmkbggufgludprfgmaotpiecffltntddwgmrp";
 
-    size_t len = ur_encode_crypto_seed(payload, sizeof(payload), &cbor, &timestamp);
+    char *seed_bytewords = bytewords_encode(bw_minimal, seed, sizeof(seed));
 
-    ret = wally_hex_from_bytes(cbor, len, &cbor_as_hex);
+    if (strcmp(seed_bytewords_expected, seed_bytewords) != 0) {
+        Serial.println("bytewords failed");
+        return false;
+    }
+
+    // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-007-hdkey.md#exampletest-vector-2
+    char *path = "m/44h/1h/1h/0/1";
+    char *derived_key = "tpubDHW3GtnVrTatx38EcygoSf9UhUd9Dx1rht7FAL8unrMo8r2NWhJuYNqDFS7cZFVbDaxJkV94MLZAr86XFPsAPYcoHWJ7sWYsrmHDw5sKQ2K";
+    char *cbor_expected = ("a4035821026fe2355745bb2db3630bbc80ef5d58951c963c841f54170ba6e5c12be7fc12a6045820ced155c72456255881793514edc5"
+                           "bd9447e7f74abb88c6d6b6480fd016ee8c8505d90131a1020106d90130a2018a182cf501f501f500f401f4021ae9181cf3");
+    uint32_t parent_fingerprint = 3910671603;
+    ext_key xpub;
+    uint8_t *cbor_xpub;
+    String xpub_bytewords;
+
+    // STUB derivation path
+    keystore.save_derivation_path(path);
+
+    ret = bip32_key_from_base58(derived_key, &xpub);
     if (ret != WALLY_OK) {
-        Serial.println("libwally: hex_from_bytes failed");
+        Serial.println("bip32_key_from_base58 failed");
         return false;
     }
 
-    if (strcmp(expected, cbor_as_hex) != 0) {
-        serial_printf("test_cbor encodeing failed\n");
-        Serial.println(expected);
-        Serial.println(cbor_as_hex);
+    size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint);
+    if (cbor_xpub_size == 0) {
+        Serial.println("cbor_encode_hdkey_xpub failed");
         return false;
     }
+
+    bool retval = compare_bytes_with_hex(cbor_xpub, cbor_xpub_size, cbor_expected);
+    if (retval == false) {
+        Serial.println("key in cbor format does not match expected value");
+        return false;
+    }
+
+    retval = ur_encode("crypto-hdkey", cbor_xpub, cbor_xpub_size, xpub_bytewords);
+    if (retval == false) {
+        Serial.println("ur encode: crypto-hdkey failed");
+        return false;
+    }
+
+    // @FIXME: does not match with expected result
+    Serial.println(xpub_bytewords);
+    free(cbor_xpub);
+
+    // CLEAN STUB
+    keystore.save_derivation_path(keystore.default_derivation);
 
     return true;
 }

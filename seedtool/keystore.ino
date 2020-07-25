@@ -1,16 +1,16 @@
 #include "keystore.h"
 
+Keystore keystore = Keystore();
+
 #define HARDENED_INDEX 0x80000000
 
 Keystore::Keystore(void) {
+    derivation = NULL;
+    derivation_tmp = NULL;
     // set default path for single native segwit key
-    set_derivation_path();
+    save_derivation_path(default_derivation);
     // set default format as QR_BASE58
     set_xpub_format();
-}
-
-void Keystore::set_derivation_path(String path) {
-    derivation_path = path;
 }
 
 String Keystore::get_derivation_path(void) {
@@ -56,7 +56,7 @@ bool Keystore::check_derivation_path(const char *path) {
         len--;
     }
 
-    derivationLen = 1;
+    derivationLen_tmp = 1;
     // checking if all chars are valid and counting derivation length
     for(size_t i=0; i<len; i++){
         const char * pch = strchr(VALID_CHARS, cur[i]);
@@ -64,10 +64,12 @@ bool Keystore::check_derivation_path(const char *path) {
             return false;
         }
         if(cur[i] == '/'){
-            derivationLen++;
+            derivationLen_tmp++;
         }
     }
-    derivation = (uint32_t *)calloc(derivationLen, sizeof(uint32_t));
+    if (derivation_tmp)
+        free(derivation_tmp);
+    derivation_tmp = (uint32_t *)calloc(derivationLen_tmp, sizeof(uint32_t));
     size_t current = 0;
     for(size_t i=0; i<len; i++){
         if(cur[i] == '/'){ // next
@@ -76,23 +78,35 @@ bool Keystore::check_derivation_path(const char *path) {
         }
         const char * pch = strchr(VALID_CHARS, cur[i]);
         uint32_t val = pch-VALID_CHARS;
-        if(derivation[current] >= HARDENED_INDEX){ // can't have anything after hardened
-            free(derivation);
+        if(derivation_tmp[current] >= HARDENED_INDEX){ // can't have anything after hardened
+            free(derivation_tmp);
             return false;
         }
         if(val < 10){
-            derivation[current] = derivation[current]*10 + val;
+            derivation_tmp[current] = derivation_tmp[current]*10 + val;
         }else{ // h or ' -> hardened
-            derivation[current] += HARDENED_INDEX;
+            derivation_tmp[current] += HARDENED_INDEX;
         }
     }
     return true;
 }
 
+bool Keystore::save_derivation_path(const char *path) {
+      if (check_derivation_path(path) == false)
+        return false;
+      derivation_path = path;
+      derivationLen = derivationLen_tmp;
+      if (derivation)
+          free(derivation);
+      derivation = (uint32_t *)calloc(derivationLen, sizeof(uint32_t));
+      memcpy(derivation, derivation_tmp, derivationLen*sizeof(uint32_t));
+
+      return true;
+}
+
 bool Keystore::get_xpub(ext_key *key_out)
 {
-    if (check_derivation_path(derivation_path.c_str()) == false)
-        return false;
+
     res = bip32_key_from_parent_path(&root, derivation, derivationLen, BIP32_FLAG_KEY_PRIVATE, key_out);
     if (res != WALLY_OK) {
         return false;

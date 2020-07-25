@@ -19,4 +19,6 @@ class Network
     NetwtorkType _type;
 };
 
+extern Network network;
+
 #endif

@@ -26,11 +26,6 @@ class Keystore
     bool update_root_key(uint8_t *seed, size_t len);
 
     /**
-     * @brief  use when a new derivation path is enetered by user
-     */
-    void set_derivation_path(String path = "m/84h/1h/0h");
-
-    /**
      * @brief  read the last derivation path set/saved by user or default one
      *         if none entered yet
      */
@@ -50,6 +45,11 @@ class Keystore
     bool check_derivation_path(const char *path);
 
     /**
+     *  @brief checks derivation path and saves it
+     */
+    bool save_derivation_path(const char *path);
+
+    /**
      * @brief  save xpub format entered by user
      */
     void set_xpub_format(xpubEnc format=QR_BASE58);
@@ -66,13 +66,26 @@ class Keystore
      */
     String get_xpub_format_as_string(void);
 
+    /**
+     * @brief check if bip32 index is hardened
+     */
+    bool is_bip32_indx_hardened(uint32_t indx)  {
+        return (indx & BIP32_INITIAL_HARDENED_CHILD) >> 31;
+    };
+
+    size_t derivationLen;
+    uint32_t * derivation;
+    const char* default_derivation ="m/84h/1h/0h";
+
   private:
     ext_key root;
     int res;
     String derivation_path;
-    size_t derivationLen;
-    uint32_t * derivation;
+    size_t derivationLen_tmp;
+    uint32_t * derivation_tmp;
     xpubEnc format;
 };
+
+extern Keystore keystore;
 
 #endif

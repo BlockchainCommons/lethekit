@@ -1,5 +1,7 @@
 #include "network.h"
 
+Network network = Network();
+
 Network::Network(NetwtorkType network) {
    _type = network;
 }

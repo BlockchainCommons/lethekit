@@ -14,7 +14,7 @@
 bool ur_encode(String ur_type, uint8_t *cbor, uint32_t cbor_size, String &ur_string);
 
 
-bool test_cbor(void);
+bool test_ur(void);
 
 
 #endif
