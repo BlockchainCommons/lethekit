@@ -5,7 +5,7 @@
 #include "wally_core.h"
 #include "wally_bip32.h"
 
-//# of elements in xpub_encoding_e
+//# of elements in xpubEnc
 #define XPUB_ENCODINGS 4
 
 enum xpubEnc {

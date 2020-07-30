@@ -608,8 +608,9 @@ void seedy_menu() {
             g_uistate = XPUB_MENU;
             return;
         case 'D':
-            // @TODO
-            break;
+            clear_full_window = false;
+            g_uistate = SEED_MENU;
+            return;
         case '*':
            ui_reset_into_state(SEEDLESS_MENU);
            g_uistate = SEEDLESS_MENU;
@@ -1996,6 +1997,205 @@ void display_xpub(void) {
       }
     }
   }
+
+void seed_menu(void) {
+    int x_off = 5;
+    /* only 2 formats: UR and Qr_UR */
+    String seed_format[] = {"Qr-UR", "UR"};
+    Point p;
+    // @FIXME option should not be retained when entering from "Seed Present" menu
+    static unsigned int option_atm = 0;
+
+    int xx = 0;
+    String line = "___________";
+
+    UiOption options[] = {{"format", seed_format[(int)g_master_seed->display_format], "Change with A"},
+                          {"RAM", "Seed", "Wipe seed with A"}};
+
+    while (true) {
+
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          const char * title = "Seed Menu";
+          int yy = 25;
+          g_display->setFont(&FreeSansBold12pt7b);
+          p = text_center(title);
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+
+          yy = yy + 34;
+
+          p = text_center(line.c_str());
+          g_display->setCursor(p.x, yy);
+          display_printf("%s", line.c_str());
+
+          g_display->setFont(&FreeMonoBold9pt7b);
+          p = text_center(options[option_atm]._name.c_str());
+          xx = p.x;
+          g_display->setCursor(xx, yy);
+          display_printf("%s", options[option_atm]._name.c_str());
+
+          g_display->setFont(&FreeMonoBold12pt7b);
+          p = text_center(options[option_atm].value.c_str());
+          xx = p.x;
+          yy += 35;
+          g_display->setCursor(xx, yy);
+          display_printf("%s", options[option_atm].value.c_str());
+
+          g_display->setFont(&FreeMono9pt7b);
+          p = text_center(options[option_atm].tip.c_str());
+          xx = p.x;
+          yy += 27;
+          g_display->setCursor(xx, yy);
+          display_printf("%s", options[option_atm].tip.c_str());
+
+          yy += (H_FMB12 + YM_FMB12) -5;
+          g_display->setFont(&FreeMonoBold12pt7b);
+          p = text_center(line.c_str());
+          g_display->setCursor(p.x, yy);
+          xx = p.x;
+          display_printf("%s", line.c_str());
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "# Ok";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          String left_option = "Cancel *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+
+          g_display->setFont(&FreeMonoBold9pt7b);
+          yy -= 32;
+          right_option = "6 next ";
+          x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          if (option_atm < (ARRAY_SIZE(options) - 1))
+              g_display->println(right_option);
+
+          left_option = " prev 4";
+          g_display->setCursor(0, yy);
+          if (option_atm > 0)
+              g_display->println(left_option);
+
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      clear_full_window = false;
+      switch (key) {
+        case '#':
+            g_uistate = DISPLAY_SEED;
+            return;
+        case '*':
+            g_uistate = SEEDY_MENU;
+            return;
+        case 'A':
+              if (options[option_atm]._name == "RAM") {
+                  // @TODO wipe xpub
+                  ui_reset_into_state(SEEDLESS_MENU);
+                  g_uistate = SEEDLESS_MENU;
+                  return;
+              }
+              else if (options[option_atm]._name == "format") {
+                  if(g_master_seed->display_format == ur)
+                      g_master_seed->display_format = qr_ur;
+                  else
+                      g_master_seed->display_format = ur;
+                  options[0].value = seed_format[(int)g_master_seed->display_format];
+                  break;
+              }
+            break;
+        case '4':
+            if (option_atm > 0)
+                option_atm -= 1;
+            break;
+        case '6':
+            if (option_atm < (ARRAY_SIZE(options))-1)
+                option_atm += 1;
+            break;
+        default:
+            break;
+      }
+    }
+}
+
+void display_seed(void) {
+    uint8_t cbor_xpub[50];
+    String ur_string;
+
+    (void)ur_encode_crypto_seed(g_master_seed->data, sizeof(g_master_seed->data), ur_string);
+
+    while (true) {
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          const char * title = "Seed";
+          int yy = 25;
+          g_display->setFont(&FreeSansBold9pt7b);
+          Point p = text_center(title);
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+
+          switch(g_master_seed->display_format) {
+            case ur:
+                g_display->setFont(&FreeMonoBold9pt7b);
+                g_display->setCursor(0, yy + 40);
+                g_display->println(ur_string);
+                break;
+            case qr_ur:
+                displayQR((char *)ur_string.c_str());
+                break;
+            default:
+                break;
+          }
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "# Done";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          String left_option = "Back *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      switch (key) {
+        case '#':
+            g_uistate = SEEDY_MENU;
+            return;
+        case '*':
+            g_uistate = SEED_MENU;
+            return;
+        default:
+            break;
+      }
+    }
+  }
+
 } // namespace userinterface_internal
 
 void ui_reset_into_state(UIState state) {
@@ -2081,6 +2281,12 @@ void ui_dispatch() {
         break;
     case SET_XPUB_FORMAT:
         set_xpub_format();
+        break;
+    case SEED_MENU:
+        seed_menu();
+        break;
+    case DISPLAY_SEED:
+        display_seed();
         break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));

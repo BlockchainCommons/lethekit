@@ -7,9 +7,16 @@
 
 #include <bc-bip39.h>
 
+enum format {
+  qr_ur,
+  ur
+};
+
 class Seed {
 public:
     static size_t const SIZE = 16;
+
+    enum format display_format = qr_ur;
 
     static Seed * from_rolls(String const & rolls);
 

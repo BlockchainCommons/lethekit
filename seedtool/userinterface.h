@@ -21,6 +21,8 @@ enum UIState {
     DERIVATION_PATH,
     SET_NETWORK,
     SET_XPUB_FORMAT,
+    SEED_MENU,
+    DISPLAY_SEED
 };
 
 extern void ui_reset_into_state(UIState state);

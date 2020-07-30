@@ -127,6 +127,28 @@ bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords) {
     return true;
 }
 
+bool ur_encode_crypto_seed(uint8_t *seed, size_t seed_len, String &seed_bytewords) {
+    bool retval;
+    uint8_t *cbor_seed = NULL;
+
+    size_t cbor_seed_size = cbor_encode_crypto_seed(seed, seed_len, &cbor_seed);
+    if (cbor_seed_size == 0) {
+        return false;
+    }
+
+    retval = ur_encode("crypto-seed", cbor_seed, cbor_seed_size, seed_bytewords);
+    if (retval == false) {
+        return false;
+    }
+
+    seed_bytewords.toUpperCase();
+
+    // @FIXME: free also on premature exit
+    free(cbor_seed);
+
+    return true;
+}
+
 bool test_ur(void) {
 
     // source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-012-bytewords.md#exampletest-vector
