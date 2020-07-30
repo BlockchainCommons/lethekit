@@ -1865,7 +1865,10 @@ void display_xpub(void) {
     uint8_t cbor_xpub[50];
     String ur_string, bytewords_string;
     String encoding_type;
+    const int nrows = 5;
+    int scroll = 0;
     String derivation_path = keystore.get_derivation_path();
+    int scroll_strlen = 0;
 
     // @FIXME: return value checks
     (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data));
@@ -1900,11 +1903,36 @@ void display_xpub(void) {
             case QR_BASE58:
                 displayQR(xpub);
                 break;
-            case UR:
-                // @FIXME: scroll text
+            case UR: {
+                int xx = 0;
+                yy = 50;
                 g_display->setFont(&FreeMonoBold9pt7b);
-                g_display->setCursor(0, yy + 30);
-                g_display->println(bytewords_string);
+                g_display->setCursor(0, yy);
+                int16_t tbx, tby; uint16_t tbw, tbh;
+                int i = 0;
+
+                if (scroll_strlen == 0) {
+                    // determine the number of chars that fit into display width
+                    for (; i < bytewords_string.length(); i++) {
+                        g_display->getTextBounds(bytewords_string.substring(0, i), 0, 0, &tbx, &tby, &tbw, &tbh);
+                        if (tbw >= g_display->width() - 10) {
+                            scroll_strlen = bytewords_string.substring(0, i).length();
+                            break;
+                        }
+                      }
+                    }
+                    if ((scroll)*scroll_strlen >= bytewords_string.length()) {
+                        // don't scroll to infinity
+                        scroll--;
+                    }
+
+                    for (int k = 0; k < nrows; ++k) {
+                        int wndx = scroll + k;
+                        g_display->setCursor(xx, yy);
+                        display_printf("%s", bytewords_string.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
+                        yy += H_FMB12 + YM_FMB12;
+                    }
+                }
                 break;
             case QR_UR:
                 displayQR((char *)bytewords_string.c_str());
@@ -1915,7 +1943,7 @@ void display_xpub(void) {
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);
-          String right_option = "Done #";
+          String right_option = "# Done";
           int x_r = text_right(right_option.c_str());
           g_display->setCursor(x_r, yy);
           g_display->println(right_option);
@@ -1923,6 +1951,18 @@ void display_xpub(void) {
           String left_option = "Back *";
           g_display->setCursor(0, yy);
           g_display->println(left_option);
+
+         if (scroll_strlen > 0) {
+             yy = 195 - 20;
+             g_display->setCursor(0, yy);
+             left_option = "   Up 1";
+             g_display->println(left_option);
+
+             right_option = "7 Down   ";
+             x_r = text_right(right_option.c_str());
+             g_display->setCursor(x_r, yy);
+             g_display->println(right_option);
+         }
       }
       while (g_display->nextPage());
 
@@ -1944,6 +1984,13 @@ void display_xpub(void) {
               wally_free_string(xpub);
             }
             return;
+        case '1':
+            if (scroll > 0)
+                scroll -= 1;
+            break;
+        case '7':
+            scroll += 1;
+            break;
         default:
             break;
       }
