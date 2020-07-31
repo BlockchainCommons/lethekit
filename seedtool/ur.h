@@ -13,7 +13,7 @@
  */
 bool ur_encode(String ur_type, uint8_t *cbor, uint32_t cbor_size, String &ur_string);
 bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords);
-bool ur_encode_crypto_seed(uint8_t *seed, size_t seed_len, String &seed_bytewords);
+bool ur_encode_crypto_seed(uint8_t *seed, size_t seed_len, String &seed_bytewords, uint32_t *unix_timestamp=NULL);
 
 bool test_ur(void);
 
