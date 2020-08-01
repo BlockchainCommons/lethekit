@@ -448,7 +448,7 @@ bool test_bip32(void) {
     ext_key root;
     // test vector from: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#test-vector-1
     uint8_t seed[] ={0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
-    const char* expected_xprv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi";
+    String expected_xprv = F("xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi");
 
     res = wally_init(0);
     if (res != WALLY_OK) {
@@ -468,36 +468,36 @@ bool test_bip32(void) {
         serial_printf("test_bip32 base58 failed\n");
         return false;
     }
-    if (strcmp(xprv, expected_xprv) != 0) {
+    if (strcmp(xprv, expected_xprv.c_str()) != 0) {
         serial_printf("test_bip32 xprv derivation failed\n");
         return false;
     }
     wally_free_string(xprv);
 
     // The last example in #test-vector-1:
-    const char *derivation_path = "m/0h/1/2h/2/1000000000";
-    const char * expected_xpub = "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy";
+    String derivation_path = F("m/0h/1/2h/2/1000000000");
+    String expected_xpub = F("xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy");
     ext_key key;
     char *xpub = NULL;
     Keystore keystore = Keystore();
 
     keystore.update_root_key(seed, sizeof(seed));
 
-    bool retval = keystore.save_derivation_path(derivation_path);
+    bool retval = keystore.save_derivation_path(derivation_path.c_str());
     if (retval == false) {
-        Serial.println("save derivation path failed");
+        Serial.println(F("save derivation path failed"));
         return false;
     }
 
     keystore.get_xpub(&key);
     bip32_key_to_base58(&key, BIP32_FLAG_KEY_PUBLIC, &xpub); // todo put into keystore
 
-    if (strcmp(xpub, expected_xpub) != 0) {
+    if (strcmp(xpub, expected_xpub.c_str()) != 0) {
         serial_printf("test_bip32 xpub derivation failed\n");
         return false;
     }
 
-    wally_free_string(xprv);
+    wally_free_string(xpub);
     wally_cleanup(0);
     return true;
 }
@@ -511,9 +511,8 @@ selftest_t g_selftests[] =
 {
  // Max test name display length is ~16 chars.
  // |--------------|
- // @FIXME commenting out due to memory problems (malloc)
  { "SHA256", test_sha256 },
- { "seed generate", test_seed_generate }, /*
+ { "seed generate", test_seed_generate },
  { "BIP39 mnemonics", test_bip39_mnemonics },
  { "BIP39 generate", test_bip39_generate },
  { "BIP39 restore", test_bip39_restore },
@@ -528,7 +527,7 @@ selftest_t g_selftests[] =
  { "SLIP39 dup share", test_slip39_duplicate_share },
  { "SLIP39 extra val", test_slip39_extra_valid_share },
  { "SLIP39 extra dup", test_slip39_extra_dup_share },
- { "SLIP39 inv share", test_slip39_invalid_share }, */
+ { "SLIP39 inv share", test_slip39_invalid_share },
  { "BIP32", test_bip32 },
  { "UR", test_ur },
  // |--------------|

@@ -24,7 +24,7 @@ void print_hex(uint8_t *data, size_t len) {
   Serial.println("");
 }
 
-bool compare_bytes_with_hex(uint8_t *data, size_t len, char * hex) {
+bool compare_bytes_with_hex(uint8_t *data, size_t len, const char * hex) {
   bool ret;
   char *str = (char *)malloc(4*len);
 

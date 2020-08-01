@@ -146,7 +146,7 @@ bool ur_encode_crypto_seed(uint8_t *seed, size_t seed_len, String &seed_ur, uint
     seed_ur.toUpperCase();
 
     // @FIXME: free also on premature exit
-    free(cbor_seed);
+    //free(cbor_seed);
 
     return true;
 }
@@ -158,84 +158,84 @@ bool test_ur(void) {
         // source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-012-bytewords.md#exampletest-vector
         uint8_t seeds[] = {0xd9, 0x01, 0x2c, 0xa2, 0x01, 0x50, 0xc7, 0x09, 0x85, 0x80, 0x12, 0x5e, 0x2a, 0xb0, 0x98, 0x12,
                            0x53, 0x46, 0x8b, 0x2d, 0xbc, 0x52, 0x02, 0xd8, 0x64, 0x19, 0x47, 0xda};
-        const char *seed_bytewords_expected = "taaddwoeadgdstasltlabghydrpfmkbggufgludprfgmaotpiecffltntddwgmrp";
+        String seed_bytewords_expected = F("taaddwoeadgdstasltlabghydrpfmkbggufgludprfgmaotpiecffltntddwgmrp");
 
         char *seed_bytewords = bytewords_encode(bw_minimal, seeds, sizeof(seeds));
 
-        if (strcmp(seed_bytewords_expected, seed_bytewords) != 0) {
+        if (strcmp(seed_bytewords_expected.c_str(), seed_bytewords) != 0) {
             Serial.println("bytewords failed");
             return false;
         }
-
+    }
+    {
         // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-006-urtypes.md#exampletest-vector-1
         uint8_t payload[] = {0xC7, 0x09, 0x85, 0x80, 0x12, 0x5E, 0x2A, 0xB0, 0x98, 0x12, 0x53, 0x46, 0x8B, 0x2D, 0xBC, 0x52};
         uint32_t birthday = 18394;
-        String ur_expected = "UR:CRYPTO-SEED/OEADGDSTASLTLABGHYDRPFMKBGGUFGLUDPRFGMAOTPIECFFLTNLTQDENOS";
+        String ur_expected = F("UR:CRYPTO-SEED/OEADGDSTASLTLABGHYDRPFMKBGGUFGLUDPRFGMAOTPIECFFLTNLTQDENOS");
         String seed_ur;
 
         bool rval = ur_encode_crypto_seed(payload, sizeof(payload), seed_ur, &birthday);
         if (rval == false) {
-          Serial.println("ur_encode_crypto_seed fails");
+          Serial.println(F("ur_encode_crypto_seed fails"));
           return false;
         }
 
         if (seed_ur != ur_expected) {
-          Serial.println(seed_ur);
-          Serial.println("ur_encode_crypto_seed wrong");
+          //  Serial.println(seed_ur);
+          Serial.println(F("ur_encode_crypto_seed wrong"));
           return false;
         }
     }
+    {
+        // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-007-hdkey.md#exampletest-vector-2
+        String path = F("m/44h/1h/1h/0/1");
+        String derived_key = F("tpubDHW3GtnVrTatx38EcygoSf9UhUd9Dx1rht7FAL8unrMo8r2NWhJuYNqDFS7cZFVbDaxJkV94MLZAr86XFPsAPYcoHWJ7sWYsrmHDw5sKQ2K");
+        String cbor_expected = F("a4035821026fe2355745bb2db3630bbc80ef5d58951c963c841f54170ba6e5c12be7fc12a6045820ced155c72456255881793514edc5"
+                               "bd9447e7f74abb88c6d6b6480fd016ee8c8505d90131a1020106d90130a2018a182cf501f501f500f401f4021ae9181cf3");
+        String ur_expect = F("ur:crypto-hdkey/oxaxhdclaojlvoechgferkdpqdiabdrflawshlhdmdcemtfnlrctghchbdolvwsednvdzcbgolaahdcxtot"
+                             "tgostdkhfdahdlykkecbbweskrymwflvdylgerkloswtbrpfdbsticmwylkltahtaadehoyaoadamtaaddyoeadlecsdwykadyk"
+                             "adykaewkadwkaocywlcscewfiavorkat");
+        uint32_t parent_fingerprint = 3910671603;
+        ext_key xpub;
+        uint8_t *cbor_xpub;
+        String xpub_ur;
 
-    // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-007-hdkey.md#exampletest-vector-2
-    char *path = "m/44h/1h/1h/0/1";
-    char *derived_key = "tpubDHW3GtnVrTatx38EcygoSf9UhUd9Dx1rht7FAL8unrMo8r2NWhJuYNqDFS7cZFVbDaxJkV94MLZAr86XFPsAPYcoHWJ7sWYsrmHDw5sKQ2K";
-    char *cbor_expected = ("a4035821026fe2355745bb2db3630bbc80ef5d58951c963c841f54170ba6e5c12be7fc12a6045820ced155c72456255881793514edc5"
-                           "bd9447e7f74abb88c6d6b6480fd016ee8c8505d90131a1020106d90130a2018a182cf501f501f500f401f4021ae9181cf3");
-    String ur_expect = ("ur:crypto-hdkey/oxaxhdclaojlvoechgferkdpqdiabdrflawshlhdmdcemtfnlrctghchbdolvwsednvdzcbgolaahdcxtot"
-                         "tgostdkhfdahdlykkecbbweskrymwflvdylgerkloswtbrpfdbsticmwylkltahtaadehoyaoadamtaaddyoeadlecsdwykadyk"
-                         "adykaewkadwkaocywlcscewfiavorkat");
-    uint32_t parent_fingerprint = 3910671603;
-    ext_key xpub;
-    uint8_t *cbor_xpub;
-    String xpub_ur;
+        // STUB derivation path
+        keystore.save_derivation_path(path.c_str());
 
-    // STUB derivation path
-    keystore.save_derivation_path(path);
+        ret = bip32_key_from_base58(derived_key.c_str(), &xpub);
+        if (ret != WALLY_OK) {
+            Serial.println(F("bip32_key_from_base58 failed"));
+            return false;
+        }
 
-    ret = bip32_key_from_base58(derived_key, &xpub);
-    if (ret != WALLY_OK) {
-        Serial.println("bip32_key_from_base58 failed");
-        return false;
+        size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint);
+        if (cbor_xpub_size == 0) {
+            Serial.println(F("cbor_encode_hdkey_xpub failed"));
+            return false;
+        }
+
+        bool retval = compare_bytes_with_hex(cbor_xpub, cbor_xpub_size, cbor_expected.c_str());
+        if (retval == false) {
+            Serial.println(F("key in cbor format does not match expected value"));
+            return false;
+        }
+
+        retval = ur_encode("crypto-hdkey", cbor_xpub, cbor_xpub_size, xpub_ur);
+        if (retval == false) {
+            Serial.println(F("ur encode: crypto-hdkey failed"));
+            return false;
+        }
+
+        if (ur_expect != xpub_ur) {
+            Serial.println(F("ur encode: crypto-hdkey wrong"));
+            //Serial.println(xpub_ur);
+            return false;
+        }
+        free(cbor_xpub);
+
+        // CLEAN STUB
+        keystore.save_derivation_path(keystore.default_derivation);
     }
-
-    size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint);
-    if (cbor_xpub_size == 0) {
-        Serial.println("cbor_encode_hdkey_xpub failed");
-        return false;
-    }
-
-    bool retval = compare_bytes_with_hex(cbor_xpub, cbor_xpub_size, cbor_expected);
-    if (retval == false) {
-        Serial.println("key in cbor format does not match expected value");
-        return false;
-    }
-
-    retval = ur_encode("crypto-hdkey", cbor_xpub, cbor_xpub_size, xpub_ur);
-    if (retval == false) {
-        Serial.println("ur encode: crypto-hdkey failed");
-        return false;
-    }
-
-    if (ur_expect != xpub_ur) {
-        Serial.println("ur encode: crypto-hdkey wrong");
-        Serial.println(xpub_ur);
-        return false;
-    }
-    Serial.println(xpub_ur);
-    free(cbor_xpub);
-
-    // CLEAN STUB
-    keystore.save_derivation_path(keystore.default_derivation);
-
     return true;
 }

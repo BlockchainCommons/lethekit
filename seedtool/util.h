@@ -25,7 +25,7 @@ void serial_printf(const char *format, ...);
     } while (false)
 
 void print_hex(uint8_t *data, size_t len);
-bool compare_bytes_with_hex(uint8_t *data, size_t len, char * hex);
+bool compare_bytes_with_hex(uint8_t *data, size_t len, const char * hex);
 
 struct Point {
   int x;
