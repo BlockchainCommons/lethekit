@@ -481,7 +481,7 @@ bool test_bip32(void) {
     char *xpub = NULL;
     Keystore keystore = Keystore();
 
-    keystore.update_root_key(seed, sizeof(seed));
+    keystore.update_root_key(seed, sizeof(seed), MAINNET);
 
     bool retval = keystore.save_derivation_path(derivation_path.c_str());
     if (retval == false) {

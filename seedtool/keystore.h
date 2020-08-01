@@ -4,6 +4,7 @@
 #include "secp256k1.h"
 #include "wally_core.h"
 #include "wally_bip32.h"
+#include "network.h"
 
 //# of elements in xpubEnc
 #define XPUB_ENCODINGS 4
@@ -23,7 +24,7 @@ class Keystore
     /**
      * @brief  Whenever seed changes, call this to update bip32 root key
      */
-    bool update_root_key(uint8_t *seed, size_t len);
+    bool update_root_key(uint8_t *seed, size_t len, NetwtorkType network=network.get_network());
 
     /**
      * @brief  read the last derivation path set/saved by user or default one

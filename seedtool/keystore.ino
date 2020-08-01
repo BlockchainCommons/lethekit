@@ -17,9 +17,22 @@ String Keystore::get_derivation_path(void) {
     return derivation_path;
 }
 
-bool Keystore::update_root_key(uint8_t *seed, size_t len)
+bool Keystore::update_root_key(uint8_t *seed, size_t len, NetwtorkType network)
 {
-    res = bip32_key_from_seed(seed, len, BIP32_VER_MAIN_PRIVATE, 0, &root);
+    uint32_t version_code = BIP32_VER_TEST_PRIVATE;
+    switch(network) {
+        case REGTEST:
+        case TESTNET:
+            version_code = BIP32_VER_TEST_PRIVATE;
+            break;
+        case MAINNET:
+            version_code = BIP32_VER_MAIN_PRIVATE;
+            break;
+        default:
+            version_code = BIP32_VER_TEST_PRIVATE;
+    }
+
+    res = bip32_key_from_seed(seed, len, version_code, 0, &root);
     if (res != WALLY_OK) {
         return false;
     }

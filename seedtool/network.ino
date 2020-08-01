@@ -20,7 +20,6 @@ String Network::as_string() {
     }
 }
 
-
 void Network::set_network(NetwtorkType type) {
     _type = type;
 }

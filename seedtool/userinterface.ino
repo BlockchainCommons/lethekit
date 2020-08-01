@@ -535,12 +535,15 @@ void set_network() {
     switch (key) {
     case 'A':
         network.set_network(REGTEST);
+        (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data), network.get_network());
         return;
     case 'B':
         network.set_network(TESTNET);
+        (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data), network.get_network());
         return;
     case 'C':
         network.set_network(MAINNET);
+        (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data), network.get_network());
         return;
     case '*':
         return;
