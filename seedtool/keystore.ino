@@ -11,6 +11,7 @@ Keystore::Keystore(void) {
     save_derivation_path(default_derivation);
     // set default format as QR_BASE58
     set_xpub_format();
+    show_derivation_path = false;
 }
 
 String Keystore::get_derivation_path(void) {

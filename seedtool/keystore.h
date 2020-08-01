@@ -77,6 +77,8 @@ class Keystore
     size_t derivationLen;
     uint32_t * derivation;
     const char* default_derivation ="m/84h/1h/0h";
+    /* show xpub with derivation path (only for base58 format) */
+    bool show_derivation_path;
 
   private:
     ext_key root;

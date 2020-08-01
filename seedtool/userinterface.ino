@@ -473,10 +473,14 @@ void generate_seed() {
         case '#':
             g_submitted = true;
             serial_assert(!g_master_seed);
+            if (g_master_seed)
+                delete g_master_seed;
             g_master_seed = Seed::from_rolls(g_rolls);
             keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data));
             g_master_seed->log();
             serial_assert(!g_bip39);
+            if (g_bip39)
+                delete g_bip39;
             g_bip39 = new BIP39Seq(g_master_seed);
             digitalWrite(GREEN_LED, HIGH);		// turn on green LED
             g_uistate = DISPLAY_BIP39;
@@ -1739,7 +1743,6 @@ void set_xpub_format() {
 void xpub_menu(void) {
     int x_off = 5;
     bool option_slip132 = false;
-    bool option_deriv_path = false;
     Point p;
     // @FIXME option should not be retained when entering from "Seed Present" menu
     static unsigned int option_atm = 0;
@@ -1748,8 +1751,8 @@ void xpub_menu(void) {
     String line = "___________";
 
     UiOption options[] = {{"derivation", keystore.get_derivation_path(), "Change with A"},
-                          {"slip132",  "Off", "Change with A"},
-                          {"show derivation", "Off", "Change with A"},
+                          {"slip132",  "Off", "Todo"},
+                          {"show derivation", keystore.show_derivation_path ? "On" : "Off", "Change with A"},
                           {"network", network.as_string(), "Change with A",},
                           {"format", keystore.get_xpub_format_as_string(), "Change with A"}};
 
@@ -1845,7 +1848,8 @@ void xpub_menu(void) {
         case 'A':
               if (options[option_atm]._name == "derivation") { g_uistate = DERIVATION_PATH; return; }
               if (options[option_atm]._name == "slip132") { option_slip132 = !option_slip132; options[1].value = option_slip132 ? "On" : "Off"; break;}
-              if (options[option_atm]._name == "show derivation") { option_deriv_path = !option_deriv_path; options[2].value = option_deriv_path ? "On" : "Off"; break;}
+              if (options[option_atm]._name == "show derivation") {
+                  keystore.show_derivation_path = !keystore.show_derivation_path; options[2].value = keystore.show_derivation_path ? "On" : "Off"; break;}
               if (options[option_atm]._name == "network") { g_uistate = SET_NETWORK; return; }
               if (options[option_atm]._name == "format") {g_uistate = SET_XPUB_FORMAT; return;}
             break;
@@ -1902,10 +1906,24 @@ void display_xpub(void) {
             case BASE58:
                 g_display->setFont(&FreeMonoBold9pt7b);
                 g_display->setCursor(0, yy + 30);
-                g_display->println(xpub);
+                if (keystore.show_derivation_path) {
+                    char fingerprint[9] = {0};
+                    sprintf(fingerprint, "%02x%02x%02x%02x", key.hash160[0], key.hash160[1], key.hash160[2], key.hash160[3]);
+                    g_display->println("[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub));
+                }
+                else
+                    g_display->println(xpub);
                 break;
             case QR_BASE58:
-                displayQR(xpub);
+                if (keystore.show_derivation_path) {
+                    char fingerprint[9] = {0};
+                    sprintf(fingerprint, "%02x%02x%02x%02x", key.hash160[0], key.hash160[1], key.hash160[2], key.hash160[3]);
+                    String fing = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub);
+                    displayQR((char *)fing.c_str());
+                }
+                else {
+                    displayQR(xpub);
+                }
                 break;
             case UR: {
                 int xx = 0;
