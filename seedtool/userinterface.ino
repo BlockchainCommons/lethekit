@@ -540,14 +540,20 @@ void set_network() {
     case 'A':
         network.set_network(REGTEST);
         (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data), network.get_network());
+        if (keystore.is_standard_derivation_path())
+            keystore.save_standard_derivation_path(NULL, network.get_network());
         return;
     case 'B':
         network.set_network(TESTNET);
         (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data), network.get_network());
+        if (keystore.is_standard_derivation_path())
+            keystore.save_standard_derivation_path(NULL, network.get_network());
         return;
     case 'C':
         network.set_network(MAINNET);
         (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data), network.get_network());
+        if (keystore.is_standard_derivation_path())
+            keystore.save_standard_derivation_path(NULL, network.get_network());
         return;
     case '*':
         return;
@@ -1570,6 +1576,87 @@ void enter_share() {
 
 void derivation_path(void) {
 
+    int x_off = 5;
+
+    while (true) {
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          const char * title = "Choose derivation path";
+          int yy = 20;
+
+          g_display->setFont(&FreeSansBold9pt7b);
+          Point p = text_center(title);
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+
+          g_display->setFont(&FreeMonoBold9pt7b);
+          yy += 50;
+          g_display->setCursor(x_off, yy);
+          g_display->println("A: native segwit");
+
+          yy += 30;
+          g_display->setCursor(x_off, yy);
+          g_display->println("B: nested segwit");
+
+          yy += 30;
+          g_display->setCursor(x_off, yy);
+          g_display->println("C: custom");
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "Ok #";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          String left_option = "Cancel *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      switch (key) {
+        case '#':
+            g_uistate = XPUB_MENU;
+            return;
+        case '*':
+            g_uistate = XPUB_MENU;
+            return;
+        case 'A': {
+            stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
+            keystore.save_standard_derivation_path(&stdDer, network.get_network());
+            }
+            g_uistate = XPUB_MENU;
+            return;
+        case 'B': {
+            stdDerivation stdDer = SINGLE_NESTED_SEGWIT;
+            keystore.save_standard_derivation_path(&stdDer, network.get_network());
+            }
+            g_uistate = XPUB_MENU;
+            return;
+        case 'C':
+            // slip132 option is not available for custom derivation paths
+            keystore.slip132 = false;
+            g_uistate = CUSTOM_DERIVATION_PATH;
+            return;
+        default:
+            break;
+      }
+    }
+}
+
+void custom_derivation_path(void) {
+
     String path_start = "m/";
     String path_entered = "";
     int x_off = 5;
@@ -1656,7 +1743,7 @@ void derivation_path(void) {
                 path_entered.remove(path_entered.length()-1);
             break;
         case '*':
-            g_uistate = XPUB_MENU;
+            g_uistate = DERIVATION_PATH;
             return;
         default:
             break;
@@ -1742,7 +1829,6 @@ void set_xpub_format() {
 
 void xpub_menu(void) {
     int x_off = 5;
-    bool option_slip132 = false;
     Point p;
     // @FIXME option should not be retained when entering from "Seed Present" menu
     static unsigned int option_atm = 0;
@@ -1751,7 +1837,7 @@ void xpub_menu(void) {
     String line = "___________";
 
     UiOption options[] = {{"derivation", keystore.get_derivation_path(), "Change with A"},
-                          {"slip132",  "Off", "Todo"},
+                          {"slip132",  keystore.slip132 ? "On" : "Off", keystore.is_standard_derivation_path() == true ? "Change with A" : "Not available"},
                           {"show derivation", keystore.show_derivation_path ? "On" : "Off", "Change with A"},
                           {"network", network.as_string(), "Change with A",},
                           {"format", keystore.get_xpub_format_as_string(), "Change with A"}};
@@ -1846,12 +1932,21 @@ void xpub_menu(void) {
             g_uistate = SEEDY_MENU;
             return;
         case 'A':
-              if (options[option_atm]._name == "derivation") { g_uistate = DERIVATION_PATH; return; }
-              if (options[option_atm]._name == "slip132") { option_slip132 = !option_slip132; options[1].value = option_slip132 ? "On" : "Off"; break;}
-              if (options[option_atm]._name == "show derivation") {
-                  keystore.show_derivation_path = !keystore.show_derivation_path; options[2].value = keystore.show_derivation_path ? "On" : "Off"; break;}
-              if (options[option_atm]._name == "network") { g_uistate = SET_NETWORK; return; }
-              if (options[option_atm]._name == "format") {g_uistate = SET_XPUB_FORMAT; return;}
+              if (options[option_atm]._name == F("derivation")) { g_uistate = DERIVATION_PATH; return; }
+              if (options[option_atm]._name == F("slip132")) {
+                  if (keystore.is_standard_derivation_path() == true) {
+                      keystore.slip132 = !keystore.slip132; options[1].value = keystore.slip132 ? F("On") : F("Off");
+                      options[1].tip = "Change with A";
+                  }
+                  else {
+                    keystore.slip132 = false; options[1].value = F("Off"); options[1].tip = F("Not available");
+                  }
+                  break;
+              }
+              if (options[option_atm]._name == F("show derivation")) {
+                  keystore.show_derivation_path = !keystore.show_derivation_path; options[2].value = keystore.show_derivation_path ? F("On") : F("Off"); break;}
+              if (options[option_atm]._name == F("network")) { g_uistate = SET_NETWORK; return; }
+              if (options[option_atm]._name == F("format")) {g_uistate = SET_XPUB_FORMAT; return;}
             break;
         case '4':
             if (option_atm > 0)
@@ -1883,8 +1978,7 @@ void display_xpub(void) {
     (void)keystore.get_xpub(&key);
 
     char *xpub = NULL;
-    bip32_key_to_base58(&key, BIP32_FLAG_KEY_PUBLIC, &xpub);
-
+    (void)keystore.xpub_to_base58(&key, &xpub);
     (void)ur_encode_hd_pubkey_xpub(bytewords_string);
 
     while (true) {
@@ -2308,6 +2402,9 @@ void ui_dispatch() {
         break;
     case DISPLAY_SEED:
         display_seed();
+        break;
+    case CUSTOM_DERIVATION_PATH:
+        custom_derivation_path();
         break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));

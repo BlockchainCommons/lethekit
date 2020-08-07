@@ -8,10 +8,12 @@ Keystore::Keystore(void) {
     derivation = NULL;
     derivation_tmp = NULL;
     // set default path for single native segwit key
-    save_derivation_path(default_derivation);
+    stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
+    save_standard_derivation_path(&stdDer, network.get_network());
     // set default format as QR_BASE58
     set_xpub_format();
     show_derivation_path = false;
+    slip132 = false;
 }
 
 String Keystore::get_derivation_path(void) {
@@ -115,11 +117,45 @@ bool Keystore::save_derivation_path(const char *path) {
       derivation = (uint32_t *)calloc(derivationLen, sizeof(uint32_t));
       memcpy(derivation, derivation_tmp, derivationLen*sizeof(uint32_t));
 
+      standard_derivation_path = false;
+
       return true;
 }
 
-bool Keystore::get_xpub(ext_key *key_out)
-{
+bool Keystore::save_standard_derivation_path(stdDerivation *path, NetwtorkType network) {
+
+      String p;
+
+      if (path) {
+        if (*path == SINGLE_NATIVE_SEGWIT) {
+            p = F("m/84h/1h/0h");
+        }
+        else if (*path == SINGLE_NESTED_SEGWIT)
+            p = F("m/49h/1h/0h");
+      }
+      else {
+        if (standard_derivation_path == false)
+            return false;
+        p = get_derivation_path();
+      }
+
+      if (network == MAINNET)
+        p.setCharAt(6, '0');
+      else
+        p.setCharAt(6, '1');
+
+      bool ret = save_derivation_path(p.c_str());
+
+      standard_derivation_path = true;
+
+      return ret;
+}
+
+bool Keystore::is_standard_derivation_path(void) {
+    return standard_derivation_path;
+}
+
+bool Keystore::get_xpub(ext_key *key_out) {
 
     res = bip32_key_from_parent_path(&root, derivation, derivationLen, BIP32_FLAG_KEY_PRIVATE, key_out);
     if (res != WALLY_OK) {
@@ -127,6 +163,45 @@ bool Keystore::get_xpub(ext_key *key_out)
     }
 
     return true;
+}
+
+bool Keystore::xpub_to_base58(ext_key *key, char **output) {
+
+    int ret;
+    unsigned char bytes[BIP32_SERIALIZED_LEN];
+
+    if ((ret = bip32_key_serialize(key, BIP32_FLAG_KEY_PUBLIC, bytes, sizeof(bytes))))
+        return false;
+
+    if (slip132) {
+      switch(network.get_network()) {
+        case MAINNET:
+            if (standard_derivation_path == SINGLE_NATIVE_SEGWIT)
+                *((uint32_t *)bytes) = __builtin_bswap32(0x04b24746);
+            else if (standard_derivation_path == SINGLE_NESTED_SEGWIT)
+                *((uint32_t *)bytes) = __builtin_bswap32(0x049d7cb2);
+            break;
+        case TESTNET:
+        case REGTEST:
+            if (standard_derivation_path == SINGLE_NATIVE_SEGWIT)
+                *((uint32_t *)bytes) = __builtin_bswap32(0x045f1cf6);
+            else if (standard_derivation_path == SINGLE_NESTED_SEGWIT)
+                *((uint32_t *)bytes) = __builtin_bswap32(0x044a5262);
+            break;
+        default:
+            break;
+      }
+    }
+
+    ret = wally_base58_from_bytes(bytes, BIP32_SERIALIZED_LEN, BASE58_FLAG_CHECKSUM, output);
+
+    // clear
+    memset(bytes, 0, sizeof(bytes));
+
+    if (ret == WALLY_OK)
+        return true;
+    else
+        return false;
 }
 
 void Keystore::set_xpub_format(xpubEnc _format) {
