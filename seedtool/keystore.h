@@ -6,6 +6,8 @@
 #include "wally_bip32.h"
 #include "network.h"
 
+#define MAX_DERIVATION_PATH_LEN 10*sizeof(uint32_t)
+
 //# of elements in xpubEnc
 #define XPUB_ENCODINGS 4
 
@@ -98,7 +100,7 @@ class Keystore
     };
 
     size_t derivationLen;
-    uint32_t * derivation;
+    uint32_t derivation[MAX_DERIVATION_PATH_LEN];
     const char* default_derivation ="m/84h/1h/0h";
     /* show xpub with derivation path (only for base58 format) */
     bool show_derivation_path;
@@ -109,7 +111,7 @@ class Keystore
     int res;
     String derivation_path;
     size_t derivationLen_tmp;
-    uint32_t * derivation_tmp;
+    uint32_t derivation_tmp[MAX_DERIVATION_PATH_LEN];
     xpubEnc format;
     bool standard_derivation_path;
 };

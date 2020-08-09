@@ -146,7 +146,7 @@ bool ur_encode_crypto_seed(uint8_t *seed, size_t seed_len, String &seed_ur, uint
     seed_ur.toUpperCase();
 
     // @FIXME: free also on premature exit
-    //free(cbor_seed);
+    free(cbor_seed);
 
     return true;
 }
@@ -154,7 +154,7 @@ bool ur_encode_crypto_seed(uint8_t *seed, size_t seed_len, String &seed_ur, uint
 bool test_ur(void) {
 
     int ret;
-    {   // scope here, otherwise problems with RAM
+    {   // scope for every test case
         // source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-012-bytewords.md#exampletest-vector
         uint8_t seeds[] = {0xd9, 0x01, 0x2c, 0xa2, 0x01, 0x50, 0xc7, 0x09, 0x85, 0x80, 0x12, 0x5e, 0x2a, 0xb0, 0x98, 0x12,
                            0x53, 0x46, 0x8b, 0x2d, 0xbc, 0x52, 0x02, 0xd8, 0x64, 0x19, 0x47, 0xda};
@@ -166,6 +166,8 @@ bool test_ur(void) {
             Serial.println("bytewords failed");
             return false;
         }
+
+        free(seed_bytewords);
     }
     {
         // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-006-urtypes.md#exampletest-vector-1
@@ -235,7 +237,8 @@ bool test_ur(void) {
         free(cbor_xpub);
 
         // CLEAN STUB
-        keystore.save_derivation_path(keystore.default_derivation);
+        stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
+        keystore.save_standard_derivation_path(&stdDer, network.get_network());
     }
     return true;
 }

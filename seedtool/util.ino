@@ -26,20 +26,14 @@ void print_hex(uint8_t *data, size_t len) {
 
 bool compare_bytes_with_hex(uint8_t *data, size_t len, const char * hex) {
   bool ret;
-  char *str = (char *)malloc(4*len);
+  char str[3] = {0};
 
   for (int i=0; i < len; i++) {
-      sprintf(str + i*2, "%02x", data[i]);
+      sprintf(str, "%02x", data[i]);
+      if (memcmp(str, hex + 2*i, 2) != 0) {
+          return false;
+      }
   }
 
-  str[2*len] = 0;
-
-  if (strcmp(str, hex) == 0)
-    ret = true;
-  else
-    ret = false;
-
-  free(str);
-
-  return ret;
+  return true;
 }

@@ -5,8 +5,6 @@ Keystore keystore = Keystore();
 #define HARDENED_INDEX 0x80000000
 
 Keystore::Keystore(void) {
-    derivation = NULL;
-    derivation_tmp = NULL;
     // set default path for single native segwit key
     stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
     save_standard_derivation_path(&stdDer, network.get_network());
@@ -51,7 +49,7 @@ bool Keystore::check_derivation_path(const char *path) {
     const char * cur = path;
 
     // first check for weird char sequences
-    for (int i=0; i<len; i++) {
+    for (size_t i=0; i<len; i++) {
         if(path[i] == '/'){
             if (i+1 < len && (path[i+1] == 'h' || path[i+1] == '/')) {
                 // 'h' or '/' must not follow '/'
@@ -83,9 +81,12 @@ bool Keystore::check_derivation_path(const char *path) {
             derivationLen_tmp++;
         }
     }
-    if (derivation_tmp)
-        free(derivation_tmp);
-    derivation_tmp = (uint32_t *)calloc(derivationLen_tmp, sizeof(uint32_t));
+
+    if (derivationLen_tmp > MAX_DERIVATION_PATH_LEN)
+        return false;
+
+    memset(derivation_tmp, 0, MAX_DERIVATION_PATH_LEN);
+
     size_t current = 0;
     for(size_t i=0; i<len; i++){
         if(cur[i] == '/'){ // next
@@ -95,7 +96,6 @@ bool Keystore::check_derivation_path(const char *path) {
         const char * pch = strchr(VALID_CHARS, cur[i]);
         uint32_t val = pch-VALID_CHARS;
         if(derivation_tmp[current] >= HARDENED_INDEX){ // can't have anything after hardened
-            free(derivation_tmp);
             return false;
         }
         if(val < 10){
@@ -112,9 +112,11 @@ bool Keystore::save_derivation_path(const char *path) {
         return false;
       derivation_path = path;
       derivationLen = derivationLen_tmp;
-      if (derivation)
-          free(derivation);
-      derivation = (uint32_t *)calloc(derivationLen, sizeof(uint32_t));
+
+      if (derivationLen > MAX_DERIVATION_PATH_LEN)
+          return false;
+
+      memset(derivation, 0, MAX_DERIVATION_PATH_LEN);
       memcpy(derivation, derivation_tmp, derivationLen*sizeof(uint32_t));
 
       standard_derivation_path = false;
@@ -176,17 +178,21 @@ bool Keystore::xpub_to_base58(ext_key *key, char **output) {
     if (slip132) {
       switch(network.get_network()) {
         case MAINNET:
-            if (standard_derivation_path == SINGLE_NATIVE_SEGWIT)
-                *((uint32_t *)bytes) = __builtin_bswap32(0x04b24746);
-            else if (standard_derivation_path == SINGLE_NESTED_SEGWIT)
-                *((uint32_t *)bytes) = __builtin_bswap32(0x049d7cb2);
+            if (standard_derivation_path == SINGLE_NATIVE_SEGWIT) {
+                ((uint32_t *)bytes)[0] = __builtin_bswap32(0x04b24746);
+            }
+            else if (standard_derivation_path == SINGLE_NESTED_SEGWIT) {
+                ((uint32_t *)bytes)[0] = __builtin_bswap32(0x049d7cb2);
+            }
             break;
         case TESTNET:
         case REGTEST:
-            if (standard_derivation_path == SINGLE_NATIVE_SEGWIT)
+            if (standard_derivation_path == SINGLE_NATIVE_SEGWIT) {
                 *((uint32_t *)bytes) = __builtin_bswap32(0x045f1cf6);
-            else if (standard_derivation_path == SINGLE_NESTED_SEGWIT)
+            }
+            else if (standard_derivation_path == SINGLE_NESTED_SEGWIT) {
                 *((uint32_t *)bytes) = __builtin_bswap32(0x044a5262);
+            }
             break;
         default:
             break;
