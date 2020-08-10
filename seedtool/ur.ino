@@ -39,7 +39,7 @@ size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t 
       writer.writeInt(1);
       writer.writeArray(keystore.derivationLen*2);
       uint32_t indx;
-      for (int i=0; i<keystore.derivationLen; i++) {
+      for (size_t i=0; i<keystore.derivationLen; i++) {
         indx = keystore.derivation[i] & ~BIP32_INITIAL_HARDENED_CHILD;
         writer.writeInt(indx);
         if (keystore.is_bip32_indx_hardened(keystore.derivation[i])) {
@@ -54,7 +54,8 @@ size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t 
       writer.writeInt(2);
       writer.writeInt(parent_fingerprint);
 
-    *buff_out = output.getData();
+    *buff_out = (uint8_t *)malloc(output.getSize());
+    memcpy(*buff_out, output.getData(), output.getSize());
 
     return output.getSize();
 
@@ -78,7 +79,8 @@ size_t cbor_encode_crypto_seed(uint8_t *seed, size_t len, uint8_t **buff_out, ui
         writer.writeInt(*unix_timestamp);
     }
 
-    *buff_out = output.getData();
+    *buff_out = (uint8_t *)malloc(output.getSize());
+    memcpy(*buff_out, output.getData(), output.getSize());
 
     return output.getSize();
 }
@@ -183,7 +185,6 @@ bool test_ur(void) {
         }
 
         if (seed_ur != ur_expected) {
-          //  Serial.println(seed_ur);
           Serial.println(F("ur_encode_crypto_seed wrong"));
           return false;
         }

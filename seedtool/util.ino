@@ -14,7 +14,7 @@ void serial_printf(const char *format, ...) {
 
 void print_hex(uint8_t *data, size_t len) {
 
-  for (int i=0; i<len; i++) {
+  for (size_t i=0; i<len; i++) {
     if (data[i] < 16) {
       Serial.print("0");
     }
@@ -25,10 +25,9 @@ void print_hex(uint8_t *data, size_t len) {
 }
 
 bool compare_bytes_with_hex(uint8_t *data, size_t len, const char * hex) {
-  bool ret;
   char str[3] = {0};
 
-  for (int i=0; i < len; i++) {
+  for (size_t i=0; i < len; i++) {
       sprintf(str, "%02x", data[i]);
       if (memcmp(str, hex + 2*i, 2) != 0) {
           return false;

@@ -19,9 +19,9 @@
 namespace userinterface_internal {
 
 UIState g_uistate;
-
 String g_rolls;
 bool g_submitted;
+String g_error_string;
 
 Seed * g_master_seed = NULL;
 BIP39Seq * g_bip39 = NULL;
@@ -1577,6 +1577,7 @@ void enter_share() {
 void derivation_path(void) {
 
     int x_off = 5;
+    bool ret;
 
     while (true) {
       g_display->firstPage();
@@ -1634,13 +1635,21 @@ void derivation_path(void) {
             return;
         case 'A': {
             stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
-            keystore.save_standard_derivation_path(&stdDer, network.get_network());
+            ret = keystore.save_standard_derivation_path(&stdDer, network.get_network());
+            if (ret == false) {
+                g_uistate = ERROR_SCREEN;
+                return;
+              }
             }
             g_uistate = XPUB_MENU;
             return;
         case 'B': {
             stdDerivation stdDer = SINGLE_NESTED_SEGWIT;
-            keystore.save_standard_derivation_path(&stdDer, network.get_network());
+            ret = keystore.save_standard_derivation_path(&stdDer, network.get_network());
+            if (ret == false) {
+                g_uistate = ERROR_SCREEN;
+                return;
+              }
             }
             g_uistate = XPUB_MENU;
             return;
@@ -1662,7 +1671,6 @@ void custom_derivation_path(void) {
     int x_off = 5;
     bool path_is_valid = false;
     String is_valid_tip = "Invalid";
-    ext_key xpubkey;
 
     while (true) {
       g_display->firstPage();
@@ -1723,7 +1731,11 @@ void custom_derivation_path(void) {
       switch (key) {
         case '#':
             if (path_is_valid) {
-                keystore.save_derivation_path((path_start + path_entered).c_str());
+                bool ret = keystore.save_derivation_path((path_start + path_entered).c_str());
+                if (ret == false) {
+                    g_uistate = ERROR_SCREEN;
+                    return;
+                }
                 g_uistate = XPUB_MENU;
                 return;
             }
@@ -1828,7 +1840,6 @@ void set_xpub_format() {
 }
 
 void xpub_menu(void) {
-    int x_off = 5;
     Point p;
     // @FIXME option should not be retained when entering from "Seed Present" menu
     static unsigned int option_atm = 0;
@@ -1965,21 +1976,38 @@ void xpub_menu(void) {
 
 void display_xpub(void) {
     ext_key key;
-    uint8_t cbor_xpub[50];
     String ur_string, bytewords_string;
     String encoding_type;
     const int nrows = 5;
     int scroll = 0;
     String derivation_path = keystore.get_derivation_path();
     int scroll_strlen = 0;
+    bool ret;
 
-    // @FIXME: return value checks
-    (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data));
-    (void)keystore.get_xpub(&key);
+    ret = keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data));
+    if (ret == false) {
+        g_uistate = ERROR_SCREEN;
+        return;
+    }
+
+    ret = keystore.get_xpub(&key);
+    if (ret == false) {
+        g_uistate = ERROR_SCREEN;
+        return;
+    }
 
     char *xpub = NULL;
-    (void)keystore.xpub_to_base58(&key, &xpub);
-    (void)ur_encode_hd_pubkey_xpub(bytewords_string);
+    ret = keystore.xpub_to_base58(&key, &xpub);
+    if (ret == false) {
+        g_uistate = ERROR_SCREEN;
+        return;
+    }
+
+    ret = ur_encode_hd_pubkey_xpub(bytewords_string);
+    if (ret == false) {
+        g_uistate = ERROR_SCREEN;
+        return;
+    }
 
     while (true) {
       g_display->firstPage();
@@ -2025,7 +2053,7 @@ void display_xpub(void) {
                 g_display->setFont(&FreeMonoBold9pt7b);
                 g_display->setCursor(0, yy);
                 int16_t tbx, tby; uint16_t tbw, tbh;
-                int i = 0;
+                size_t i = 0;
 
                 if (scroll_strlen == 0) {
                     // determine the number of chars that fit into display width
@@ -2037,13 +2065,12 @@ void display_xpub(void) {
                         }
                       }
                     }
-                    if ((scroll)*scroll_strlen >= bytewords_string.length()) {
+                    if ((scroll)*scroll_strlen >= (int)bytewords_string.length()) {
                         // don't scroll to infinity
                         scroll--;
                     }
 
                     for (int k = 0; k < nrows; ++k) {
-                        int wndx = scroll + k;
                         g_display->setCursor(xx, yy);
                         display_printf("%s", bytewords_string.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
                         yy += H_FMB12 + YM_FMB12;
@@ -2114,7 +2141,6 @@ void display_xpub(void) {
   }
 
 void seed_menu(void) {
-    int x_off = 5;
     /* only 2 formats: UR and Qr_UR */
     String seed_format[] = {"Qr-UR", "UR"};
     Point p;
@@ -2247,10 +2273,13 @@ void seed_menu(void) {
 }
 
 void display_seed(void) {
-    uint8_t cbor_xpub[50];
     String ur_string;
 
-    (void)ur_encode_crypto_seed(g_master_seed->data, sizeof(g_master_seed->data), ur_string);
+    bool ret = ur_encode_crypto_seed(g_master_seed->data, sizeof(g_master_seed->data), ur_string);
+    if (ret == false) {
+        g_uistate = ERROR_SCREEN;
+        return;
+    }
 
     while (true) {
       g_display->firstPage();
@@ -2304,6 +2333,53 @@ void display_seed(void) {
             return;
         case '*':
             g_uistate = SEED_MENU;
+            return;
+        default:
+            break;
+      }
+    }
+  }
+
+void error_screen(void) {
+    while (true) {
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          const char * title = "Error!";
+          int yy = 30;
+          g_display->setFont(&FreeSansBold12pt7b);
+          Point p = text_center(title);
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+
+          if (g_error_string.length() > 0) {
+              g_display->setFont(&FreeMonoBold9pt7b);
+              g_display->setCursor(0, yy + 40);
+              g_display->println(g_error_string);
+          }
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "# Done";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      switch (key) {
+        case '#':
+            g_error_string = "";
+            g_uistate = SEEDLESS_MENU;
             return;
         default:
             break;
@@ -2405,6 +2481,9 @@ void ui_dispatch() {
         break;
     case CUSTOM_DERIVATION_PATH:
         custom_derivation_path();
+        break;
+    case ERROR_SCREEN:
+        error_screen();
         break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));

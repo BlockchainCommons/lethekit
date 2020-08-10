@@ -228,5 +228,7 @@ String Keystore::get_xpub_format_as_string(void) {
             return "ur";
         case QR_UR:
             return "qr_ur";
+        default:
+            return "qr_ur";
     }
 }

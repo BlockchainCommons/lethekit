@@ -24,6 +24,7 @@ enum UIState {
     SEED_MENU,
     DISPLAY_SEED,
     CUSTOM_DERIVATION_PATH,
+    ERROR_SCREEN
 };
 
 extern void ui_reset_into_state(UIState state);
