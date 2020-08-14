@@ -121,8 +121,6 @@ bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords) {
         return false;
     }
 
-    xpub_bytewords.toUpperCase();
-
     // @FIXME: free also on premature exit
     free(cbor_xpub);
 
@@ -144,8 +142,6 @@ bool ur_encode_crypto_seed(uint8_t *seed, size_t seed_len, String &seed_ur, uint
     if (retval == false) {
         return false;
     }
-
-    seed_ur.toUpperCase();
 
     // @FIXME: free also on premature exit
     free(cbor_seed);
@@ -175,7 +171,7 @@ bool test_ur(void) {
         // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-006-urtypes.md#exampletest-vector-1
         uint8_t payload[] = {0xC7, 0x09, 0x85, 0x80, 0x12, 0x5E, 0x2A, 0xB0, 0x98, 0x12, 0x53, 0x46, 0x8B, 0x2D, 0xBC, 0x52};
         uint32_t birthday = 18394;
-        String ur_expected = F("UR:CRYPTO-SEED/OEADGDSTASLTLABGHYDRPFMKBGGUFGLUDPRFGMAOTPIECFFLTNLTQDENOS");
+        String ur_expected = F("ur:crypto-seed/oeadgdstasltlabghydrpfmkbggufgludprfgmaotpiecffltnltqdenos");
         String seed_ur;
 
         bool rval = ur_encode_crypto_seed(payload, sizeof(payload), seed_ur, &birthday);

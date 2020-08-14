@@ -1976,7 +1976,7 @@ void xpub_menu(void) {
 
 void display_xpub(void) {
     ext_key key;
-    String ur_string, bytewords_string;
+    String ur_string;
     String encoding_type;
     const int nrows = 5;
     int scroll = 0;
@@ -2003,7 +2003,7 @@ void display_xpub(void) {
         return;
     }
 
-    ret = ur_encode_hd_pubkey_xpub(bytewords_string);
+    ret = ur_encode_hd_pubkey_xpub(ur_string);
     if (ret == false) {
         g_uistate = ERROR_SCREEN;
         return;
@@ -2057,28 +2057,29 @@ void display_xpub(void) {
 
                 if (scroll_strlen == 0) {
                     // determine the number of chars that fit into display width
-                    for (; i < bytewords_string.length(); i++) {
-                        g_display->getTextBounds(bytewords_string.substring(0, i), 0, 0, &tbx, &tby, &tbw, &tbh);
+                    for (; i < ur_string.length(); i++) {
+                        g_display->getTextBounds(ur_string.substring(0, i), 0, 0, &tbx, &tby, &tbw, &tbh);
                         if (tbw >= g_display->width() - 10) {
-                            scroll_strlen = bytewords_string.substring(0, i).length();
+                            scroll_strlen = ur_string.substring(0, i).length();
                             break;
                         }
                       }
                     }
-                    if ((scroll)*scroll_strlen >= (int)bytewords_string.length()) {
+                    if ((scroll)*scroll_strlen >= (int)ur_string.length()) {
                         // don't scroll to infinity
                         scroll--;
                     }
 
                     for (int k = 0; k < nrows; ++k) {
                         g_display->setCursor(xx, yy);
-                        display_printf("%s", bytewords_string.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
+                        display_printf("%s", ur_string.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
                         yy += H_FMB12 + YM_FMB12;
                     }
                 }
                 break;
             case QR_UR:
-                displayQR((char *)bytewords_string.c_str());
+                ur_string.toUpperCase();
+                displayQR((char *)ur_string.c_str());
                 break;
             default:
                 break;
@@ -2303,6 +2304,7 @@ void display_seed(void) {
                 g_display->println(ur_string);
                 break;
             case qr_ur:
+                ur_string.toUpperCase();
                 displayQR((char *)ur_string.c_str());
                 break;
             default:
