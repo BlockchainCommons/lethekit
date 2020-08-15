@@ -78,7 +78,7 @@ class Keystore
     /**
      * @brief  save xpub format entered by user
      */
-    void set_xpub_format(xpubEnc format=QR_BASE58);
+    void set_xpub_format(xpubEnc format=QR_UR);
 
     /**
      * @brief  get the last xpub format entered by user or default one if none

@@ -8,7 +8,7 @@ Keystore::Keystore(void) {
     // set default path for single native segwit key
     stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
     save_standard_derivation_path(&stdDer, network.get_network());
-    // set default format as QR_BASE58
+    // set default format as QR_UR
     set_xpub_format();
     show_derivation_path = false;
     slip132 = false;

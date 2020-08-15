@@ -1847,11 +1847,14 @@ void xpub_menu(void) {
     int xx = 0;
     String line = "___________";
 
-    UiOption options[] = {{"derivation", keystore.get_derivation_path(), "Change with A"},
-                          {"slip132",  keystore.slip132 ? "On" : "Off", keystore.is_standard_derivation_path() == true ? "Change with A" : "Not available"},
-                          {"show derivation", keystore.show_derivation_path ? "On" : "Off", "Change with A"},
-                          {"network", network.as_string(), "Change with A",},
-                          {"format", keystore.get_xpub_format_as_string(), "Change with A"}};
+    // when UR format, we hide options derivation path and slip132
+    bool is_UR_format = (keystore.get_xpub_format() == UR || keystore.get_xpub_format() == QR_UR);
+
+    UiOption options[] = {{"derivation", keystore.get_derivation_path(), "Change with A", true},
+                          {"slip132",  keystore.slip132 ? "On" : "Off", "Change with A", is_UR_format ? false : true},
+                          {"show derivation", keystore.show_derivation_path ? "On" : "Off", "Change with A", is_UR_format ? false : true},
+                          {"network", network.as_string(), "Change with A", true},
+                          {"format", keystore.get_xpub_format_as_string(), "Change with A", true}};
 
     while (true) {
 
@@ -1947,25 +1950,36 @@ void xpub_menu(void) {
               if (options[option_atm]._name == F("slip132")) {
                   if (keystore.is_standard_derivation_path() == true) {
                       keystore.slip132 = !keystore.slip132; options[1].value = keystore.slip132 ? F("On") : F("Off");
-                      options[1].tip = "Change with A";
-                  }
-                  else {
-                    keystore.slip132 = false; options[1].value = F("Off"); options[1].tip = F("Not available");
                   }
                   break;
               }
               if (options[option_atm]._name == F("show derivation")) {
                   keystore.show_derivation_path = !keystore.show_derivation_path; options[2].value = keystore.show_derivation_path ? F("On") : F("Off"); break;}
               if (options[option_atm]._name == F("network")) { g_uistate = SET_NETWORK; return; }
-              if (options[option_atm]._name == F("format")) {g_uistate = SET_XPUB_FORMAT; return;}
+              if (options[option_atm]._name == F("format")) {
+                     g_uistate = SET_XPUB_FORMAT;
+                     return;
+                 }
             break;
         case '4':
-            if (option_atm > 0)
-                option_atm -= 1;
+        {
+            for (int i = option_atm; i > 0; i--) {
+                if (options[i-1].show == true) {
+                    option_atm = i-1;
+                    break;
+                }
+            }
+        }
             break;
         case '6':
-            if (option_atm < (ARRAY_SIZE(options))-1)
-                option_atm += 1;
+        {
+            for (unsigned int i = option_atm; i < (ARRAY_SIZE(options))-1; i++) {
+                if (options[i+1].show == true) {
+                    option_atm = i+1;
+                    break;
+                }
+            }
+        }
             break;
         default:
             break;
@@ -2151,8 +2165,8 @@ void seed_menu(void) {
     int xx = 0;
     String line = "___________";
 
-    UiOption options[] = {{"format", seed_format[(int)g_master_seed->display_format], "Change with A"},
-                          {"RAM", "Seed", "Wipe seed with A"}};
+    UiOption options[] = {{"format", seed_format[(int)g_master_seed->display_format], "Change with A", true},
+                          {"RAM", "Seed", "Wipe seed with A", true}};
 
     while (true) {
 

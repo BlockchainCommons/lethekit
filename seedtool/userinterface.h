@@ -35,6 +35,7 @@ struct UiOption {
     String _name;
     String value;
     String tip;
+    bool show;
 };
 
 #endif // USERINTERFACE_H
