@@ -853,10 +853,75 @@ void config_slip39() {
     }
 }
 
+void set_slip39_format() {
+    int xoff = 5, yoff = 5;
+    String title = "Set format";
+    g_display->firstPage();
+    do
+    {
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
+
+        int xx = xoff;
+        int yy = yoff + (H_FSB9 + YM_FSB9);
+        g_display->setFont(&FreeSansBold9pt7b);
+        Point p = text_center(title.c_str());
+        g_display->setCursor(p.x, yy);
+        g_display->println(title);
+
+        yy += H_FSB9 + 2*YM_FSB9 + 15;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("A: Text");
+
+        yy += H_FSB9 + 2*YM_FSB9 + 5;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("B: UR");
+
+
+        yy += H_FSB9 + 2*YM_FSB9 + 5;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("C: QR-UR");
+
+        // bottom-relative position
+        xx = xoff + 2;
+        yy = Y_MAX - (H_FSB9) + 2;
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("*-Cancel");
+    }
+    while (g_display->nextPage());
+
+    char key;
+    do {
+        key = g_keypad.getKey();
+    } while (key == NO_KEY);
+    g_uistate = DISPLAY_SLIP39;
+    clear_full_window = false;
+    switch (key) {
+    case 'A':
+        g_slip39_generate->display_format = text;
+        return;
+    case 'B':
+        g_slip39_generate->display_format = ur;
+        return;
+    case 'C':
+        g_slip39_generate->display_format = qr_ur;
+        return;
+    case '*':
+        return;
+    default:
+        g_uistate = SET_SLIP39_FORMAT;
+        break;
+    }
+}
+
 void display_slip39() {
     int const nwords = SLIP39ShareSeq::WORDS_PER_SHARE;
     int sharendx = 0;
     int scroll = 0;
+    String ur_string;
+    bool retval;
 
     while (true) {
         int xoff = 12;
@@ -867,7 +932,6 @@ void display_slip39() {
         do
         {
             g_display->setPartialWindow(0, 0, 200, 200);
-            // g_display->fillScreen(GxEPD_WHITE);
             g_display->setTextColor(GxEPD_BLACK);
 
             int xx = xoff;
@@ -881,24 +945,79 @@ void display_slip39() {
             yy += 8;
 
             g_display->setFont(&FreeMonoBold12pt7b);
-            for (int rr = 0; rr < nrows; ++rr) {
-                int wndx = scroll + rr;
-                char const * word =
-                    g_slip39_generate->get_share_word(sharendx, wndx);
-                g_display->setCursor(xx, yy);
-                display_printf("%2d %s", wndx+1, word);
-                yy += H_FMB12 + YM_FMB12;
+
+            if (g_slip39_generate->display_format == text) {
+                for (int rr = 0; rr < nrows; ++rr) {
+                    int wndx = scroll + rr;
+                    char const * word =
+                        g_slip39_generate->get_share_word(sharendx, wndx);
+                    g_display->setCursor(xx, yy);
+                    display_printf("%2d %s", wndx+1, word);
+                    yy += H_FMB12 + YM_FMB12;
+                }
+            }
+            else if (g_slip39_generate->display_format == qr_ur) {
+                String ur;
+                retval = ur_encode_slip39_share(g_slip39_generate, sharendx, ur);
+                if (retval == false) {
+                    g_uistate = ERROR_SCREEN;
+                    return;
+                }
+                ur.toUpperCase();
+                displayQR((char *)ur.c_str());
+            }
+            else {
+                int xx = 0;
+                yy = 50;
+                g_display->setFont(&FreeMonoBold9pt7b);
+                g_display->setCursor(0, yy);
+
+                retval = ur_encode_slip39_share(g_slip39_generate, sharendx, ur_string);
+                if (retval == false) {
+                    g_uistate = ERROR_SCREEN;
+                    return;
+                }
+
+                // @FIXME write function dependent on font style and size
+                int scroll_strlen = 18;
+
+                if ((scroll)*scroll_strlen >= (int)ur_string.length()) {
+                    // don't scroll to infinity
+                    scroll--;
+                }
+
+                for (int k = 0; k < nrows; ++k) {
+                    g_display->setCursor(xx, yy);
+                    display_printf("%s", ur_string.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
+                    yy += H_FMB12 + YM_FMB12;
+                }
             }
 
-            // bottom-relative position
-            xx = xoff + 2;
-            yy = Y_MAX - (H_FSB9) + 2;
-            g_display->setFont(&FreeSansBold9pt7b);
-            g_display->setCursor(xx, yy);
+            yy = 195; // Absolute, stuck to bottom
+            g_display->setFont(&FreeMono9pt7b);
+
+            String right_option = "# Done";
             if (sharendx < (int)(g_slip39_generate->numshares()-1))
-                g_display->println("1,7-Up,Down #-Next");
-            else
-                g_display->println("1,7-Up,Down #-Done");
+                right_option = "# Next";
+            int x_r = text_right(right_option.c_str());
+            g_display->setCursor(x_r, yy);
+            g_display->println(right_option);
+
+            String left_option = "Back *";
+            g_display->setCursor(0, yy);
+            g_display->println(left_option);
+
+            yy -= 15;
+
+            right_option = "1Up/7Down";
+            x_r = text_right(right_option.c_str());
+            g_display->setCursor(x_r, yy);
+            if (g_slip39_generate->display_format != qr_ur)
+                g_display->println(right_option);
+
+            left_option = "Form A";
+            g_display->setCursor(0, yy);
+            g_display->println(left_option);
         }
         while (g_display->nextPage());
 
@@ -908,13 +1027,23 @@ void display_slip39() {
         } while (key == NO_KEY);
         Serial.println("display_slip39 saw " + String(key));
         switch (key) {
+        case 'A':
+            g_uistate = SET_SLIP39_FORMAT;
+            clear_full_window = false;
+            scroll = 0;
+            return;
         case '1':
             if (scroll > 0)
                 scroll -= 1;
             break;
         case '7':
-            if (scroll < (nwords - nrows))
-                scroll += 1;
+            if(g_slip39_generate->display_format == ur) {
+                scroll++;
+            }
+            else {
+                if (scroll < (nwords - nrows))
+                    scroll += 1;
+            }
             break;
         case '*':	// prev
             if (sharendx > 0) {
@@ -2500,6 +2629,9 @@ void ui_dispatch() {
         break;
     case ERROR_SCREEN:
         error_screen();
+        break;
+    case SET_SLIP39_FORMAT:
+        set_slip39_format();
         break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));

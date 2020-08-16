@@ -9,7 +9,8 @@
 
 enum format {
   qr_ur,
-  ur
+  ur,
+  text
 };
 
 class Seed {
@@ -69,6 +70,8 @@ class SLIP39ShareSeq {
 public:
     static size_t const MAX_SHARES = 16;
     static size_t const WORDS_PER_SHARE = 20;
+
+    enum format display_format = text;
 
     static bool verify_share_checksum(uint16_t const * share);
 
