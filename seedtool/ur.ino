@@ -137,10 +137,10 @@ bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords) {
     }
 
     uint32_t parent_fingerprint;
-    ((uint8_t *)&parent_fingerprint)[0] = xpub.parent160[0];
-    ((uint8_t *)&parent_fingerprint)[1] = xpub.parent160[1];
-    ((uint8_t *)&parent_fingerprint)[2] = xpub.parent160[2];
-    ((uint8_t *)&parent_fingerprint)[3] = xpub.parent160[3];
+    ((uint8_t *)&parent_fingerprint)[0] = xpub.parent160[3];
+    ((uint8_t *)&parent_fingerprint)[1] = xpub.parent160[2];
+    ((uint8_t *)&parent_fingerprint)[2] = xpub.parent160[1];
+    ((uint8_t *)&parent_fingerprint)[3] = xpub.parent160[0];
 
     size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint);
     if (cbor_xpub_size == 0) {

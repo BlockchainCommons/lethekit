@@ -115,6 +115,7 @@ class Keystore
     uint32_t derivation_tmp[MAX_DERIVATION_PATH_LEN];
     xpubEnc format;
     bool standard_derivation_path;
+    stdDerivation std_derivation_path;
 };
 
 extern Keystore keystore;

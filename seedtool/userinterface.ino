@@ -414,6 +414,7 @@ void generate_seed() {
     while (true) {
         int xoff = 14;
         int yoff = 8;
+        bool ret;
 
         g_display->firstPage();
         do
@@ -470,20 +471,26 @@ void generate_seed() {
         case '*':
             g_rolls = "";
             break;
-        case '#':
+        case '#': {
             g_submitted = true;
             serial_assert(!g_master_seed);
             if (g_master_seed)
                 delete g_master_seed;
             g_master_seed = Seed::from_rolls(g_rolls);
-            keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data));
             g_master_seed->log();
             serial_assert(!g_bip39);
             if (g_bip39)
                 delete g_bip39;
             g_bip39 = new BIP39Seq(g_master_seed);
+
+            ret = keystore.update_root_key(g_bip39->mnemonic_seed, BIP39_SEED_LEN_512);
+            if (ret == false) {
+                g_uistate = ERROR_SCREEN;
+                return;
+            }
             digitalWrite(GREEN_LED, HIGH);		// turn on green LED
             g_uistate = DISPLAY_BIP39;
+        }
             return;
         default:
             break;
@@ -494,6 +501,7 @@ void generate_seed() {
 void set_network() {
     int xoff = 5, yoff = 5;
     String title = "Set network";
+    bool ret;
     g_display->firstPage();
     do
     {
@@ -539,19 +547,31 @@ void set_network() {
     switch (key) {
     case 'A':
         network.set_network(REGTEST);
-        (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data), network.get_network());
+        ret = keystore.update_root_key(g_bip39->mnemonic_seed, BIP39_SEED_LEN_512, network.get_network());
+        if (ret == false) {
+            g_uistate = ERROR_SCREEN;
+            return;
+        }
         if (keystore.is_standard_derivation_path())
             keystore.save_standard_derivation_path(NULL, network.get_network());
         return;
     case 'B':
         network.set_network(TESTNET);
-        (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data), network.get_network());
+        ret = keystore.update_root_key(g_bip39->mnemonic_seed, BIP39_SEED_LEN_512, network.get_network());
+        if (ret == false) {
+            g_uistate = ERROR_SCREEN;
+            return;
+        }
         if (keystore.is_standard_derivation_path())
             keystore.save_standard_derivation_path(NULL, network.get_network());
         return;
     case 'C':
         network.set_network(MAINNET);
-        (void)keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data), network.get_network());
+        ret = keystore.update_root_key(g_bip39->mnemonic_seed, BIP39_SEED_LEN_512, network.get_network());
+        if (ret == false) {
+            g_uistate = ERROR_SCREEN;
+            return;
+        }
         if (keystore.is_standard_derivation_path())
             keystore.save_standard_derivation_path(NULL, network.get_network());
         return;
@@ -2127,7 +2147,7 @@ void display_xpub(void) {
     int scroll_strlen = 0;
     bool ret;
 
-    ret = keystore.update_root_key(g_master_seed->data, sizeof(g_master_seed->data));
+    ret = keystore.update_root_key(g_bip39->mnemonic_seed, BIP39_SEED_LEN_512);
     if (ret == false) {
         g_uistate = ERROR_SCREEN;
         return;

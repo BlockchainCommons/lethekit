@@ -7,6 +7,8 @@
 
 #include <bc-bip39.h>
 
+#define BIP39_SEED_LEN_512 64
+
 enum format {
   qr_ur,
   ur,
@@ -42,6 +44,8 @@ public:
 
     static BIP39Seq * from_words(uint16_t * words);
 
+    uint8_t mnemonic_seed[BIP39_SEED_LEN_512];
+
     BIP39Seq();
 
     BIP39Seq(Seed const * seed);
@@ -64,6 +68,12 @@ public:
 
 private:
     void* ctx;
+    // we need to have full menmonic words saved as string
+    // which is needed to calculate mnemonic seed
+    String get_mnemonic_as_string();
+    // menmonic seed is needed for bip32 root key
+    // len of the returned bytes is BIP39_SEED_LEN_512
+    bool calc_mnemonic_seed();
 };
 
 class SLIP39ShareSeq {
@@ -119,5 +129,15 @@ private:
 
     mutable int last_rv;
 };
+
+/**
+ *  This function is taken from libwally. We cannot import libwally_bip39 because it is clashing with
+ *  bc-bip39.h. bc-bip39.h should be deprecated and replaced with libwally_bip39. To recompile libwally
+ *  with libwally_bip39 uncomment the lines in blacklist array in scripts/libwally_build.py
+ *  See https://github.com/BlockchainCommons/bc-bip39/pull/19
+ */
+int bip39_mnemonic_to_seed(const char *mnemonic, const char *passphrase,
+                            unsigned char *bytes_out, size_t len,
+                            size_t *written);
 
 #endif // SEED_H

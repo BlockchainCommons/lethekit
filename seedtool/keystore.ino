@@ -33,24 +33,15 @@ bool Keystore::update_root_key(uint8_t *seed, size_t len, NetwtorkType network)
             version_code = BIP32_VER_TEST_PRIVATE;
     }
 
-    //Serial.println("seed:");
-    //print_hex(seed, len);
-
     res = bip32_key_from_seed(seed, len, version_code, 0, &root);
     if (res != WALLY_OK) {
         return false;
     }
 
-    //Serial.println("private key");
-    //print_hex(root.priv_key, 33);
-
-    //Serial.println("pub key");
-    //print_hex(root.pub_key, 33);
-
-    ((uint8_t *)&fingerprint)[0] = root.hash160[0];
-    ((uint8_t *)&fingerprint)[1] = root.hash160[1];
-    ((uint8_t *)&fingerprint)[2] = root.hash160[2];
-    ((uint8_t *)&fingerprint)[3] = root.hash160[3];
+    ((uint8_t *)&fingerprint)[0] = root.hash160[3];
+    ((uint8_t *)&fingerprint)[1] = root.hash160[2];
+    ((uint8_t *)&fingerprint)[2] = root.hash160[1];
+    ((uint8_t *)&fingerprint)[3] = root.hash160[0];
 
     return true;
 }
@@ -144,6 +135,8 @@ bool Keystore::save_standard_derivation_path(stdDerivation *path, NetwtorkType n
       String p;
 
       if (path) {
+        std_derivation_path = *path;
+
         if (*path == SINGLE_NATIVE_SEGWIT) {
             p = F("m/84h/1h/0h");
         }
@@ -191,22 +184,22 @@ bool Keystore::xpub_to_base58(ext_key *key, char **output) {
     if ((ret = bip32_key_serialize(key, BIP32_FLAG_KEY_PUBLIC, bytes, sizeof(bytes))))
         return false;
 
-    if (slip132) {
+    if (slip132 && standard_derivation_path) {
       switch(network.get_network()) {
         case MAINNET:
-            if (standard_derivation_path == SINGLE_NATIVE_SEGWIT) {
+            if (std_derivation_path == SINGLE_NATIVE_SEGWIT) {
                 *bytes_ptr = __builtin_bswap32(0x04b24746);
             }
-            else if (standard_derivation_path == SINGLE_NESTED_SEGWIT) {
+            else if (std_derivation_path == SINGLE_NESTED_SEGWIT) {
                 *bytes_ptr = __builtin_bswap32(0x049d7cb2);
             }
             break;
         case TESTNET:
         case REGTEST:
-            if (standard_derivation_path == SINGLE_NATIVE_SEGWIT) {
+            if (std_derivation_path == SINGLE_NATIVE_SEGWIT) {
                 *bytes_ptr = __builtin_bswap32(0x045f1cf6);
             }
-            else if (standard_derivation_path == SINGLE_NESTED_SEGWIT) {
+            else if (std_derivation_path == SINGLE_NESTED_SEGWIT) {
                 *bytes_ptr = __builtin_bswap32(0x044a5262);
             }
             break;

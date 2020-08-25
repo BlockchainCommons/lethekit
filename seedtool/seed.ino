@@ -7,6 +7,7 @@
 
 #include "util.h"
 #include "seed.h"
+#include "wally_crypto.h"
 
 namespace seed_internal {
 
@@ -46,6 +47,10 @@ BIP39Seq * BIP39Seq::from_words(uint16_t * words) {
     BIP39Seq * retval = new BIP39Seq();
     for (size_t ii = 0; ii < WORD_COUNT; ++ii)
         retval->set_word(ii, words[ii]);
+
+    // this function takes a couple of seconds!
+    retval->calc_mnemonic_seed();
+
     return retval;
 }
 
@@ -60,6 +65,9 @@ BIP39Seq::BIP39Seq(Seed const * seed) {
     ctx = bip39_new_context();
     bip39_set_byte_count(ctx, Seed::SIZE);
     bip39_set_payload(ctx, Seed::SIZE, seed->data);
+
+    // this function takes a couple of seconds!
+    calc_mnemonic_seed();
 }
 
 BIP39Seq::~BIP39Seq() {
@@ -85,6 +93,27 @@ String BIP39Seq::get_string(size_t ndx) {
     char mnemonic[20];
     bip39_mnemonic_from_word(word, mnemonic);
     return String(mnemonic);
+}
+
+String BIP39Seq::get_mnemonic_as_string() {
+    String mnemonic;
+    for (size_t i=0; i< WORD_COUNT; i++) {
+        mnemonic += get_string(i);
+        if (i != WORD_COUNT - 1)
+            mnemonic += " ";
+    }
+    return mnemonic;
+}
+
+bool BIP39Seq::calc_mnemonic_seed() {
+
+    String mnemonic_str = get_mnemonic_as_string();
+    size_t written;
+
+    // TODO: password currently NULL
+    int ret = bip39_mnemonic_to_seed(mnemonic_str.c_str(), NULL, mnemonic_seed, sizeof(mnemonic_seed), &written);
+    if (ret != WALLY_OK)
+        return false;
 }
 
 Seed * BIP39Seq::restore_seed() const {
@@ -211,4 +240,44 @@ Seed * SLIP39ShareSeq::restore_seed() const {
                              seed_data,
                              sizeof(seed_data));
     return last_rv < 0 ? NULL : new Seed(seed_data, sizeof(seed_data));
+}
+
+int bip39_mnemonic_to_seed(const char *mnemonic, const char *passphrase,
+                            unsigned char *bytes_out, size_t len,
+                            size_t *written)
+{
+    const uint32_t bip9_cost = 2048u;
+    const char *prefix = "mnemonic";
+    const size_t prefix_len = strlen(prefix);
+    const size_t passphrase_len = passphrase ? strlen(passphrase) : 0;
+    const size_t salt_len = prefix_len + passphrase_len;
+    unsigned char *salt;
+    int ret;
+
+    if (written)
+        *written = 0;
+
+    if (!mnemonic || !bytes_out || len != BIP39_SEED_LEN_512)
+        return WALLY_EINVAL;
+
+    salt = (unsigned char *)malloc(salt_len);
+    if (!salt)
+        return WALLY_ENOMEM;
+
+    memcpy(salt, prefix, prefix_len);
+    if (passphrase_len)
+        memcpy(salt + prefix_len, passphrase, passphrase_len);
+
+    ret = wally_pbkdf2_hmac_sha512((unsigned char *)mnemonic, strlen(mnemonic),
+                                   salt, salt_len, 0,
+                                   bip9_cost, bytes_out, len);
+
+    if (!ret && written)
+        *written = BIP39_SEED_LEN_512; /* Succeeded */
+
+    //clear_and_free(salt, salt_len);
+    memset(salt, 0, salt_len);
+    free(salt);
+
+    return ret;
 }
