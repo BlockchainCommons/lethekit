@@ -377,7 +377,8 @@ void seedless_menu() {
         g_display->println("B - Restore BIP39");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
-        g_display->println("C - Restore SLIP39");
+        // deprecating slip39. TODO Replace it with bc-shamir
+        //g_display->println("C - Restore SLIP39");
 
         yy = 190; // Absolute, stuck to bottom
         g_display->setFont(&FreeSansBold9pt7b);
@@ -400,10 +401,11 @@ void seedless_menu() {
             g_bip39 = new BIP39Seq();
             g_uistate = RESTORE_BIP39;
             return;
-        case 'C':
-            g_slip39_restore = new SLIP39ShareSeq();
-            g_uistate = RESTORE_SLIP39;
-            return;
+        // deprecating slip39. TODO Replace it with bc-shamir
+        //case 'C':
+        //    g_slip39_restore = new SLIP39ShareSeq();
+        //    g_uistate = RESTORE_SLIP39;
+        //    return;
         default:
             break;
         }
@@ -604,9 +606,10 @@ void seedy_menu() {
         g_display->setFont(&FreeSansBold9pt7b);
         g_display->setCursor(xx, yy);
         g_display->println("A - Display BIP39");
-        yy += H_FSB9 + 2*YM_FSB9;
-        g_display->setCursor(xx, yy);
-        g_display->println("B - Generate SLIP39");
+        // deprecating slip39. TODO replace it with bc-shamir
+        //yy += H_FSB9 + 2*YM_FSB9;
+        //g_display->setCursor(xx, yy);
+        //g_display->println("B - Generate SLIP39");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         g_display->println("C - Display XPUB");
@@ -633,9 +636,9 @@ void seedy_menu() {
         case 'A':
             g_uistate = DISPLAY_BIP39;
             return;
-        case 'B':
-            g_uistate = CONFIG_SLIP39;
-            return;
+        //case 'B':
+        //    g_uistate = CONFIG_SLIP39;
+        //    return;
         case 'C':
             clear_full_window = false;
             g_uistate = XPUB_MENU;
