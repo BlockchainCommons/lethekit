@@ -14,26 +14,30 @@
 // source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md
 //         f68d54efd0cf6f9943801412e273167c558c8189 (Single part UR only)
 
-size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint=0) {
+size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint) {
 
     CborDynamicOutput output;
     CborWriter writer(output);
 
-    writer.writeMap(4);
+    if (network.get_network() == MAINNET)
+        writer.writeMap(3);
+    else
+        writer.writeMap(4);
     writer.writeInt(3);
     writer.writeBytes(key->pub_key, sizeof(key->pub_key));
     writer.writeInt(4);
     writer.writeBytes(key->chain_code, sizeof(key->chain_code));
-    writer.writeInt(5);
-    writer.writeTag(305);
-      writer.writeMap(1);
-      writer.writeInt(2);
-      if (network.get_network() == MAINNET)
-        writer.writeInt(0);
-      else
-        writer.writeInt(1);
+    // crypto-coininfo
+    if (network.get_network() != MAINNET) {
+        writer.writeInt(5);
+        writer.writeTag(305);
+          writer.writeMap(1);
+          writer.writeInt(2);
+          writer.writeInt(1);
+    }
     writer.writeInt(6);
     // @FIXME write function:
+    // crypto-keypath:
     writer.writeTag(304);
     writer.writeMap(2);
       writer.writeInt(1);
@@ -132,7 +136,13 @@ bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords) {
        return false;
     }
 
-    size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub);
+    uint32_t parent_fingerprint;
+    ((uint8_t *)&parent_fingerprint)[0] = xpub.parent160[0];
+    ((uint8_t *)&parent_fingerprint)[1] = xpub.parent160[1];
+    ((uint8_t *)&parent_fingerprint)[2] = xpub.parent160[2];
+    ((uint8_t *)&parent_fingerprint)[3] = xpub.parent160[3];
+
+    size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint);
     if (cbor_xpub_size == 0) {
         return false;
     }

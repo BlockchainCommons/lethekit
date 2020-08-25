@@ -2173,7 +2173,7 @@ void display_xpub(void) {
                 g_display->setCursor(0, yy + 30);
                 if (keystore.show_derivation_path) {
                     char fingerprint[9] = {0};
-                    sprintf(fingerprint, "%02x%02x%02x%02x", key.hash160[0], key.hash160[1], key.hash160[2], key.hash160[3]);
+                    sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
                     g_display->println("[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub));
                 }
                 else
@@ -2182,7 +2182,7 @@ void display_xpub(void) {
             case QR_BASE58:
                 if (keystore.show_derivation_path) {
                     char fingerprint[9] = {0};
-                    sprintf(fingerprint, "%02x%02x%02x%02x", key.hash160[0], key.hash160[1], key.hash160[2], key.hash160[3]);
+                    sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
                     String fing = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub);
                     displayQR((char *)fing.c_str());
                 }

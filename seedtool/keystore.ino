@@ -33,10 +33,25 @@ bool Keystore::update_root_key(uint8_t *seed, size_t len, NetwtorkType network)
             version_code = BIP32_VER_TEST_PRIVATE;
     }
 
+    //Serial.println("seed:");
+    //print_hex(seed, len);
+
     res = bip32_key_from_seed(seed, len, version_code, 0, &root);
     if (res != WALLY_OK) {
         return false;
     }
+
+    //Serial.println("private key");
+    //print_hex(root.priv_key, 33);
+
+    //Serial.println("pub key");
+    //print_hex(root.pub_key, 33);
+
+    ((uint8_t *)&fingerprint)[0] = root.hash160[0];
+    ((uint8_t *)&fingerprint)[1] = root.hash160[1];
+    ((uint8_t *)&fingerprint)[2] = root.hash160[2];
+    ((uint8_t *)&fingerprint)[3] = root.hash160[3];
+
     return true;
 }
 
@@ -171,6 +186,7 @@ bool Keystore::xpub_to_base58(ext_key *key, char **output) {
 
     int ret;
     unsigned char bytes[BIP32_SERIALIZED_LEN];
+    uint32_t *bytes_ptr = (uint32_t *)bytes;
 
     if ((ret = bip32_key_serialize(key, BIP32_FLAG_KEY_PUBLIC, bytes, sizeof(bytes))))
         return false;
@@ -179,19 +195,19 @@ bool Keystore::xpub_to_base58(ext_key *key, char **output) {
       switch(network.get_network()) {
         case MAINNET:
             if (standard_derivation_path == SINGLE_NATIVE_SEGWIT) {
-                ((uint32_t *)bytes)[0] = __builtin_bswap32(0x04b24746);
+                *bytes_ptr = __builtin_bswap32(0x04b24746);
             }
             else if (standard_derivation_path == SINGLE_NESTED_SEGWIT) {
-                ((uint32_t *)bytes)[0] = __builtin_bswap32(0x049d7cb2);
+                *bytes_ptr = __builtin_bswap32(0x049d7cb2);
             }
             break;
         case TESTNET:
         case REGTEST:
             if (standard_derivation_path == SINGLE_NATIVE_SEGWIT) {
-                *((uint32_t *)bytes) = __builtin_bswap32(0x045f1cf6);
+                *bytes_ptr = __builtin_bswap32(0x045f1cf6);
             }
             else if (standard_derivation_path == SINGLE_NESTED_SEGWIT) {
-                *((uint32_t *)bytes) = __builtin_bswap32(0x044a5262);
+                *bytes_ptr = __builtin_bswap32(0x044a5262);
             }
             break;
         default:

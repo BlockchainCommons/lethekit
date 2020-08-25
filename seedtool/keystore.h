@@ -105,6 +105,7 @@ class Keystore
     /* show xpub with derivation path (only for base58 format) */
     bool show_derivation_path;
     bool slip132;
+    uint32_t fingerprint;
 
   private:
     ext_key root;
