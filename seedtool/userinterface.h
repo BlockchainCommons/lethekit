@@ -30,7 +30,8 @@ enum UIState {
     SET_SLIP39_FORMAT,
     OPEN_WALLET,
     SHOW_ADDRESS,
-    SET_ADDRESS_FORMAT
+    SET_ADDRESS_FORMAT,
+    EXPORT_WALLET
 };
 
 extern void ui_reset_into_state(UIState state);

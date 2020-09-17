@@ -2,8 +2,6 @@
 
 Keystore keystore = Keystore();
 
-#define HARDENED_INDEX 0x80000000
-
 Keystore::Keystore(void) {
     // set default path for single native segwit key
     stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
@@ -108,6 +106,73 @@ bool Keystore::check_derivation_path(const char *path) {
             derivation_tmp[current] = derivation_tmp[current]*10 + val;
         }else{ // h or ' -> hardened
             derivation_tmp[current] += HARDENED_INDEX;
+        }
+    }
+    return true;
+}
+
+// @FIXME merge previous function with this one
+bool Keystore::calc_derivation_path(const char *path, uint32_t *derivation, uint32_t &derivation_len) {
+
+    // source: https://github.com/micro-bitcoin/uBitcoin/blob/master/src/HDWallet.cpp
+    static const char VALID_CHARS[] = "0123456789/h'";
+    size_t len = strlen(path);
+    const char * cur = path;
+
+    // first check for weird char sequences
+    for (size_t i=0; i<len; i++) {
+        if(path[i] == '/'){
+            if (i+1 < len && (path[i+1] == 'h' || path[i+1] == '/')) {
+                // 'h' or '/' must not follow '/'
+                return false;
+            }
+            if (i+2 < len && path[i+1] == '0' && isDigit(path[i+2])) {
+                // e.g. /01 is invalid
+                return false;
+            }
+        }
+    }
+
+    if(path[0] == 'm'){ // remove leading "m/"
+        cur+=2;
+        len-=2;
+    }
+    if(cur[len-1] == '/'){ // remove trailing "/"
+        len--;
+    }
+
+    derivation_len = 1;
+    // checking if all chars are valid and counting derivation length
+    for(size_t i=0; i<len; i++){
+        const char * pch = strchr(VALID_CHARS, cur[i]);
+        if(pch == NULL){ // wrong character
+            return false;
+        }
+        if(cur[i] == '/'){
+            derivation_len++;
+        }
+    }
+
+    if (derivation_len > MAX_DERIVATION_PATH_LEN)
+        return false;
+
+    memset(derivation, 0, MAX_DERIVATION_PATH_LEN);
+
+    size_t current = 0;
+    for(size_t i=0; i<len; i++){
+        if(cur[i] == '/'){ // next
+            current++;
+            continue;
+        }
+        const char * pch = strchr(VALID_CHARS, cur[i]);
+        uint32_t val = pch-VALID_CHARS;
+        if(derivation[current] >= HARDENED_INDEX){ // can't have anything after hardened
+            return false;
+        }
+        if(val < 10){
+            derivation[current] = derivation_tmp[current]*10 + val;
+        }else{ // h or ' -> hardened
+            derivation[current] += HARDENED_INDEX;
         }
     }
     return true;

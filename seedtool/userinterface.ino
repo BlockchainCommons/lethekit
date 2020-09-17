@@ -2178,7 +2178,7 @@ void display_xpub(void) {
         return;
     }
 
-    ret = ur_encode_hd_pubkey_xpub(ur_string);
+    ret = ur_encode_hd_pubkey_xpub(ur_string, keystore.derivation, keystore.derivationLen);
     if (ret == false) {
         g_uistate = ERROR_SCREEN;
         return;
@@ -2621,7 +2621,8 @@ void open_wallet(void) {
             g_uistate = SHOW_ADDRESS;
             return;
         case 'B':
-            break;
+            g_uistate = EXPORT_WALLET;
+            return;
         default:
             break;
       }
@@ -2633,7 +2634,7 @@ void show_address(void) {
     String title = "Address " + String(pg_show_address.addr_indx);
     struct ext_key child_key;
     char *addr_segwit = NULL; // @TODO free
-    uint32_t child_path[2] = {0, pg_show_address.addr_indx};
+    uint32_t child_path[2] = {0, pg_show_address.addr_indx};  // FIXME: complete segwit path missing
     String address_family;
 
     while (true) {
@@ -2831,6 +2832,127 @@ void set_address_format(void) {
     }
 }
 
+void export_wallet(void) {
+
+    String title = "Wallet";
+    struct ext_key child_key;
+    // TODO: currently only single native segwit wallet supported
+    String child_path_str = network.get_network() == MAINNET ? "m/48h/1h/0h" : "m/48h/0h/0h";
+    uint32_t child_path[10];
+    uint32_t child_path_len;
+    String address_family;
+    char derivation_path_with_fingerprint[100] = {0};
+
+    while (true) {
+
+      keystore.calc_derivation_path(child_path_str.c_str(), child_path, child_path_len);
+      (void)bip32_key_from_parent_path(&keystore.root, child_path, child_path_len, 0, &child_key);
+
+      sprintf(derivation_path_with_fingerprint, "[%02x%02x%02x%02x%s]", child_key.parent160[0], child_key.parent160[1],
+                                                child_key.parent160[2], child_key.parent160[3], child_path_str.substring(1).c_str());
+
+      // prepare cbor/ur format
+      uint8_t data[100];
+      size_t data_written;
+      String wallet_text;
+      String wallet_ur;
+
+      (void)ur_encode_output_descriptor(wallet_ur, child_path, child_path_len, 123); // TODO fingerprint 
+
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          int yy = 25;
+          g_display->setFont(&FreeSansBold9pt7b);
+          Point p = text_center(title.c_str());
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+
+          g_display->setFont(&FreeSansBold9pt7b);
+          g_display->setCursor(0, yy + 40);
+
+          g_display->println(wallet_ur);
+          Serial.println(wallet_ur);
+
+          /*
+          switch(pg_show_address.addr_format) {
+            case text:
+                g_display->println(wallet_text);
+                break;
+            case qr_text:
+                displayQR((char *)wallet_text.c_str());
+                break;
+            case qr_ur:
+            {
+                wallet_ur.toUpperCase();
+                displayQR((char *)wallet_ur.c_str());
+                break;
+            }
+            case ur:
+                g_display->println(wallet_ur.c_str());
+                break;
+            default:
+                break;
+          }
+          */
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "# Done";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          String left_option = "Back *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+
+          yy -= 15;
+          right_option = "<-4/6->";
+          x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          left_option = "Form 0";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      switch (key) {
+        case '#':
+            g_uistate = OPEN_WALLET;
+            return;
+        case '*':
+            g_uistate = OPEN_WALLET;
+            return;
+        case '6':
+            pg_show_address.addr_indx++;
+            title = "Address " + String(pg_show_address.addr_indx);
+            break;
+        case '4':
+            if (pg_show_address.addr_indx > 0)
+                pg_show_address.addr_indx--;
+            title = "Address " + String(pg_show_address.addr_indx);
+            break;
+        case '0':
+            g_uistate = SET_ADDRESS_FORMAT;
+            return;
+        default:
+            break;
+      }
+    }
+}
+
 } // namespace userinterface_internal
 
 void ui_reset_into_state(UIState state) {
@@ -2940,6 +3062,9 @@ void ui_dispatch() {
         break;
     case SET_ADDRESS_FORMAT:
         set_address_format();
+        break;
+    case EXPORT_WALLET:
+        export_wallet();
         break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));

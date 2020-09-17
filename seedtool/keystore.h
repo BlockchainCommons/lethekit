@@ -6,6 +6,7 @@
 #include "wally_bip32.h"
 #include "network.h"
 
+#define HARDENED_INDEX 0x80000000
 #define MAX_DERIVATION_PATH_LEN 10*sizeof(uint32_t)
 
 //# of elements in xpubEnc
@@ -57,6 +58,9 @@ class Keystore
      *         in derivationLen and derivation for further processing
      */
     bool check_derivation_path(const char *path);
+
+    // TODO
+    bool calc_derivation_path(const char *path, uint32_t *derivation, uint32_t &derivation_len);
 
     /**
      *  @brief checks derivation path and saves it

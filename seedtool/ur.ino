@@ -15,7 +15,31 @@
 // source: https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md
 //         f68d54efd0cf6f9943801412e273167c558c8189 (Single part UR only)
 
-size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint) {
+
+bool crypto_keypath(class CborWriter &writer, uint32_t *derivation, uint32_t derivation_len, uint32_t parent_fingerprint) {
+    // crypto-keypath:
+    writer.writeTag(304);
+    writer.writeMap(2);
+      writer.writeInt(1);
+      writer.writeArray(derivation_len*2);
+      uint32_t indx;
+      for (size_t i=0; i<derivation_len; i++) {
+        indx = derivation[i] & ~BIP32_INITIAL_HARDENED_CHILD;
+        writer.writeInt(indx);
+        if (keystore.is_bip32_indx_hardened(derivation[i])) {
+          uint32_t cbor_true = 21;
+          writer.writeSpecial(cbor_true);
+        }
+        else {
+          uint32_t cbor_false = 20;
+          writer.writeSpecial(cbor_false);
+        }
+      }
+      writer.writeInt(2);
+      writer.writeInt(parent_fingerprint);
+}
+
+size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint, uint32_t *derivation, uint32_t derivation_len) {
 
     CborDynamicOutput output;
     CborWriter writer(output);
@@ -37,27 +61,7 @@ size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t 
           writer.writeInt(1);
     }
     writer.writeInt(6);
-    // @FIXME write function:
-    // crypto-keypath:
-    writer.writeTag(304);
-    writer.writeMap(2);
-      writer.writeInt(1);
-      writer.writeArray(keystore.derivationLen*2);
-      uint32_t indx;
-      for (size_t i=0; i<keystore.derivationLen; i++) {
-        indx = keystore.derivation[i] & ~BIP32_INITIAL_HARDENED_CHILD;
-        writer.writeInt(indx);
-        if (keystore.is_bip32_indx_hardened(keystore.derivation[i])) {
-          uint32_t cbor_true = 21;
-          writer.writeSpecial(cbor_true);
-        }
-        else {
-          uint32_t cbor_false = 20;
-          writer.writeSpecial(cbor_false);
-        }
-      }
-      writer.writeInt(2);
-      writer.writeInt(parent_fingerprint);
+    crypto_keypath(writer, derivation, derivation_len, parent_fingerprint);
 
     *buff_out = (uint8_t *)malloc(output.getSize());
     memcpy(*buff_out, output.getData(), output.getSize());
@@ -142,15 +146,12 @@ bool ur_encode(String ur_type, uint8_t *cbor, uint32_t cbor_size, String &ur_str
     return true;
 }
 
-bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords) {
+bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords, uint32_t *derivation, uint32_t derivation_len) {
     bool retval;
     ext_key xpub;
     uint8_t *cbor_xpub = NULL;
 
-    retval = keystore.get_xpub(&xpub);
-    if (retval == false) {
-       return false;
-    }
+    (void)bip32_key_from_parent_path(&keystore.root, derivation, derivation_len, BIP32_FLAG_KEY_PRIVATE, &xpub);
 
     uint32_t parent_fingerprint;
     ((uint8_t *)&parent_fingerprint)[0] = xpub.parent160[3];
@@ -158,7 +159,7 @@ bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords) {
     ((uint8_t *)&parent_fingerprint)[2] = xpub.parent160[1];
     ((uint8_t *)&parent_fingerprint)[3] = xpub.parent160[0];
 
-    size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint);
+    size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint, derivation, derivation_len);
     if (cbor_xpub_size == 0) {
         return false;
     }
@@ -212,6 +213,39 @@ bool ur_encode_address(uint8_t *address, size_t address_len, String &address_ur)
 
     // @FIXME: free also on premature exit
     free(cbor);
+
+    return true;
+}
+
+bool ur_encode_output_descriptor(String &ur, uint32_t *derivation, uint32_t derivation_len, uint32_t parent_fingerprint) {
+    bool retval;
+    uint8_t *cbor = NULL;
+    size_t cbor_size;
+    uint8_t *buff_out = NULL;
+    struct ext_key child_key;
+
+    CborDynamicOutput output;
+    CborWriter writer(output);
+
+    writer.writeTag(404); // @FIXME currently fixed ton only wpkh (404)
+
+    (void)bip32_key_from_parent_path(&keystore.root, derivation, derivation_len, 0, &child_key);
+    cbor_size = cbor_encode_hdkey_xpub(&child_key, &buff_out, parent_fingerprint, derivation, derivation_len);
+
+    uint8_t *cbor_all = (uint8_t *)malloc(cbor_size + output.getSize());
+    memcpy(cbor_all, output.getData(), output.getSize());
+    memcpy(cbor_all + output.getSize(), buff_out, cbor_size);
+
+    print_hex(cbor_all, cbor_size + output.getSize());
+
+    retval = ur_encode("crypto-address", cbor_all, cbor_size + output.getSize(), ur);
+    if (retval == false) {
+        return false;
+    }
+
+    // @FIXME: free also on premature exit
+    free(cbor);
+    free(cbor_all);
 
     return true;
 }
@@ -297,7 +331,7 @@ bool test_ur(void) {
             return false;
         }
 
-        size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint);
+        size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint, keystore.derivation, keystore.derivationLen);
         if (cbor_xpub_size == 0) {
             Serial.println(F("cbor_encode_hdkey_xpub failed"));
             return false;
