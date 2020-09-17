@@ -3,6 +3,8 @@
 #ifndef USERINTERFACE_H
 #define USERINTERFACE_H
 
+#include "util.h"
+
 enum UIState {
     INVALID_STATE = -1,
     SELF_TEST,
@@ -25,7 +27,10 @@ enum UIState {
     DISPLAY_SEED,
     CUSTOM_DERIVATION_PATH,
     ERROR_SCREEN,
-    SET_SLIP39_FORMAT
+    SET_SLIP39_FORMAT,
+    OPEN_WALLET,
+    SHOW_ADDRESS,
+    SET_ADDRESS_FORMAT
 };
 
 extern void ui_reset_into_state(UIState state);
@@ -37,6 +42,11 @@ struct UiOption {
     String value;
     String tip;
     bool show;
+};
+
+struct pg_show_address_t{
+    uint32_t addr_indx;
+    format addr_format; // todo
 };
 
 #endif // USERINTERFACE_H

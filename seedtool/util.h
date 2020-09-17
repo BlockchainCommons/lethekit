@@ -32,4 +32,11 @@ struct Point {
   int y;
 };
 
+enum format {
+  qr_ur,
+  ur,
+  text,
+  qr_text
+};
+
 #endif // _UTIL_H

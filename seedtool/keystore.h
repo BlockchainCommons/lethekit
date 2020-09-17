@@ -106,9 +106,9 @@ class Keystore
     bool show_derivation_path;
     bool slip132;
     uint32_t fingerprint;
+    ext_key root;
 
   private:
-    ext_key root;
     int res;
     String derivation_path;
     size_t derivationLen_tmp;

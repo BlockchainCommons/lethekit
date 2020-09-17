@@ -6,14 +6,9 @@
 #include <stdint.h>
 
 #include <bc-bip39.h>
+#include "util.h"
 
 #define BIP39_SEED_LEN_512 64
-
-enum format {
-  qr_ur,
-  ur,
-  text
-};
 
 class Seed {
 public:

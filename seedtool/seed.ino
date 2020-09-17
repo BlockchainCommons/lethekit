@@ -114,6 +114,7 @@ bool BIP39Seq::calc_mnemonic_seed() {
     int ret = bip39_mnemonic_to_seed(mnemonic_str.c_str(), NULL, mnemonic_seed, sizeof(mnemonic_seed), &written);
     if (ret != WALLY_OK)
         return false;
+    return true;
 }
 
 Seed * BIP39Seq::restore_seed() const {

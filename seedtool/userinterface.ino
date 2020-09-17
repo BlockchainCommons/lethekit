@@ -15,6 +15,7 @@
 #include "qrcode.h"
 #include "ur.h"
 #include "keystore.h"
+#include "wally_address.h"
 
 namespace userinterface_internal {
 
@@ -54,6 +55,9 @@ int const H_FMB12 = 21;	// height
 int const YM_FMB12 = 4;	// y-margin
 
 bool clear_full_window = true;
+
+// Pages
+struct pg_show_address_t pg_show_address{0, ur};
 
 Point text_center(const char * txt) {
     int16_t tbx, tby; uint16_t tbw, tbh;
@@ -617,7 +621,8 @@ void seedy_menu() {
         g_display->setCursor(xx, yy);
         g_display->println("D - Display seed");
         yy += H_FSB9 + 2*YM_FSB9;
-        // TODO: Wipe seed will probably be in Display Seed
+        g_display->setCursor(xx, yy);
+        g_display->println("3 - Open Wallet");
 
         yy = 190; // Absolute, stuck to bottom
         g_display->setFont(&FreeSansBold9pt7b);
@@ -642,6 +647,10 @@ void seedy_menu() {
         case 'C':
             clear_full_window = false;
             g_uistate = XPUB_MENU;
+            return;
+        case '3':
+            clear_full_window = false;
+            g_uistate = OPEN_WALLET;
             return;
         case 'D':
             clear_full_window = false;
@@ -2555,6 +2564,249 @@ void error_screen(void) {
     }
   }
 
+void open_wallet(void) {
+    int xx = 0;
+    
+    while (true) {
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          const char * title = "Wallet";
+          int yy = 20;
+
+          g_display->setFont(&FreeSansBold9pt7b);
+          Point p = text_center(title);
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+
+          yy += 50;
+          g_display->setCursor(xx, yy);
+          g_display->println("A: show address");
+
+          yy += 30;
+          g_display->setCursor(xx, yy);
+          g_display->println("B: export");
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "Ok #";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          String left_option = "Cancel *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      clear_full_window = false;
+      switch (key) {
+        case '#':
+            g_uistate = SEEDY_MENU;
+            return;
+        case '*':
+            g_uistate = SEEDY_MENU;
+            return;
+        case 'A':
+            g_uistate = SHOW_ADDRESS;
+            return;
+        case 'B':
+            break;
+        default:
+            break;
+      }
+    }
+}
+
+void show_address(void) {
+
+    String title = "Address " + String(pg_show_address.addr_indx);
+    struct ext_key child_key;
+    char *addr_segwit = NULL; // @TODO free
+    uint32_t child_path[2] = {0, pg_show_address.addr_indx};
+    String address_family;
+
+    while (true) {
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          int yy = 25;
+          g_display->setFont(&FreeSansBold9pt7b);
+          Point p = text_center(title.c_str());
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+
+          child_path[1] = pg_show_address.addr_indx;
+          (void)bip32_key_from_parent_path(&keystore.root, child_path, sizeof(child_path), 0, &child_key);
+
+          switch(network.get_network())
+          {
+            case MAINNET:
+                address_family = "bc";
+                break;
+            case TESTNET:
+                address_family = "tb";
+                break;
+            default:
+                address_family = "bcrt1";
+                break;
+          }
+
+          (void)wally_bip32_key_to_addr_segwit(&child_key, address_family.c_str(), 0, &addr_segwit);
+
+          g_display->setFont(&FreeSansBold9pt7b);
+          g_display->setCursor(0, yy + 40);
+          switch(pg_show_address.addr_format) {
+            case text:
+                g_display->println(addr_segwit);
+                break;
+            case qr_text:
+                displayQR(addr_segwit);
+                break;
+            case qr_ur:
+                // TODO
+                displayQR(addr_segwit);
+                break;
+            case ur:
+                // TODO
+                g_display->println(addr_segwit);
+                break;
+            default:
+                break;
+          }
+
+          // TODO: add 4/6 as forward/backwards
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "# Done";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          String left_option = "Back *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      switch (key) {
+        case '#':
+            g_uistate = OPEN_WALLET;
+            return;
+        case '*':
+            g_uistate = OPEN_WALLET;
+            return;
+        case '6':
+            pg_show_address.addr_indx++;
+            title = "Address " + String(pg_show_address.addr_indx);
+            break;
+        case '4':
+            if (pg_show_address.addr_indx > 0)
+                pg_show_address.addr_indx--;
+            title = "Address " + String(pg_show_address.addr_indx);
+            break;
+        case '0':
+            g_uistate = SET_ADDRESS_FORMAT;
+            return;
+        default:
+            break;
+      }
+    }
+}
+
+void set_address_format(void) {
+
+    String title = "Set address format";
+    int xx = 5;
+
+    while (true) {
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          int yy = 25;
+          g_display->setFont(&FreeSansBold9pt7b);
+          Point p = text_center(title.c_str());
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+          yy += H_FSB9 + 2*YM_FSB9;
+
+          g_display->setCursor(xx, yy);
+          g_display->println("A: text");
+          yy += H_FSB9 + 2*YM_FSB9;
+
+          g_display->setCursor(xx, yy);
+          g_display->println("B: qr");
+          yy += H_FSB9 + 2*YM_FSB9;
+
+          g_display->setCursor(xx, yy);
+          g_display->println("C: ur");
+          yy += H_FSB9 + 2*YM_FSB9;
+
+          g_display->setCursor(xx, yy);
+          g_display->println("D: qr-ur");
+
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "# Done";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          String left_option = "Back *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      g_uistate = SHOW_ADDRESS;
+      switch (key) {
+        case '#':
+            return;
+        case '*':
+            g_uistate = SEED_MENU;
+            return;
+        case 'A':
+            pg_show_address.addr_format = text;
+            return;
+        case 'B':
+            pg_show_address.addr_format = qr_text;
+            return;
+        default:
+            break;
+      }
+    }
+}
+
 } // namespace userinterface_internal
 
 void ui_reset_into_state(UIState state) {
@@ -2655,6 +2907,15 @@ void ui_dispatch() {
         break;
     case SET_SLIP39_FORMAT:
         set_slip39_format();
+        break;
+    case OPEN_WALLET:
+        open_wallet();
+        break;
+    case SHOW_ADDRESS:
+        show_address();
+        break;
+    case SET_ADDRESS_FORMAT:
+        set_address_format();
         break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));
