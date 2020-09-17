@@ -8,6 +8,7 @@
 #include "wally_core.h"
 #include "crc32.h"
 #include "wally_bip32.h"
+#include "wally_address.h"
 #include "keystore.h"
 #include "network.h"
 
@@ -110,6 +111,21 @@ size_t cbor_encode_slip39_share(SLIP39ShareSeq *slip39_generate, size_t share_wn
     return output.getSize();
 }
 
+size_t cbor_encode_address(uint8_t *address, size_t len, uint8_t **buff_out) {
+
+    CborDynamicOutput output;
+    CborWriter writer(output);
+
+    writer.writeMap(1);
+    writer.writeInt(3);
+    writer.writeBytes(address, len);
+
+    *buff_out = (uint8_t *)malloc(output.getSize());
+    memcpy(*buff_out, output.getData(), output.getSize());
+
+    return output.getSize();
+}
+
 bool ur_encode(String ur_type, uint8_t *cbor, uint32_t cbor_size, String &ur_string)
 {
     // Encode cbor payload as bytewords
@@ -176,6 +192,26 @@ bool ur_encode_crypto_seed(uint8_t *seed, size_t seed_len, String &seed_ur, uint
 
     // @FIXME: free also on premature exit
     free(cbor_seed);
+
+    return true;
+}
+
+bool ur_encode_address(uint8_t *address, size_t address_len, String &address_ur) {
+    bool retval;
+    uint8_t *cbor = NULL;
+
+    size_t cbor_size = cbor_encode_crypto_seed(address, address_len, &cbor);
+    if (cbor_size == 0) {
+        return false;
+    }
+
+    retval = ur_encode("crypto-address", cbor, cbor_size, address_ur);
+    if (retval == false) {
+        return false;
+    }
+
+    // @FIXME: free also on premature exit
+    free(cbor);
 
     return true;
 }

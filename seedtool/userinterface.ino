@@ -2637,6 +2637,33 @@ void show_address(void) {
     String address_family;
 
     while (true) {
+
+      child_path[1] = pg_show_address.addr_indx;
+      (void)bip32_key_from_parent_path(&keystore.root, child_path, sizeof(child_path), 0, &child_key);
+
+      switch(network.get_network())
+      {
+        case MAINNET:
+            address_family = "bc";
+            break;
+        case TESTNET:
+            address_family = "tb";
+            break;
+        default:
+            address_family = "bcrt1";
+            break;
+      }
+
+      (void)wally_bip32_key_to_addr_segwit(&child_key, address_family.c_str(), 0, &addr_segwit);
+
+      // prepare cbor/ur format
+      uint8_t data[100];
+      size_t data_written;
+      String address_ur;
+      (void)wally_addr_segwit_to_bytes(addr_segwit, address_family.c_str(), 0, data, sizeof(data), &data_written);
+      // @FIXME check the spec if "including the version and data push opcode" is valid in cbor structure
+      (void)ur_encode_address(data, data_written, address_ur);
+
       g_display->firstPage();
       do
       {
@@ -2650,24 +2677,6 @@ void show_address(void) {
           g_display->setCursor(p.x, yy);
           g_display->println(title);
 
-          child_path[1] = pg_show_address.addr_indx;
-          (void)bip32_key_from_parent_path(&keystore.root, child_path, sizeof(child_path), 0, &child_key);
-
-          switch(network.get_network())
-          {
-            case MAINNET:
-                address_family = "bc";
-                break;
-            case TESTNET:
-                address_family = "tb";
-                break;
-            default:
-                address_family = "bcrt1";
-                break;
-          }
-
-          (void)wally_bip32_key_to_addr_segwit(&child_key, address_family.c_str(), 0, &addr_segwit);
-
           g_display->setFont(&FreeSansBold9pt7b);
           g_display->setCursor(0, yy + 40);
           switch(pg_show_address.addr_format) {
@@ -2678,18 +2687,17 @@ void show_address(void) {
                 displayQR(addr_segwit);
                 break;
             case qr_ur:
-                // TODO
-                displayQR(addr_segwit);
+            {
+                address_ur.toUpperCase();
+                displayQR((char *)address_ur.c_str());
                 break;
+            }
             case ur:
-                // TODO
-                g_display->println(addr_segwit);
+                g_display->println(address_ur.c_str());
                 break;
             default:
                 break;
           }
-
-          // TODO: add 4/6 as forward/backwards
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);
@@ -2699,6 +2707,16 @@ void show_address(void) {
           g_display->println(right_option);
 
           String left_option = "Back *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+
+          yy -= 15;
+          right_option = "<-4/6->";
+          x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          left_option = "Form 0";
           g_display->setCursor(0, yy);
           g_display->println(left_option);
       }
@@ -2752,7 +2770,7 @@ void set_address_format(void) {
           Point p = text_center(title.c_str());
           g_display->setCursor(p.x, yy);
           g_display->println(title);
-          yy += H_FSB9 + 2*YM_FSB9;
+          yy += H_FSB9 + 2*YM_FSB9 + 10;
 
           g_display->setCursor(xx, yy);
           g_display->println("A: text");
@@ -2800,6 +2818,12 @@ void set_address_format(void) {
             return;
         case 'B':
             pg_show_address.addr_format = qr_text;
+            return;
+        case 'C':
+            pg_show_address.addr_format = ur;
+            return;
+        case 'D':
+            pg_show_address.addr_format = qr_ur;
             return;
         default:
             break;
