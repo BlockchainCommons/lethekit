@@ -31,7 +31,8 @@ enum UIState {
     OPEN_WALLET,
     SHOW_ADDRESS,
     SET_ADDRESS_FORMAT,
-    EXPORT_WALLET
+    EXPORT_WALLET,
+    SET_EXPORT_WALLET_FORMAT,
 };
 
 extern void ui_reset_into_state(UIState state);
@@ -47,7 +48,11 @@ struct UiOption {
 
 struct pg_show_address_t{
     uint32_t addr_indx;
-    format addr_format; // todo
+    format addr_format;
+};
+
+struct pg_export_wallet_t{
+    format wallet_format;
 };
 
 #endif // USERINTERFACE_H

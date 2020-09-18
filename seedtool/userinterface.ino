@@ -58,6 +58,7 @@ bool clear_full_window = true;
 
 // Pages
 struct pg_show_address_t pg_show_address{0, ur};
+struct pg_export_wallet_t pg_export_wallet{ur};
 
 Point text_center(const char * txt) {
     int16_t tbx, tby; uint16_t tbw, tbh;
@@ -2842,6 +2843,14 @@ void export_wallet(void) {
     uint32_t child_path_len;
     String address_family;
     char derivation_path_with_fingerprint[100] = {0};
+    size_t nrows = 4;
+    size_t scroll = 0;
+    char *xpub_base58 = NULL;
+    // prepare cbor/ur format
+    uint8_t data[100];
+    size_t data_written;
+    String wallet_text;
+    String wallet_ur;
 
     while (true) {
 
@@ -2851,13 +2860,17 @@ void export_wallet(void) {
       sprintf(derivation_path_with_fingerprint, "[%02x%02x%02x%02x%s]", child_key.parent160[0], child_key.parent160[1],
                                                 child_key.parent160[2], child_key.parent160[3], child_path_str.substring(1).c_str());
 
-      // prepare cbor/ur format
-      uint8_t data[100];
-      size_t data_written;
-      String wallet_text;
-      String wallet_ur;
 
-      (void)ur_encode_output_descriptor(wallet_ur, child_path, child_path_len, 123); // TODO fingerprint 
+      (void)bip32_key_to_base58(&child_key, BIP32_FLAG_KEY_PUBLIC, &xpub_base58);
+      wallet_text = "wpkh(" + String(derivation_path_with_fingerprint) + String(xpub_base58) + ")";
+      free(xpub_base58);
+
+      uint32_t fingerprint;
+      ((uint8_t *)&fingerprint)[0] = child_key.parent160[3];
+      ((uint8_t *)&fingerprint)[1] = child_key.parent160[2];
+      ((uint8_t *)&fingerprint)[2] = child_key.parent160[1];
+      ((uint8_t *)&fingerprint)[3] = child_key.parent160[0];
+      (void)ur_encode_output_descriptor(wallet_ur, child_path, child_path_len, fingerprint); // TODO fingerprint
 
       g_display->firstPage();
       do
@@ -2866,23 +2879,29 @@ void export_wallet(void) {
           g_display->fillScreen(GxEPD_WHITE);
           g_display->setTextColor(GxEPD_BLACK);
 
-          int yy = 25;
+          int yy = 25; int xx = 0;
           g_display->setFont(&FreeSansBold9pt7b);
           Point p = text_center(title.c_str());
           g_display->setCursor(p.x, yy);
           g_display->println(title);
+          yy += H_FMB12 + YM_FMB12 + 15;
 
-          g_display->setFont(&FreeSansBold9pt7b);
+          g_display->setFont(&FreeMonoBold9pt7b);
           g_display->setCursor(0, yy + 40);
 
-          g_display->println(wallet_ur);
-          Serial.println(wallet_ur);
-
-          /*
-          switch(pg_show_address.addr_format) {
+          switch(pg_export_wallet.wallet_format) {
             case text:
-                g_display->println(wallet_text);
+            {
+                Serial.println(wallet_text);
+                Serial.println(scroll);
+                int scroll_strlen = 18;
+                for (int k = 0; k < nrows; ++k) {
+                    g_display->setCursor(xx, yy);
+                    display_printf("%s", wallet_text.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
+                    yy += H_FMB12 + YM_FMB12;
+                }
                 break;
+            }
             case qr_text:
                 displayQR((char *)wallet_text.c_str());
                 break;
@@ -2893,12 +2912,19 @@ void export_wallet(void) {
                 break;
             }
             case ur:
-                g_display->println(wallet_ur.c_str());
+            {
+                Serial.println(wallet_ur);
+                int scroll_strlen = 18;
+                for (int k = 0; k < nrows; ++k) {
+                    g_display->setCursor(xx, yy);
+                    display_printf("%s", wallet_ur.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
+                    yy += H_FMB12 + YM_FMB12;
+                }
                 break;
+            }
             default:
                 break;
           }
-          */
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);
@@ -2936,16 +2962,94 @@ void export_wallet(void) {
             g_uistate = OPEN_WALLET;
             return;
         case '6':
-            pg_show_address.addr_indx++;
-            title = "Address " + String(pg_show_address.addr_indx);
+            scroll++;
             break;
         case '4':
-            if (pg_show_address.addr_indx > 0)
-                pg_show_address.addr_indx--;
-            title = "Address " + String(pg_show_address.addr_indx);
+            if (scroll > 0)
+                scroll--;
             break;
         case '0':
-            g_uistate = SET_ADDRESS_FORMAT;
+            g_uistate = SET_EXPORT_WALLET_FORMAT;
+            scroll = 0;
+            return;
+        default:
+            break;
+      }
+    }
+}
+
+void set_export_wallet_format(void) {
+
+    String title = "Set wallet format";
+    int xx = 5;
+
+    while (true) {
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          int yy = 25;
+          g_display->setFont(&FreeSansBold9pt7b);
+          Point p = text_center(title.c_str());
+          g_display->setCursor(p.x, yy);
+          g_display->println(title);
+          yy += H_FSB9 + 2*YM_FSB9 + 10;
+
+          g_display->setCursor(xx, yy);
+          g_display->println("A: text");
+          yy += H_FSB9 + 2*YM_FSB9;
+
+          g_display->setCursor(xx, yy);
+          g_display->println("B: qr");
+          yy += H_FSB9 + 2*YM_FSB9;
+
+          g_display->setCursor(xx, yy);
+          g_display->println("C: ur");
+          yy += H_FSB9 + 2*YM_FSB9;
+
+          g_display->setCursor(xx, yy);
+          g_display->println("D: qr-ur");
+
+
+          yy = 195; // Absolute, stuck to bottom
+          g_display->setFont(&FreeMono9pt7b);
+          String right_option = "# Done";
+          int x_r = text_right(right_option.c_str());
+          g_display->setCursor(x_r, yy);
+          g_display->println(right_option);
+
+          String left_option = "Back *";
+          g_display->setCursor(0, yy);
+          g_display->println(left_option);
+      }
+      while (g_display->nextPage());
+
+      char key;
+      do {
+          key = g_keypad.getKey();
+      } while (key == NO_KEY);
+
+      g_uistate = EXPORT_WALLET;
+      switch (key) {
+        case '#':
+            return;
+        case '*':
+            g_uistate = SEED_MENU;
+            return;
+        case 'A':
+            pg_export_wallet.wallet_format = text;
+            return;
+        case 'B':
+            pg_export_wallet.wallet_format = qr_text;
+            return;
+        case 'C':
+            pg_export_wallet.wallet_format = ur;
+            return;
+        case 'D':
+            pg_export_wallet.wallet_format = qr_ur;
             return;
         default:
             break;
@@ -3066,6 +3170,9 @@ void ui_dispatch() {
     case EXPORT_WALLET:
         export_wallet();
         break;
+    case SET_EXPORT_WALLET_FORMAT:
+       set_export_wallet_format();
+       break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));
         break;

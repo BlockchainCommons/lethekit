@@ -238,7 +238,7 @@ bool ur_encode_output_descriptor(String &ur, uint32_t *derivation, uint32_t deri
 
     print_hex(cbor_all, cbor_size + output.getSize());
 
-    retval = ur_encode("crypto-address", cbor_all, cbor_size + output.getSize(), ur);
+    retval = ur_encode("crypto-output", cbor_all, cbor_size + output.getSize(), ur);
     if (retval == false) {
         return false;
     }
