@@ -9,22 +9,17 @@
 #define HARDENED_INDEX 0x80000000
 #define MAX_DERIVATION_PATH_LEN 10*sizeof(uint32_t)
 
-//# of elements in xpubEnc
-#define XPUB_ENCODINGS 4
-
-enum xpubEnc {
-  BASE58 = 0,
-  QR_BASE58,
-  UR,
-  QR_UR
-};
-
 enum stdDerivation {
   SINGLE_NATIVE_SEGWIT,
   SINGLE_NESTED_SEGWIT
 };
 
 
+/**
+ * @brief  * This class initializes/updates bip32 root key
+ *         * It is also a database that stores xpub configuration set by user.
+ *           @FIXME: DB part should be moved into UI code
+*/
 class Keystore
 {
   public:
@@ -51,15 +46,11 @@ class Keystore
     /**
      * @brief  convert hdkey to base58
      */
-    bool xpub_to_base58(ext_key *key, char **output);
+    bool xpub_to_base58(ext_key *key, char **output, bool slip132);
 
     /**
-     *  @brief checks if derivation path is valid, and makes it available as integers
-     *         in derivationLen and derivation for further processing
+     *  @brief calculate derivation path from string
      */
-    bool check_derivation_path(const char *path);
-
-    // TODO
     bool calc_derivation_path(const char *path, uint32_t *derivation, uint32_t &derivation_len);
 
     /**
@@ -80,23 +71,6 @@ class Keystore
     bool is_standard_derivation_path(void);
 
     /**
-     * @brief  save xpub format entered by user
-     */
-    void set_xpub_format(xpubEnc format=QR_UR);
-
-    /**
-     * @brief  get the last xpub format entered by user or default one if none
-     *         entered yet
-     */
-    xpubEnc get_xpub_format(void);
-
-    /**
-     * @brief  get the last xpub format entered by user in string format
-     *         or default one if none entered yet
-     */
-    String get_xpub_format_as_string(void);
-
-    /**
      * @brief check if bip32 index is hardened
      */
     bool is_bip32_indx_hardened(uint32_t indx)  {
@@ -106,16 +80,12 @@ class Keystore
     size_t derivationLen;
     uint32_t derivation[MAX_DERIVATION_PATH_LEN];
     const char* default_derivation ="m/84h/1h/0h";
-    /* show xpub with derivation path (only for base58 format) */
-    bool show_derivation_path;
-    bool slip132;
+    String derivation_path;
     uint32_t fingerprint;
     ext_key root;
 
   private:
     int res;
-    String derivation_path;
-    xpubEnc format;
     bool standard_derivation_path;
     stdDerivation std_derivation_path;
 };

@@ -14,8 +14,6 @@ class Seed {
 public:
     static size_t const SIZE = 16;
 
-    enum format display_format = qr_ur;
-
     static Seed * from_rolls(String const & rolls);
 
     Seed(uint8_t const * data, size_t len);
@@ -75,8 +73,6 @@ class SLIP39ShareSeq {
 public:
     static size_t const MAX_SHARES = 16;
     static size_t const WORDS_PER_SHARE = 20;
-
-    enum format display_format = text;
 
     static bool verify_share_checksum(uint16_t const * share);
 

@@ -64,6 +64,7 @@ struct pg_set_xpub_format_t pg_set_xpub_format{ur};
 struct pg_xpub_menu_t pg_xpub_menu = {false};
 struct pg_set_xpub_options_t pg_set_xpub_options = {false, false};
 struct pg_set_seed_format_t pg_set_seed_format = {ur};
+struct pg_set_slip39_format_t pg_set_slip39_format = {ur};
 
 Point text_center(const char * txt) {
     int16_t tbx, tby; uint16_t tbw, tbh;
@@ -938,13 +939,13 @@ void set_slip39_format() {
     clear_full_window = false;
     switch (key) {
     case 'A':
-        g_slip39_generate->display_format = text;
+        pg_set_slip39_format.slip39_format = text;
         return;
     case 'B':
-        g_slip39_generate->display_format = ur;
+        pg_set_slip39_format.slip39_format = ur;
         return;
     case 'C':
-        g_slip39_generate->display_format = qr_ur;
+        pg_set_slip39_format.slip39_format = qr_ur;
         return;
     case '*':
         return;
@@ -984,7 +985,7 @@ void display_slip39() {
 
             g_display->setFont(&FreeMonoBold12pt7b);
 
-            if (g_slip39_generate->display_format == text) {
+            if (pg_set_slip39_format.slip39_format == text) {
                 for (int rr = 0; rr < nrows; ++rr) {
                     int wndx = scroll + rr;
                     char const * word =
@@ -994,7 +995,7 @@ void display_slip39() {
                     yy += H_FMB12 + YM_FMB12;
                 }
             }
-            else if (g_slip39_generate->display_format == qr_ur) {
+            else if (pg_set_slip39_format.slip39_format == qr_ur) {
                 String ur;
                 retval = ur_encode_slip39_share(g_slip39_generate, sharendx, ur);
                 if (retval == false) {
@@ -1050,7 +1051,7 @@ void display_slip39() {
             right_option = "1Up/7Down";
             x_r = text_right(right_option.c_str());
             g_display->setCursor(x_r, yy);
-            if (g_slip39_generate->display_format != qr_ur)
+            if (pg_set_slip39_format.slip39_format != qr_ur)
                 g_display->println(right_option);
 
             left_option = "Form A";
@@ -1075,7 +1076,7 @@ void display_slip39() {
                 scroll -= 1;
             break;
         case '7':
-            if(g_slip39_generate->display_format == ur) {
+            if(pg_set_slip39_format.slip39_format == ur) {
                 scroll++;
             }
             else {
@@ -1836,11 +1837,11 @@ void derivation_path(void) {
 
 void custom_derivation_path(void) {
 
-    String path_start = "m/";
-    String path_entered = "";
+    String path_start = "m/";;
+    String path_entered = keystore.derivation_path.substring(2);
     int x_off = 5;
-    bool path_is_valid = false;
-    String is_valid_tip = "Invalid";
+    bool path_is_valid = true;
+    String is_valid_tip = "Valid";
 
     while (true) {
       g_display->firstPage();
@@ -2100,7 +2101,7 @@ void display_xpub(void) {
     }
 
     char *xpub = NULL;
-    ret = keystore.xpub_to_base58(&key, &xpub);
+    ret = keystore.xpub_to_base58(&key, &xpub, pg_set_xpub_options.slip132);
     if (ret == false) {
         g_uistate = ERROR_SCREEN;
         return;
@@ -2131,7 +2132,7 @@ void display_xpub(void) {
             case text:
                 g_display->setFont(&FreeMonoBold9pt7b);
                 g_display->setCursor(0, yy + 30);
-                if (keystore.show_derivation_path) {
+                if (pg_set_xpub_options.show_derivation_path) {
                     char fingerprint[9] = {0};
                     sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
                     g_display->println("[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub));
@@ -2140,7 +2141,7 @@ void display_xpub(void) {
                     g_display->println(xpub);
                 break;
             case qr_text:
-                if (keystore.show_derivation_path) {
+                if (pg_set_xpub_options.show_derivation_path) {
                     char fingerprint[9] = {0};
                     sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
                     String fing = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub);
@@ -2193,11 +2194,15 @@ void display_xpub(void) {
              g_display->println(left_option);
          }
          else if (pg_set_xpub_format.xpub_format == text || pg_set_xpub_format.xpub_format == qr_text) {
-             right_option = "B Opt.";
-             x_r = text_right(right_option.c_str());
-             g_display->setCursor(x_r, yy);
-             g_display->println(right_option);
+             left_option = "B Opt.";
+             g_display->setCursor(0, yy);
+             g_display->println(left_option);
          }
+
+         right_option = "C Path";
+         x_r = text_right(right_option.c_str());
+         g_display->setCursor(x_r, yy);
+         g_display->println(right_option);
       }
       while (g_display->nextPage());
 
@@ -2231,6 +2236,9 @@ void display_xpub(void) {
             return;
         case 'B':
             g_uistate = SET_XPUB_OPTIONS;
+            return;
+        case 'C':
+            g_uistate = DERIVATION_PATH;
             return;
         default:
             break;
@@ -2577,7 +2585,7 @@ void show_address(void) {
           g_display->setCursor(x_r, yy);
           g_display->println(right_option);
 
-          left_option = "Form 0";
+          left_option = "Form A";
           g_display->setCursor(0, yy);
           g_display->println(left_option);
       }
@@ -2604,7 +2612,7 @@ void show_address(void) {
                 pg_show_address.addr_indx--;
             title = "Address " + String(pg_show_address.addr_indx);
             break;
-        case '0':
+        case 'A':
             g_uistate = SET_ADDRESS_FORMAT;
             return;
         default:
@@ -2801,7 +2809,7 @@ void export_wallet(void) {
           g_display->setCursor(x_r, yy);
           g_display->println(right_option);
 
-          left_option = "Form 0";
+          left_option = "Form A";
           g_display->setCursor(0, yy);
           g_display->println(left_option);
       }
@@ -2826,7 +2834,7 @@ void export_wallet(void) {
             if (scroll > 0)
                 scroll--;
             break;
-        case '0':
+        case 'A':
             g_uistate = SET_EXPORT_WALLET_FORMAT;
             scroll = 0;
             return;

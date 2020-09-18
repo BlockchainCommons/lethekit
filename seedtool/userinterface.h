@@ -40,13 +40,6 @@ extern void ui_reset_into_state(UIState state);
 
 extern void ui_dispatch();
 
-struct UiOption {
-    String _name;
-    String value;
-    String tip;
-    bool show;
-};
-
 struct pg_show_address_t {
     uint32_t addr_indx;
     format addr_format;
@@ -92,6 +85,10 @@ struct pg_set_xpub_options_t {
 
 struct pg_set_seed_format_t {
     format seed_format;
+};
+
+struct pg_set_slip39_format_t {
+    format slip39_format;
 };
 
 #endif // USERINTERFACE_H

@@ -6,10 +6,6 @@ Keystore::Keystore(void) {
     // set default path for single native segwit key
     stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
     save_standard_derivation_path(&stdDer, network.get_network());
-    // set default format as QR_UR
-    set_xpub_format();
-    show_derivation_path = false;
-    slip132 = false;
 }
 
 String Keystore::get_derivation_path(void) {
@@ -181,7 +177,7 @@ bool Keystore::get_xpub(ext_key *key_out) {
     return true;
 }
 
-bool Keystore::xpub_to_base58(ext_key *key, char **output) {
+bool Keystore::xpub_to_base58(ext_key *key, char **output, bool slip132) {
 
     int ret;
     unsigned char bytes[BIP32_SERIALIZED_LEN];
@@ -223,27 +219,4 @@ bool Keystore::xpub_to_base58(ext_key *key, char **output) {
         return true;
     else
         return false;
-}
-
-void Keystore::set_xpub_format(xpubEnc _format) {
-    format = _format;
-}
-
-xpubEnc Keystore::get_xpub_format(void) {
-    return format;
-}
-
-String Keystore::get_xpub_format_as_string(void) {
-    switch(format) {
-        case BASE58:
-            return "base58";
-        case QR_BASE58:
-            return "qr-base58";
-        case UR:
-            return "ur";
-        case QR_UR:
-            return "qr_ur";
-        default:
-            return "qr_ur";
-    }
 }
