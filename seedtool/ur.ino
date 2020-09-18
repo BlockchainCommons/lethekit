@@ -323,7 +323,7 @@ bool test_ur(void) {
         String xpub_ur;
 
         // STUB derivation path
-        keystore.save_derivation_path(path.c_str());
+        keystore.check_derivation_path(path.c_str(), true);
 
         ret = bip32_key_from_base58(derived_key.c_str(), &xpub);
         if (ret != WALLY_OK) {

@@ -4,6 +4,7 @@
 #define USERINTERFACE_H
 
 #include "util.h"
+#include "keystore.h" // TODO remove eventually after refactored
 
 enum UIState {
     INVALID_STATE = -1,
@@ -19,12 +20,12 @@ enum UIState {
     CONFIG_SLIP39,
     DISPLAY_SLIP39,
     DISPLAY_XPUBS,
-    XPUB_MENU,
     DERIVATION_PATH,
     SET_NETWORK,
     SET_XPUB_FORMAT,
-    SEED_MENU,
+    SET_XPUB_OPTIONS,
     DISPLAY_SEED,
+    SET_SEED_FORMAT,
     CUSTOM_DERIVATION_PATH,
     ERROR_SCREEN,
     SET_SLIP39_FORMAT,
@@ -46,13 +47,51 @@ struct UiOption {
     bool show;
 };
 
-struct pg_show_address_t{
+struct pg_show_address_t {
     uint32_t addr_indx;
     format addr_format;
 };
 
-struct pg_export_wallet_t{
+struct pg_export_wallet_t {
     format wallet_format;
+};
+
+struct pg_derivation_path_t {
+    bool is_standard_derivation;
+    enum stdDerivation std_derivation;
+    bool slip132;
+};
+
+struct pg_set_xpub_format_t {
+    format xpub_format;
+
+    String get_xpub_format_as_string(void) {
+      switch(xpub_format) {
+          case text:
+              return "base58";
+          case qr_text:
+              return "qr-base58";
+          case ur:
+              return "ur";
+          case qr_ur:
+              return "qr_ur";
+          default:
+              return "qr_ur";
+      }
+    }
+};
+
+struct pg_xpub_menu_t {
+    bool slip132;
+};
+
+struct pg_set_xpub_options_t {
+    bool slip132;
+    bool show_derivation_path;
+};
+
+struct pg_set_seed_format_t {
+    format seed_format;
 };
 
 #endif // USERINTERFACE_H

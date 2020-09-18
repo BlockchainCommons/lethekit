@@ -63,9 +63,9 @@ class Keystore
     bool calc_derivation_path(const char *path, uint32_t *derivation, uint32_t &derivation_len);
 
     /**
-     *  @brief checks derivation path and saves it
+     *  @brief checks derivation path and optionally saves it
      */
-    bool save_derivation_path(const char *path);
+    bool check_derivation_path(const char *path, bool save);
 
     /**
      *  @brief saves standard derivation path. Path can be NULL if only network changed
@@ -115,8 +115,6 @@ class Keystore
   private:
     int res;
     String derivation_path;
-    size_t derivationLen_tmp;
-    uint32_t derivation_tmp[MAX_DERIVATION_PATH_LEN];
     xpubEnc format;
     bool standard_derivation_path;
     stdDerivation std_derivation_path;

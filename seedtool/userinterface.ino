@@ -59,6 +59,11 @@ bool clear_full_window = true;
 // Pages
 struct pg_show_address_t pg_show_address{0, ur};
 struct pg_export_wallet_t pg_export_wallet{ur};
+struct pg_derivation_path_t pg_derivation_path{true, SINGLE_NATIVE_SEGWIT, false};
+struct pg_set_xpub_format_t pg_set_xpub_format{ur};
+struct pg_xpub_menu_t pg_xpub_menu = {false};
+struct pg_set_xpub_options_t pg_set_xpub_options = {false, false};
+struct pg_set_seed_format_t pg_set_seed_format = {ur};
 
 Point text_center(const char * txt) {
     int16_t tbx, tby; uint16_t tbw, tbh;
@@ -549,7 +554,7 @@ void set_network() {
     do {
         key = g_keypad.getKey();
     } while (key == NO_KEY);
-    g_uistate = XPUB_MENU;
+    g_uistate = DISPLAY_XPUBS;
     clear_full_window = false;
     switch (key) {
     case 'A':
@@ -647,7 +652,7 @@ void seedy_menu() {
         //    return;
         case 'C':
             clear_full_window = false;
-            g_uistate = XPUB_MENU;
+            g_uistate = DISPLAY_XPUBS;
             return;
         case '3':
             clear_full_window = false;
@@ -655,7 +660,7 @@ void seedy_menu() {
             return;
         case 'D':
             clear_full_window = false;
-            g_uistate = SEED_MENU;
+            g_uistate = DISPLAY_SEED;
             return;
         case '*':
            ui_reset_into_state(SEEDLESS_MENU);
@@ -1790,34 +1795,37 @@ void derivation_path(void) {
 
       switch (key) {
         case '#':
-            g_uistate = XPUB_MENU;
+            g_uistate = DISPLAY_XPUBS;
             return;
         case '*':
-            g_uistate = XPUB_MENU;
+            g_uistate = DISPLAY_XPUBS;
             return;
         case 'A': {
-            stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
-            ret = keystore.save_standard_derivation_path(&stdDer, network.get_network());
+            pg_derivation_path.std_derivation = SINGLE_NATIVE_SEGWIT;
+            pg_derivation_path.is_standard_derivation = true;
+            ret = keystore.save_standard_derivation_path(&pg_derivation_path.std_derivation, network.get_network());
             if (ret == false) {
                 g_uistate = ERROR_SCREEN;
                 return;
               }
             }
-            g_uistate = XPUB_MENU;
+            g_uistate = DISPLAY_XPUBS;
             return;
         case 'B': {
-            stdDerivation stdDer = SINGLE_NESTED_SEGWIT;
-            ret = keystore.save_standard_derivation_path(&stdDer, network.get_network());
+            pg_derivation_path.std_derivation = SINGLE_NESTED_SEGWIT;
+            pg_derivation_path.is_standard_derivation = true;
+            ret = keystore.save_standard_derivation_path(&pg_derivation_path.std_derivation, network.get_network());
             if (ret == false) {
                 g_uistate = ERROR_SCREEN;
                 return;
               }
             }
-            g_uistate = XPUB_MENU;
+            g_uistate = DISPLAY_XPUBS;
             return;
         case 'C':
             // slip132 option is not available for custom derivation paths
-            keystore.slip132 = false;
+            pg_derivation_path.slip132 = false;
+            pg_derivation_path.is_standard_derivation = false;
             g_uistate = CUSTOM_DERIVATION_PATH;
             return;
         default:
@@ -1893,12 +1901,12 @@ void custom_derivation_path(void) {
       switch (key) {
         case '#':
             if (path_is_valid) {
-                bool ret = keystore.save_derivation_path((path_start + path_entered).c_str());
+                bool ret = keystore.check_derivation_path((path_start + path_entered).c_str(), true);
                 if (ret == false) {
                     g_uistate = ERROR_SCREEN;
                     return;
                 }
-                g_uistate = XPUB_MENU;
+                g_uistate = DISPLAY_XPUBS;
                 return;
             }
             break;
@@ -1923,7 +1931,7 @@ void custom_derivation_path(void) {
             break;
       }
 
-      if (keystore.check_derivation_path((path_start + path_entered).c_str())) {
+      if (keystore.check_derivation_path((path_start + path_entered).c_str(), false)) {
           path_is_valid = true;
       }
       else {
@@ -1978,20 +1986,20 @@ void set_xpub_format() {
     do {
         key = g_keypad.getKey();
     } while (key == NO_KEY);
-    g_uistate = XPUB_MENU;
+    g_uistate = DISPLAY_XPUBS;
     clear_full_window = false;
     switch (key) {
     case 'A':
-        keystore.set_xpub_format(QR_BASE58);
+        pg_set_xpub_format.xpub_format = qr_text;
         return;
     case 'B':
-        keystore.set_xpub_format(BASE58);
+        pg_set_xpub_format.xpub_format = text;
         return;
     case 'C':
-        keystore.set_xpub_format(QR_UR);
+        pg_set_xpub_format.xpub_format = qr_ur;
         return;
     case 'D':
-        keystore.set_xpub_format(UR);
+        pg_set_xpub_format.xpub_format = ur;
         return;
     case '*':
         return;
@@ -2001,154 +2009,73 @@ void set_xpub_format() {
     }
 }
 
-void xpub_menu(void) {
-    Point p;
-    // @FIXME option should not be retained when entering from "Seed Present" menu
-    static unsigned int option_atm = 0;
+void set_xpub_options() {
+    int xoff = 5, yoff = 5;
+    String title = "Slip132";
+    g_display->firstPage();
+    do
+    {
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
 
-    int xx = 0;
-    String line = "___________";
+        int xx = xoff;
+        int yy = yoff + (H_FSB9 + YM_FSB9);
+        g_display->setFont(&FreeSansBold9pt7b);
+        Point p = text_center(title.c_str());
+        g_display->setCursor(p.x, yy);
+        g_display->println(title);
 
-    // when UR format, we hide options derivation path and slip132
-    bool is_UR_format = (keystore.get_xpub_format() == UR || keystore.get_xpub_format() == QR_UR);
+        yy += H_FSB9 + 2*YM_FSB9 + 5;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("A: True    B: False");
 
-    UiOption options[] = {{"derivation", keystore.get_derivation_path(), "Change with A", true},
-                          {"slip132",  keystore.slip132 ? "On" : "Off", "Change with A", is_UR_format ? false : true},
-                          {"show derivation", keystore.show_derivation_path ? "On" : "Off", "Change with A", is_UR_format ? false : true},
-                          {"network", network.as_string(), "Change with A", true},
-                          {"format", keystore.get_xpub_format_as_string(), "Change with A", true}};
+        yy += H_FSB9 + 2*YM_FSB9 + 20;
 
-    while (true) {
+        title = "Show path";
+        p = text_center(title.c_str());
+        g_display->setCursor(p.x, yy);
+        g_display->println(title);
 
-      g_display->firstPage();
-      do
-      {
-          g_display->setPartialWindow(0, 0, 200, 200);
-          g_display->fillScreen(GxEPD_WHITE);
-          g_display->setTextColor(GxEPD_BLACK);
+        yy += H_FSB9 + 2*YM_FSB9 + 5;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("C: True    D: False");
 
-          const char * title = "Xpub Menu";
-          int yy = 25;
-          g_display->setFont(&FreeSansBold12pt7b);
-          p = text_center(title);
-          g_display->setCursor(p.x, yy);
-          g_display->println(title);
+        // bottom-relative position
+        xx = xoff + 2;
+        yy = Y_MAX - (H_FSB9) + 2;
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("*-Cancel");
+    }
+    while (g_display->nextPage());
 
-          yy = yy + 34;
-
-          p = text_center(line.c_str());
-          g_display->setCursor(p.x, yy);
-          display_printf("%s", line.c_str());
-
-          g_display->setFont(&FreeMonoBold9pt7b);
-          p = text_center(options[option_atm]._name.c_str());
-          xx = p.x;
-          g_display->setCursor(xx, yy);
-          display_printf("%s", options[option_atm]._name.c_str());
-
-          g_display->setFont(&FreeMonoBold12pt7b);
-          p = text_center(options[option_atm].value.c_str());
-          xx = p.x;
-          yy += 35;
-          g_display->setCursor(xx, yy);
-          display_printf("%s", options[option_atm].value.c_str());
-
-          g_display->setFont(&FreeMono9pt7b);
-          p = text_center(options[option_atm].tip.c_str());
-          xx = p.x;
-          yy += 27;
-          g_display->setCursor(xx, yy);
-          display_printf("%s", options[option_atm].tip.c_str());
-
-          yy += (H_FMB12 + YM_FMB12) -5;
-          g_display->setFont(&FreeMonoBold12pt7b);
-          p = text_center(line.c_str());
-          g_display->setCursor(p.x, yy);
-          xx = p.x;
-          display_printf("%s", line.c_str());
-
-          yy = 195; // Absolute, stuck to bottom
-          g_display->setFont(&FreeMono9pt7b);
-          String right_option = "# Ok";
-          int x_r = text_right(right_option.c_str());
-          g_display->setCursor(x_r, yy);
-          g_display->println(right_option);
-
-          String left_option = "Cancel *";
-          g_display->setCursor(0, yy);
-          g_display->println(left_option);
-
-          g_display->setFont(&FreeMonoBold9pt7b);
-          yy -= 32;
-          right_option = "6 next ";
-          x_r = text_right(right_option.c_str());
-          g_display->setCursor(x_r, yy);
-          if (option_atm < (ARRAY_SIZE(options) - 1))
-              g_display->println(right_option);
-
-          left_option = " prev 4";
-          g_display->setCursor(0, yy);
-          if (option_atm > 0)
-              g_display->println(left_option);
-
-      }
-      while (g_display->nextPage());
-
-      char key;
-      do {
-          key = g_keypad.getKey();
-      } while (key == NO_KEY);
-
-      clear_full_window = false;
-      switch (key) {
-        case '#':
-            g_uistate = DISPLAY_XPUBS;
-            return;
-        case '*':
-            g_uistate = SEEDY_MENU;
-            return;
-        case 'A':
-              if (options[option_atm]._name == F("derivation")) { g_uistate = DERIVATION_PATH; return; }
-              if (options[option_atm]._name == F("slip132")) {
-                  if (keystore.is_standard_derivation_path() == true) {
-                      keystore.slip132 = !keystore.slip132; options[1].value = keystore.slip132 ? F("On") : F("Off");
-                  }
-                  break;
-              }
-              if (options[option_atm]._name == F("show derivation")) {
-                  keystore.show_derivation_path = !keystore.show_derivation_path; options[2].value = keystore.show_derivation_path ? F("On") : F("Off"); break;}
-              if (options[option_atm]._name == F("network")) { g_uistate = SET_NETWORK; return; }
-              if (options[option_atm]._name == F("format")) {
-                     g_uistate = SET_XPUB_FORMAT;
-                     return;
-                 }
-            break;
-        case '4':
-        {
-            for (int i = option_atm; i > 0; i--) {
-                if (options[i-1].show == true) {
-                    option_atm = i-1;
-                    break;
-                }
-            }
-        }
-            break;
-        case '6':
-        {
-            for (unsigned int i = option_atm; i < (ARRAY_SIZE(options))-1; i++) {
-                if (options[i+1].show == true) {
-                    option_atm = i+1;
-                    break;
-                }
-            }
-        }
-            break;
-        default:
-            break;
-      }
+    char key;
+    do {
+        key = g_keypad.getKey();
+    } while (key == NO_KEY);
+    g_uistate = DISPLAY_XPUBS;
+    clear_full_window = false;
+    switch (key) {
+    case 'A':
+        pg_set_xpub_options.slip132 = true;
+        return;
+    case 'B':
+        pg_set_xpub_options.slip132 = false;
+        return;
+    case 'C':
+        pg_set_xpub_options.show_derivation_path = true;
+        return;
+    case 'D':
+        pg_set_xpub_options.show_derivation_path = false;
+        return;
+    case '*':
+        return;
+    default:
+        g_uistate = SET_XPUB_FORMAT;
+        break;
     }
 }
-
 
 void display_xpub(void) {
     ext_key key;
@@ -2200,8 +2127,8 @@ void display_xpub(void) {
           g_display->setCursor(p.x, yy);
           g_display->println(title);
 
-          switch(keystore.get_xpub_format()) {
-            case BASE58:
+          switch(pg_set_xpub_format.xpub_format) {
+            case text:
                 g_display->setFont(&FreeMonoBold9pt7b);
                 g_display->setCursor(0, yy + 30);
                 if (keystore.show_derivation_path) {
@@ -2212,7 +2139,7 @@ void display_xpub(void) {
                 else
                     g_display->println(xpub);
                 break;
-            case QR_BASE58:
+            case qr_text:
                 if (keystore.show_derivation_path) {
                     char fingerprint[9] = {0};
                     sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
@@ -2223,7 +2150,7 @@ void display_xpub(void) {
                     displayQR(xpub);
                 }
                 break;
-            case UR: {
+            case ur: {
                 int xx = 0;
                 yy = 50;
                 g_display->setFont(&FreeMonoBold9pt7b);
@@ -2231,29 +2158,16 @@ void display_xpub(void) {
                 int16_t tbx, tby; uint16_t tbw, tbh;
                 size_t i = 0;
 
-                if (scroll_strlen == 0) {
-                    // determine the number of chars that fit into display width
-                    for (; i < ur_string.length(); i++) {
-                        g_display->getTextBounds(ur_string.substring(0, i), 0, 0, &tbx, &tby, &tbw, &tbh);
-                        if (tbw >= g_display->width() - 10) {
-                            scroll_strlen = ur_string.substring(0, i).length();
-                            break;
-                        }
-                      }
-                    }
-                    if ((scroll)*scroll_strlen >= (int)ur_string.length()) {
-                        // don't scroll to infinity
-                        scroll--;
-                    }
+                scroll_strlen = 18;
 
-                    for (int k = 0; k < nrows; ++k) {
-                        g_display->setCursor(xx, yy);
-                        display_printf("%s", ur_string.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
-                        yy += H_FMB12 + YM_FMB12;
-                    }
+                for (int k = 0; k < nrows; ++k) {
+                    g_display->setCursor(xx, yy);
+                    display_printf("%s", ur_string.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
+                    yy += H_FMB12 + YM_FMB12;
+                }
                 }
                 break;
-            case QR_UR:
+            case qr_ur:
                 ur_string.toUpperCase();
                 displayQR((char *)ur_string.c_str());
                 break;
@@ -2268,17 +2182,18 @@ void display_xpub(void) {
           g_display->setCursor(x_r, yy);
           g_display->println(right_option);
 
-          String left_option = "Back *";
+          String left_option = "Form A";
           g_display->setCursor(0, yy);
           g_display->println(left_option);
 
-         if (scroll_strlen > 0) {
-             yy = 195 - 20;
+         yy = 195 - 20;
+         if (pg_set_xpub_format.xpub_format == ur) {
              g_display->setCursor(0, yy);
-             left_option = "   Up 1";
+             left_option = "<-1/7->";
              g_display->println(left_option);
-
-             right_option = "7 Down   ";
+         }
+         else if (pg_set_xpub_format.xpub_format == text || pg_set_xpub_format.xpub_format == qr_text) {
+             right_option = "B Opt.";
              x_r = text_right(right_option.c_str());
              g_display->setCursor(x_r, yy);
              g_display->println(right_option);
@@ -2299,7 +2214,7 @@ void display_xpub(void) {
             }
             return;
         case '*':
-            g_uistate = XPUB_MENU;
+            g_uistate = SEEDY_MENU;
             if (xpub != NULL) {
               wally_free_string(xpub);
             }
@@ -2311,143 +2226,17 @@ void display_xpub(void) {
         case '7':
             scroll += 1;
             break;
+        case 'A':
+            g_uistate = SET_XPUB_FORMAT;
+            return;
+        case 'B':
+            g_uistate = SET_XPUB_OPTIONS;
+            return;
         default:
             break;
       }
     }
   }
-
-void seed_menu(void) {
-    /* only 2 formats: UR and Qr_UR */
-    String seed_format[] = {"Qr-UR", "UR"};
-    Point p;
-    // @FIXME option should not be retained when entering from "Seed Present" menu
-    static unsigned int option_atm = 0;
-
-    int xx = 0;
-    String line = "___________";
-
-    UiOption options[] = {{"format", seed_format[(int)g_master_seed->display_format], "Change with A", true},
-                          {"RAM", "Seed", "Wipe seed with A", true}};
-
-    while (true) {
-
-      g_display->firstPage();
-      do
-      {
-          g_display->setPartialWindow(0, 0, 200, 200);
-          g_display->fillScreen(GxEPD_WHITE);
-          g_display->setTextColor(GxEPD_BLACK);
-
-          const char * title = "Seed Menu";
-          int yy = 25;
-          g_display->setFont(&FreeSansBold12pt7b);
-          p = text_center(title);
-          g_display->setCursor(p.x, yy);
-          g_display->println(title);
-
-          yy = yy + 34;
-
-          p = text_center(line.c_str());
-          g_display->setCursor(p.x, yy);
-          display_printf("%s", line.c_str());
-
-          g_display->setFont(&FreeMonoBold9pt7b);
-          p = text_center(options[option_atm]._name.c_str());
-          xx = p.x;
-          g_display->setCursor(xx, yy);
-          display_printf("%s", options[option_atm]._name.c_str());
-
-          g_display->setFont(&FreeMonoBold12pt7b);
-          p = text_center(options[option_atm].value.c_str());
-          xx = p.x;
-          yy += 35;
-          g_display->setCursor(xx, yy);
-          display_printf("%s", options[option_atm].value.c_str());
-
-          g_display->setFont(&FreeMono9pt7b);
-          p = text_center(options[option_atm].tip.c_str());
-          xx = p.x;
-          yy += 27;
-          g_display->setCursor(xx, yy);
-          display_printf("%s", options[option_atm].tip.c_str());
-
-          yy += (H_FMB12 + YM_FMB12) -5;
-          g_display->setFont(&FreeMonoBold12pt7b);
-          p = text_center(line.c_str());
-          g_display->setCursor(p.x, yy);
-          xx = p.x;
-          display_printf("%s", line.c_str());
-
-          yy = 195; // Absolute, stuck to bottom
-          g_display->setFont(&FreeMono9pt7b);
-          String right_option = "# Ok";
-          int x_r = text_right(right_option.c_str());
-          g_display->setCursor(x_r, yy);
-          g_display->println(right_option);
-
-          String left_option = "Cancel *";
-          g_display->setCursor(0, yy);
-          g_display->println(left_option);
-
-          g_display->setFont(&FreeMonoBold9pt7b);
-          yy -= 32;
-          right_option = "6 next ";
-          x_r = text_right(right_option.c_str());
-          g_display->setCursor(x_r, yy);
-          if (option_atm < (ARRAY_SIZE(options) - 1))
-              g_display->println(right_option);
-
-          left_option = " prev 4";
-          g_display->setCursor(0, yy);
-          if (option_atm > 0)
-              g_display->println(left_option);
-
-      }
-      while (g_display->nextPage());
-
-      char key;
-      do {
-          key = g_keypad.getKey();
-      } while (key == NO_KEY);
-
-      clear_full_window = false;
-      switch (key) {
-        case '#':
-            g_uistate = DISPLAY_SEED;
-            return;
-        case '*':
-            g_uistate = SEEDY_MENU;
-            return;
-        case 'A':
-              if (options[option_atm]._name == "RAM") {
-                  // @TODO wipe xpub
-                  ui_reset_into_state(SEEDLESS_MENU);
-                  g_uistate = SEEDLESS_MENU;
-                  return;
-              }
-              else if (options[option_atm]._name == "format") {
-                  if(g_master_seed->display_format == ur)
-                      g_master_seed->display_format = qr_ur;
-                  else
-                      g_master_seed->display_format = ur;
-                  options[0].value = seed_format[(int)g_master_seed->display_format];
-                  break;
-              }
-            break;
-        case '4':
-            if (option_atm > 0)
-                option_atm -= 1;
-            break;
-        case '6':
-            if (option_atm < (ARRAY_SIZE(options))-1)
-                option_atm += 1;
-            break;
-        default:
-            break;
-      }
-    }
-}
 
 void display_seed(void) {
     String ur_string;
@@ -2473,7 +2262,7 @@ void display_seed(void) {
           g_display->setCursor(p.x, yy);
           g_display->println(title);
 
-          switch(g_master_seed->display_format) {
+          switch(pg_set_seed_format.seed_format) {
             case ur:
                 g_display->setFont(&FreeMonoBold9pt7b);
                 g_display->setCursor(0, yy + 40);
@@ -2497,6 +2286,11 @@ void display_seed(void) {
           String left_option = "Back *";
           g_display->setCursor(0, yy);
           g_display->println(left_option);
+
+          yy = 195 - 20;
+          g_display->setCursor(0, yy);
+          left_option = "Form A";
+          g_display->println(left_option);
       }
       while (g_display->nextPage());
 
@@ -2510,13 +2304,71 @@ void display_seed(void) {
             g_uistate = SEEDY_MENU;
             return;
         case '*':
-            g_uistate = SEED_MENU;
+            g_uistate = SEEDY_MENU;
+            return;
+        case 'A':
+            g_uistate = SET_SEED_FORMAT;
             return;
         default:
             break;
       }
     }
   }
+
+void set_seed_format() {
+    int xoff = 5, yoff = 5;
+    String title = "Set seed format";
+    g_display->firstPage();
+    do
+    {
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
+
+        int xx = xoff;
+        int yy = yoff + (H_FSB9 + YM_FSB9);
+        g_display->setFont(&FreeSansBold9pt7b);
+        Point p = text_center(title.c_str());
+        g_display->setCursor(p.x, yy);
+        g_display->println(title);
+
+        yy += H_FSB9 + 2*YM_FSB9 + 15;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("A: ur");
+
+        yy += H_FSB9 + 2*YM_FSB9 + 5;
+        g_display->setCursor(4*xx, yy);
+        g_display->println("B: qr-ur");
+
+        // bottom-relative position
+        xx = xoff + 2;
+        yy = Y_MAX - (H_FSB9) + 2;
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
+        g_display->println("*-Cancel");
+    }
+    while (g_display->nextPage());
+
+    char key;
+    do {
+        key = g_keypad.getKey();
+    } while (key == NO_KEY);
+    g_uistate = DISPLAY_SEED;
+    clear_full_window = false;
+    switch (key) {
+    case 'A':
+        pg_set_seed_format.seed_format = ur;
+        return;
+    case 'B':
+        pg_set_seed_format.seed_format = qr_ur;
+        return;
+    case '*':
+        return;
+    default:
+        g_uistate = SET_SEED_FORMAT;
+        break;
+    }
+}
 
 void error_screen(void) {
     while (true) {
@@ -2820,7 +2672,7 @@ void set_address_format(void) {
         case '#':
             return;
         case '*':
-            g_uistate = SEED_MENU;
+            g_uistate = SEEDY_MENU;
             return;
         case 'A':
             pg_show_address.addr_format = text;
@@ -3043,7 +2895,7 @@ void set_export_wallet_format(void) {
         case '#':
             return;
         case '*':
-            g_uistate = SEED_MENU;
+            g_uistate = SEEDY_MENU;
             return;
         case 'A':
             pg_export_wallet.wallet_format = text;
@@ -3134,9 +2986,6 @@ void ui_dispatch() {
     case DISPLAY_SLIP39:
         display_slip39();
         break;
-    case XPUB_MENU:
-        xpub_menu();
-        break;
     case DISPLAY_XPUBS:
         display_xpub();
         break;
@@ -3149,8 +2998,8 @@ void ui_dispatch() {
     case SET_XPUB_FORMAT:
         set_xpub_format();
         break;
-    case SEED_MENU:
-        seed_menu();
+    case SET_XPUB_OPTIONS:
+        set_xpub_options();
         break;
     case DISPLAY_SEED:
         display_seed();
@@ -3178,6 +3027,9 @@ void ui_dispatch() {
         break;
     case SET_EXPORT_WALLET_FORMAT:
        set_export_wallet_format();
+       break;
+    case SET_SEED_FORMAT:
+       set_seed_format();
        break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));

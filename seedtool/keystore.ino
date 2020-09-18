@@ -44,74 +44,6 @@ bool Keystore::update_root_key(uint8_t *seed, size_t len, NetwtorkType network)
     return true;
 }
 
-bool Keystore::check_derivation_path(const char *path) {
-
-    // source: https://github.com/micro-bitcoin/uBitcoin/blob/master/src/HDWallet.cpp
-    // char ' excluded as keypad will support only 'h'
-    static const char VALID_CHARS[] = "0123456789/h";
-    size_t len = strlen(path);
-    const char * cur = path;
-
-    // first check for weird char sequences
-    for (size_t i=0; i<len; i++) {
-        if(path[i] == '/'){
-            if (i+1 < len && (path[i+1] == 'h' || path[i+1] == '/')) {
-                // 'h' or '/' must not follow '/'
-                return false;
-            }
-            if (i+2 < len && path[i+1] == '0' && isDigit(path[i+2])) {
-                // e.g. /01 is invalid
-                return false;
-            }
-        }
-    }
-
-    if(path[0] == 'm'){ // remove leading "m/"
-        cur+=2;
-        len-=2;
-    }
-    if(cur[len-1] == '/'){ // remove trailing "/"
-        len--;
-    }
-
-    derivationLen_tmp = 1;
-    // checking if all chars are valid and counting derivation length
-    for(size_t i=0; i<len; i++){
-        const char * pch = strchr(VALID_CHARS, cur[i]);
-        if(pch == NULL){ // wrong character
-            return false;
-        }
-        if(cur[i] == '/'){
-            derivationLen_tmp++;
-        }
-    }
-
-    if (derivationLen_tmp > MAX_DERIVATION_PATH_LEN)
-        return false;
-
-    memset(derivation_tmp, 0, MAX_DERIVATION_PATH_LEN);
-
-    size_t current = 0;
-    for(size_t i=0; i<len; i++){
-        if(cur[i] == '/'){ // next
-            current++;
-            continue;
-        }
-        const char * pch = strchr(VALID_CHARS, cur[i]);
-        uint32_t val = pch-VALID_CHARS;
-        if(derivation_tmp[current] >= HARDENED_INDEX){ // can't have anything after hardened
-            return false;
-        }
-        if(val < 10){
-            derivation_tmp[current] = derivation_tmp[current]*10 + val;
-        }else{ // h or ' -> hardened
-            derivation_tmp[current] += HARDENED_INDEX;
-        }
-    }
-    return true;
-}
-
-// @FIXME merge previous function with this one
 bool Keystore::calc_derivation_path(const char *path, uint32_t *derivation, uint32_t &derivation_len) {
 
     // source: https://github.com/micro-bitcoin/uBitcoin/blob/master/src/HDWallet.cpp
@@ -170,7 +102,7 @@ bool Keystore::calc_derivation_path(const char *path, uint32_t *derivation, uint
             return false;
         }
         if(val < 10){
-            derivation[current] = derivation_tmp[current]*10 + val;
+            derivation[current] = derivation[current]*10 + val;
         }else{ // h or ' -> hardened
             derivation[current] += HARDENED_INDEX;
         }
@@ -178,14 +110,23 @@ bool Keystore::calc_derivation_path(const char *path, uint32_t *derivation, uint
     return true;
 }
 
-bool Keystore::save_derivation_path(const char *path) {
-      if (check_derivation_path(path) == false)
+bool Keystore::check_derivation_path(const char *path, bool save) {
+
+      uint32_t derivationLen_tmp;
+      uint32_t derivation_tmp[MAX_DERIVATION_PATH_LEN];
+
+      if (calc_derivation_path(path, derivation_tmp, derivationLen_tmp) == false)
         return false;
-      derivation_path = path;
-      derivationLen = derivationLen_tmp;
 
       if (derivationLen > MAX_DERIVATION_PATH_LEN)
           return false;
+
+      if (save == false)
+          return true;
+
+      // save
+      derivation_path = path;
+      derivationLen = derivationLen_tmp;
 
       memset(derivation, 0, MAX_DERIVATION_PATH_LEN);
       memcpy(derivation, derivation_tmp, derivationLen*sizeof(uint32_t));
@@ -219,7 +160,7 @@ bool Keystore::save_standard_derivation_path(stdDerivation *path, NetwtorkType n
       else
         p.setCharAt(6, '1');
 
-      bool ret = save_derivation_path(p.c_str());
+      bool ret = check_derivation_path(p.c_str(), true);
 
       standard_derivation_path = true;
 

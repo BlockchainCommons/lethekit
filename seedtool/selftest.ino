@@ -484,7 +484,7 @@ bool test_bip32(void) {
     keystore.update_root_key(seed, sizeof(seed), MAINNET);
 
     // STUB derivation path
-    bool retval = keystore.save_derivation_path(derivation_path.c_str());
+    bool retval = keystore.check_derivation_path(derivation_path.c_str(), true);
     if (retval == false) {
         Serial.println(F("save derivation path failed"));
         return false;
