@@ -2634,14 +2634,21 @@ void show_address(void) {
 
     String title = "Address " + String(pg_show_address.addr_indx);
     struct ext_key child_key;
+    struct ext_key child_key2;
     char *addr_segwit = NULL; // @TODO free
-    uint32_t child_path[2] = {0, pg_show_address.addr_indx};  // FIXME: complete segwit path missing
+    // @TODO only single native segwit for now
+    String child_path_str = network.get_network() == MAINNET ? "m/84h/0h/0h/0" : "m/84h/1h/0h/0";
+    uint32_t child_path[10];
+    uint32_t child_path_len;
     String address_family;
+
+
+    keystore.calc_derivation_path(child_path_str.c_str(), child_path, child_path_len);
 
     while (true) {
 
-      child_path[1] = pg_show_address.addr_indx;
-      (void)bip32_key_from_parent_path(&keystore.root, child_path, sizeof(child_path), 0, &child_key);
+      (void)bip32_key_from_parent_path(&keystore.root, child_path, child_path_len, BIP32_FLAG_KEY_PRIVATE, &child_key);
+      (void)bip32_key_from_parent(&child_key, pg_show_address.addr_indx, BIP32_FLAG_KEY_PUBLIC, &child_key2);
 
       switch(network.get_network())
       {
@@ -2652,11 +2659,11 @@ void show_address(void) {
             address_family = "tb";
             break;
         default:
-            address_family = "bcrt1";
+            address_family = "bcrt";
             break;
       }
 
-      (void)wally_bip32_key_to_addr_segwit(&child_key, address_family.c_str(), 0, &addr_segwit);
+      (void)wally_bip32_key_to_addr_segwit(&child_key2, address_family.c_str(), 0, &addr_segwit);
 
       // prepare cbor/ur format
       uint8_t data[100];
@@ -2855,7 +2862,7 @@ void export_wallet(void) {
     while (true) {
 
       keystore.calc_derivation_path(child_path_str.c_str(), child_path, child_path_len);
-      (void)bip32_key_from_parent_path(&keystore.root, child_path, child_path_len, 0, &child_key);
+      (void)bip32_key_from_parent_path(&keystore.root, child_path, child_path_len, BIP32_FLAG_KEY_PUBLIC, &child_key);
 
       sprintf(derivation_path_with_fingerprint, "[%02x%02x%02x%02x%s]", child_key.parent160[0], child_key.parent160[1],
                                                 child_key.parent160[2], child_key.parent160[3], child_path_str.substring(1).c_str());
