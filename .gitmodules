@@ -22,3 +22,6 @@
 [submodule "deps/bc-bytewords"]
 	path = deps/bc-bytewords
 	url = git@github.com:BlockchainCommons/bc-bytewords.git
+[submodule "deps/bc-sskr"]
+	path = deps/bc-sskr
+	url = git@github.com:BlockchainCommons/bc-sskr.git

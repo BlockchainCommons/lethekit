@@ -76,6 +76,7 @@ declare -a libs=(
     bc-bytewords
     bc-crypto-base
     bc-shamir
+    bc-sskr
     bc-bip39
     TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
     GxEPD2
