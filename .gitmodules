@@ -4,9 +4,6 @@
 [submodule "deps/bc-shamir"]
 	path = deps/bc-shamir
 	url = git@github.com:BlockchainCommons/bc-shamir.git
-[submodule "deps/bc-slip39"]
-	path = deps/bc-slip39
-	url = git@github.com:BlockchainCommons/bc-slip39.git
 [submodule "deps/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-"]
 	path = deps/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
 	url = git@github.com:SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-.git
