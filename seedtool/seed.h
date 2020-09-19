@@ -7,6 +7,8 @@
 
 #include <bc-bip39.h>
 #include "util.h"
+#include "bc-bytewords.h"
+#include "CborEncoder.h"
 
 #define BIP39_SEED_LEN_512 64
 
@@ -69,56 +71,27 @@ private:
     bool calc_mnemonic_seed();
 };
 
-class SLIP39ShareSeq {
+class SSKRShareSeq {
 public:
     static size_t const MAX_SHARES = 16;
-    static size_t const WORDS_PER_SHARE = 20;
+    const size_t METADATA_LENGTH_BYTES = 5;
 
-    static bool verify_share_checksum(uint16_t const * share);
-
-    static SLIP39ShareSeq * from_seed(Seed const * seed,
+    static SSKRShareSeq * from_seed(Seed const * seed,
                                       uint8_t thresh,
                                       uint8_t nshares,
-                                      void(*randgen)(uint8_t *, size_t));
+                                      void(*randgen)(uint8_t *, size_t, void *));
 
-    //  Read-only, don't free returned value.
-    static char const * error_msg(int errval);
-
-    SLIP39ShareSeq();
-
-    ~SLIP39ShareSeq();
-
-    size_t numshares() const { return nshares; }
-
-    // Adds a copy of the argument, returns the share index.
-    size_t add_share(uint16_t const * share);
-
-    // Replace a share's value with a copy of the argument.
-    void set_share(size_t ndx, uint16_t const * share);
-
-    // Delete the specified share, compact gaps.
-    void del_share(size_t ndx);
-
-    // Read-only, don't free returned value.
-    uint16_t const * get_share(size_t ndx) const;
-
-    // Free the returned value!
-    char * get_share_strings(size_t ndx) const;
-
-    // Read only, don't free returned value.
-    char const * get_share_word(size_t sndx, size_t wndx) const;
-
-    // Returns NULL if restore fails, use last_error for diagnostic.
-    Seed * restore_seed() const;
-
-    int last_restore_error() { return last_rv; }
+    String get_share_word(int sharendx, int wndx);
+    String shares_ur[MAX_SHARES]; // shares in ur format      
+    String shares[MAX_SHARES];    // shares in bytewords format
+    size_t shares_len;
+    size_t words_per_share;
 
 private:
     size_t nshares;
 
-    uint16_t * shares[MAX_SHARES];
-
-    mutable int last_rv;
+    uint8_t * shares_buffer[MAX_SHARES];
+    size_t shares_buffer_len;
 };
 
 /**

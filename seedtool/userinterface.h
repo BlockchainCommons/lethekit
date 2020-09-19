@@ -13,12 +13,12 @@ enum UIState {
     SEEDLESS_MENU,
     GENERATE_SEED,
     RESTORE_BIP39,
-    RESTORE_SLIP39,
+    RESTORE_SSKR,
     ENTER_SHARE,
     SEEDY_MENU,
     DISPLAY_BIP39,
-    CONFIG_SLIP39,
-    DISPLAY_SLIP39,
+    CONFIG_SSKR,
+    DISPLAY_SSKR,
     DISPLAY_XPUBS,
     DERIVATION_PATH,
     SET_NETWORK,
@@ -28,7 +28,7 @@ enum UIState {
     SET_SEED_FORMAT,
     CUSTOM_DERIVATION_PATH,
     ERROR_SCREEN,
-    SET_SLIP39_FORMAT,
+    SET_SSKR_FORMAT,
     OPEN_WALLET,
     SHOW_ADDRESS,
     SET_ADDRESS_FORMAT,
@@ -52,7 +52,6 @@ struct pg_export_wallet_t {
 struct pg_derivation_path_t {
     bool is_standard_derivation;
     enum stdDerivation std_derivation;
-    bool slip132;
 };
 
 struct pg_set_xpub_format_t {
@@ -87,8 +86,8 @@ struct pg_set_seed_format_t {
     format seed_format;
 };
 
-struct pg_set_slip39_format_t {
-    format slip39_format;
+struct pg_set_sskr_format_t {
+    format sskr_format;
 };
 
 #endif // USERINTERFACE_H

@@ -178,4 +178,18 @@ void hw_random_buffer(uint8_t *buf, size_t len) {
     }
 }
 
+
+// TODO
+void random_buffer(uint8_t *buf, size_t len, void * p) {
+    if (p == NULL) {
+        hw_random_buffer(buf, len);
+    }
+    else {
+      // deterministic random
+      // TODO
+    }
+  
+}
+
+
 } // extern "C"

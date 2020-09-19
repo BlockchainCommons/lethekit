@@ -26,6 +26,7 @@ void serial_printf(const char *format, ...);
 
 void print_hex(uint8_t *data, size_t len);
 bool compare_bytes_with_hex(uint8_t *data, size_t len, const char * hex);
+String get_word_from_sentence(String data, char separator, int index);
 
 struct Point {
   int x;

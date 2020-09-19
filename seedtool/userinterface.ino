@@ -26,14 +26,14 @@ String g_error_string;
 
 Seed * g_master_seed = NULL;
 BIP39Seq * g_bip39 = NULL;
-SLIP39ShareSeq * g_slip39_generate = NULL;
-SLIP39ShareSeq * g_slip39_restore = NULL;
+SSKRShareSeq * g_sskr_generate = NULL;
+SSKRShareSeq * g_sskr_restore = NULL;
 
 int g_ndx = 0;		// index of "selected" word
 int g_pos = 0;		// char position of cursor
 int g_scroll = 0;	// index of scrolled window
 
-int g_restore_slip39_selected;
+int g_restore_sskr_selected;
 
 int const Y_MAX = 200;
 
@@ -59,12 +59,12 @@ bool clear_full_window = true;
 // Pages
 struct pg_show_address_t pg_show_address{0, ur};
 struct pg_export_wallet_t pg_export_wallet{ur};
-struct pg_derivation_path_t pg_derivation_path{true, SINGLE_NATIVE_SEGWIT, false};
+struct pg_derivation_path_t pg_derivation_path{true, SINGLE_NATIVE_SEGWIT};
 struct pg_set_xpub_format_t pg_set_xpub_format{ur};
 struct pg_xpub_menu_t pg_xpub_menu = {false};
 struct pg_set_xpub_options_t pg_set_xpub_options = {false, false};
 struct pg_set_seed_format_t pg_set_seed_format = {ur};
-struct pg_set_slip39_format_t pg_set_slip39_format = {ur};
+struct pg_set_sskr_format_t pg_set_sskr_format = {ur};
 
 Point text_center(const char * txt) {
     int16_t tbx, tby; uint16_t tbw, tbh;
@@ -388,8 +388,8 @@ void seedless_menu() {
         g_display->println("B - Restore BIP39");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
-        // deprecating slip39. TODO Replace it with bc-shamir
-        //g_display->println("C - Restore SLIP39");
+        // deprecating sskr. TODO Replace it with bc-shamir
+        //g_display->println("C - Restore SSKR");
 
         yy = 190; // Absolute, stuck to bottom
         g_display->setFont(&FreeSansBold9pt7b);
@@ -412,10 +412,10 @@ void seedless_menu() {
             g_bip39 = new BIP39Seq();
             g_uistate = RESTORE_BIP39;
             return;
-        // deprecating slip39. TODO Replace it with bc-shamir
+        // deprecating sskr. TODO Replace it with bc-shamir
         //case 'C':
-        //    g_slip39_restore = new SLIP39ShareSeq();
-        //    g_uistate = RESTORE_SLIP39;
+        //    g_sskr_restore = new SSKRShareSeq();
+        //    g_uistate = RESTORE_SSKR;
         //    return;
         default:
             break;
@@ -555,7 +555,7 @@ void set_network() {
     do {
         key = g_keypad.getKey();
     } while (key == NO_KEY);
-    g_uistate = DISPLAY_XPUBS;
+    g_uistate = SEEDY_MENU;
     clear_full_window = false;
     switch (key) {
     case 'A':
@@ -598,7 +598,7 @@ void set_network() {
 
 void seedy_menu() {
     int xoff = 16;
-    int yoff = 10;
+    int yoff = 3;
 
     g_display->firstPage();
     do
@@ -608,19 +608,18 @@ void seedy_menu() {
         g_display->setTextColor(GxEPD_BLACK);
 
         int xx = xoff;
-        int yy = yoff + (H_FSB12 + YM_FSB12);
+        int yy = H_FSB12 + YM_FSB12;
         g_display->setFont(&FreeSansBold12pt7b);
         g_display->setCursor(xx, yy);
         g_display->println("Seed Present");
 
-        yy = yoff + 3*(H_FSB9 + YM_FSB9);
+        yy = yoff + 2*(H_FSB9 + YM_FSB9) + 15;
         g_display->setFont(&FreeSansBold9pt7b);
         g_display->setCursor(xx, yy);
         g_display->println("A - Display BIP39");
-        // deprecating slip39. TODO replace it with bc-shamir
-        //yy += H_FSB9 + 2*YM_FSB9;
-        //g_display->setCursor(xx, yy);
-        //g_display->println("B - Generate SLIP39");
+        yy += H_FSB9 + 2*YM_FSB9;
+        g_display->setCursor(xx, yy);
+        g_display->println("B - Generate SSKR");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         g_display->println("C - Display XPUB");
@@ -629,7 +628,7 @@ void seedy_menu() {
         g_display->println("D - Display seed");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
-        g_display->println("3 - Open Wallet");
+        g_display->println("0 - Open Wallet");
 
         yy = 190; // Absolute, stuck to bottom
         g_display->setFont(&FreeSansBold9pt7b);
@@ -648,16 +647,21 @@ void seedy_menu() {
         case 'A':
             g_uistate = DISPLAY_BIP39;
             return;
-        //case 'B':
-        //    g_uistate = CONFIG_SLIP39;
-        //    return;
+        case 'B':
+            g_uistate = CONFIG_SSKR;
+            return;
         case 'C':
             clear_full_window = false;
             g_uistate = DISPLAY_XPUBS;
             return;
-        case '3':
+        case '0':
             clear_full_window = false;
             g_uistate = OPEN_WALLET;
+            return;
+        case '1':
+            // TODO: this option is currently hidden from UI
+            clear_full_window = false;
+            g_uistate = SET_NETWORK;
             return;
         case 'D':
             clear_full_window = false;
@@ -738,8 +742,8 @@ void display_bip39() {
     }
 }
 
-// Append a character to a SLIP39 config value, check range.
-String config_slip39_addkey(String str0, char key) {
+// Append a character to a SSKR config value, check range.
+String config_sskr_addkey(String str0, char key) {
     String newstr;
     if (str0 == " ")
         newstr = key;
@@ -755,7 +759,8 @@ String config_slip39_addkey(String str0, char key) {
     return newstr;
 }
 
-void config_slip39() {
+
+void config_sskr() {
     bool thresh_done = false;
     String threshstr = "3";
     String nsharestr = "5";
@@ -775,7 +780,7 @@ void config_slip39() {
             int yy = yoff + (H_FSB9 + YM_FSB9);
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
-            g_display->println("Configure SLIP39");
+            g_display->println("Configure SSKR");
 
             yy += 10;
 
@@ -838,14 +843,14 @@ void config_slip39() {
         do {
             key = g_keypad.getKey();
         } while (key == NO_KEY);
-        Serial.println("config_slip39 saw " + String(key));
+        Serial.println("config_sskr saw " + String(key));
         switch (key) {
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':
             if (!thresh_done)
-                threshstr = config_slip39_addkey(threshstr, key);
+                threshstr = config_sskr_addkey(threshstr, key);
             else
-                nsharestr = config_slip39_addkey(nsharestr, key);
+                nsharestr = config_sskr_addkey(nsharestr, key);
             break;
         case '*':
             if (!thresh_done) {
@@ -869,21 +874,20 @@ void config_slip39() {
                     thresh_done = false;
                     break;
                 }
-                // It's ok to generate multiple slip39 shares.
-                if (g_slip39_generate)
-                    delete g_slip39_generate;
+                // It's ok to generate multiple sskr shares.
+                if (g_sskr_generate)
+                    delete g_sskr_generate;
 
                 // This will take a few seconds; clear the screen
                 // immediately to let the user know something is
                 // happening ..
                 full_window_clear();
 
-                g_slip39_generate =
-                    SLIP39ShareSeq::from_seed(g_master_seed,
+                g_sskr_generate = SSKRShareSeq::from_seed(g_master_seed,
                                               threshstr.toInt(),
                                               nsharestr.toInt(),
-                                              hw_random_buffer);
-                g_uistate = DISPLAY_SLIP39;
+                                              random_buffer);
+                g_uistate = DISPLAY_SSKR;
                 return;
             }
         default:
@@ -892,7 +896,8 @@ void config_slip39() {
     }
 }
 
-void set_slip39_format() {
+
+void set_sskr_format() {
     int xoff = 5, yoff = 5;
     String title = "Set format";
     g_display->firstPage();
@@ -935,28 +940,28 @@ void set_slip39_format() {
     do {
         key = g_keypad.getKey();
     } while (key == NO_KEY);
-    g_uistate = DISPLAY_SLIP39;
+    g_uistate = DISPLAY_SSKR;
     clear_full_window = false;
     switch (key) {
     case 'A':
-        pg_set_slip39_format.slip39_format = text;
+        pg_set_sskr_format.sskr_format = text;
         return;
     case 'B':
-        pg_set_slip39_format.slip39_format = ur;
+        pg_set_sskr_format.sskr_format = ur;
         return;
     case 'C':
-        pg_set_slip39_format.slip39_format = qr_ur;
+        pg_set_sskr_format.sskr_format = qr_ur;
         return;
     case '*':
         return;
     default:
-        g_uistate = SET_SLIP39_FORMAT;
+        g_uistate = SET_SSKR_FORMAT;
         break;
     }
 }
 
-void display_slip39() {
-    int const nwords = SLIP39ShareSeq::WORDS_PER_SHARE;
+void display_sskr() {
+    int const nwords = g_sskr_generate->words_per_share;
     int sharendx = 0;
     int scroll = 0;
     String ur_string;
@@ -977,66 +982,43 @@ void display_slip39() {
             int yy = yoff + (H_FSB9 + YM_FSB9);
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
-            display_printf("SLIP39 %d/%d",
-                           sharendx+1, g_slip39_generate->numshares());
+            display_printf("       SSKR %d/%d",
+                           sharendx+1, g_sskr_generate->shares_len);
             yy += H_FSB9 + YM_FSB9;
 
             yy += 8;
 
             g_display->setFont(&FreeMonoBold12pt7b);
 
-            if (pg_set_slip39_format.slip39_format == text) {
+            if (pg_set_sskr_format.sskr_format == text) {
                 for (int rr = 0; rr < nrows; ++rr) {
                     int wndx = scroll + rr;
-                    char const * word =
-                        g_slip39_generate->get_share_word(sharendx, wndx);
+                    String word =
+                        g_sskr_generate->get_share_word(sharendx, wndx);
                     g_display->setCursor(xx, yy);
-                    display_printf("%2d %s", wndx+1, word);
+                    display_printf("%2d %s", wndx+1, word.c_str());
                     yy += H_FMB12 + YM_FMB12;
                 }
             }
-            else if (pg_set_slip39_format.slip39_format == qr_ur) {
-                String ur;
-                retval = ur_encode_slip39_share(g_slip39_generate, sharendx, ur);
-                if (retval == false) {
-                    g_uistate = ERROR_SCREEN;
-                    return;
-                }
+            else if (pg_set_sskr_format.sskr_format == qr_ur) {
+                String ur = g_sskr_generate->shares_ur[sharendx];
                 ur.toUpperCase();
                 displayQR((char *)ur.c_str());
             }
             else {
                 int xx = 0;
-                yy = 50;
+                yy = 65;
                 g_display->setFont(&FreeMonoBold9pt7b);
                 g_display->setCursor(0, yy);
-
-                retval = ur_encode_slip39_share(g_slip39_generate, sharendx, ur_string);
-                if (retval == false) {
-                    g_uistate = ERROR_SCREEN;
-                    return;
-                }
-
-                // @FIXME write function dependent on font style and size
-                int scroll_strlen = 18;
-
-                if ((scroll)*scroll_strlen >= (int)ur_string.length()) {
-                    // don't scroll to infinity
-                    scroll--;
-                }
-
-                for (int k = 0; k < nrows; ++k) {
-                    g_display->setCursor(xx, yy);
-                    display_printf("%s", ur_string.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
-                    yy += H_FMB12 + YM_FMB12;
-                }
+                display_printf(g_sskr_generate->shares_ur[sharendx].c_str());
+                Serial.println(g_sskr_generate->shares_ur[sharendx].c_str());
             }
 
             yy = 195; // Absolute, stuck to bottom
             g_display->setFont(&FreeMono9pt7b);
 
             String right_option = "# Done";
-            if (sharendx < (int)(g_slip39_generate->numshares()-1))
+            if (sharendx < (int)(g_sskr_generate->shares_len-1))
                 right_option = "# Next";
             int x_r = text_right(right_option.c_str());
             g_display->setCursor(x_r, yy);
@@ -1051,7 +1033,7 @@ void display_slip39() {
             right_option = "1Up/7Down";
             x_r = text_right(right_option.c_str());
             g_display->setCursor(x_r, yy);
-            if (pg_set_slip39_format.slip39_format != qr_ur)
+            if (pg_set_sskr_format.sskr_format == text)
                 g_display->println(right_option);
 
             left_option = "Form A";
@@ -1064,10 +1046,10 @@ void display_slip39() {
         do {
             key = g_keypad.getKey();
         } while (key == NO_KEY);
-        Serial.println("display_slip39 saw " + String(key));
+        Serial.println("display_sskr saw " + String(key));
         switch (key) {
         case 'A':
-            g_uistate = SET_SLIP39_FORMAT;
+            g_uistate = SET_SSKR_FORMAT;
             clear_full_window = false;
             scroll = 0;
             return;
@@ -1076,7 +1058,7 @@ void display_slip39() {
                 scroll -= 1;
             break;
         case '7':
-            if(pg_set_slip39_format.slip39_format == ur) {
+            if(pg_set_sskr_format.sskr_format == ur) {
                 scroll++;
             }
             else {
@@ -1090,8 +1072,8 @@ void display_slip39() {
                 scroll = 0;
             }
             break;
-        case '#':	// next / done
-            if (sharendx < (int)(g_slip39_generate->numshares()-1)) {
+        case '#':	// next / done 
+            if (sharendx < (int)(g_sskr_generate->shares_len-1)) {
                 ++sharendx;
                 scroll = 0;
             } else {
@@ -1230,13 +1212,6 @@ struct WordListState {
             if (prefix(wordndx[selected] + 1) == prefix(wordndx[selected]))
                 return false;
         return true;
-    }
-};
-
-struct SLIP39WordlistState : WordListState {
-    SLIP39WordlistState(int i_nwords) : WordListState(i_nwords, 1024) {}
-    virtual String refword(int ndx) {
-        return String(slip39_string_for_word(ndx));
     }
 };
 
@@ -1415,9 +1390,10 @@ void restore_bip39() {
     }
 }
 
-void restore_slip39() {
+/*
+void restore_sskr() {
     int scroll = 0;
-    int selected = g_slip39_restore->numshares();	// selects "add" initially
+    int selected = g_sskr_restore->numshares();	// selects "add" initially
 
     while (true) {
         int const xoff = 12;
@@ -1425,18 +1401,18 @@ void restore_slip39() {
         int const nrows = 4;
 
         // Are we showing the restore action?
-        int showrestore = g_slip39_restore->numshares() > 0 ? 1 : 0;
+        int showrestore = g_sskr_restore->numshares() > 0 ? 1 : 0;
 
         // How many rows displayed?
-        int disprows = g_slip39_restore->numshares() + 1 + showrestore;
+        int disprows = g_sskr_restore->numshares() + 1 + showrestore;
         if (disprows > nrows)
             disprows = nrows;
 
         // Adjust the scroll to center the selection.
         if (selected < 2)
             scroll = 0;
-        else if (selected > (int)g_slip39_restore->numshares())
-            scroll = g_slip39_restore->numshares() + 2 - disprows;
+        else if (selected > (int)g_sskr_restore->numshares())
+            scroll = g_sskr_restore->numshares() + 2 - disprows;
         else
             scroll = selected - 2;
         serial_printf("scroll = %d\n", scroll);
@@ -1452,7 +1428,7 @@ void restore_slip39() {
             int yy = yoff + (H_FSB9 + YM_FSB9);
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
-            g_display->println("Enter SLIP39 Shares");
+            g_display->println("Enter SSKR Shares");
             yy += H_FSB9 + YM_FSB9;
 
             xx = xoff + 20;
@@ -1462,9 +1438,9 @@ void restore_slip39() {
             for (int rr = 0; rr < disprows; ++rr) {
                 int sharendx = scroll + rr;
                 char buffer[32];
-                if (sharendx < (int)g_slip39_restore->numshares()) {
+                if (sharendx < (int)g_sskr_restore->numshares()) {
                     sprintf(buffer, "Share %d", sharendx+1);
-                } else if (sharendx == (int)g_slip39_restore->numshares()) {
+                } else if (sharendx == (int)g_sskr_restore->numshares()) {
                     sprintf(buffer, "Add Share");
                 } else {
                     sprintf(buffer, "Restore");
@@ -1500,31 +1476,31 @@ void restore_slip39() {
         do {
             key = g_keypad.getKey();
         } while (key == NO_KEY);
-        Serial.println("restore_slip39 saw " + String(key));
+        Serial.println("restore_sskr saw " + String(key));
         switch (key) {
         case '1':
             if (selected > 0)
                 selected -= 1;
             break;
         case '7':
-            if (selected < (int)g_slip39_restore->numshares() + 1 + showrestore - 1)
+            if (selected < (int)g_sskr_restore->numshares() + 1 + showrestore - 1)
                 selected += 1;
             break;
         case '*':
             g_uistate = SEEDLESS_MENU;
             return;
         case '#':
-            if (selected < (int)g_slip39_restore->numshares()) {
+            if (selected < (int)g_sskr_restore->numshares()) {
                 // Edit existing share
-                g_restore_slip39_selected = selected;
+                g_restore_sskr_selected = selected;
                 g_uistate = ENTER_SHARE;
                 return;
-            } else if (selected == (int)g_slip39_restore->numshares()) {
+            } else if (selected == (int)g_sskr_restore->numshares()) {
                 // Add new (zeroed) share
-                uint16_t share[SLIP39ShareSeq::WORDS_PER_SHARE] =
+                uint16_t share[SSKRShareSeq::WORDS_PER_SHARE] =
                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-                g_restore_slip39_selected = g_slip39_restore->add_share(share);
+                g_restore_sskr_selected = g_sskr_restore->add_share(share);
                 g_uistate = ENTER_SHARE;
                 return;
             } else {
@@ -1535,20 +1511,20 @@ void restore_slip39() {
                 // happening ..
                 full_window_clear();
 
-                for (size_t ii = 0; ii < g_slip39_restore->numshares(); ++ii) {
+                for (size_t ii = 0; ii < g_sskr_restore->numshares(); ++ii) {
                     char * strings =
-                        g_slip39_restore->get_share_strings(ii);
+                        g_sskr_restore->get_share_strings(ii);
                     serial_printf("%d %s\n", ii+1, strings);
                     free(strings);
                 }
-                Seed * seed = g_slip39_restore->restore_seed();
+                Seed * seed = g_sskr_restore->restore_seed();
                 if (!seed) {
-                    int err = g_slip39_restore->last_restore_error();
+                    int err = g_sskr_restore->last_restore_error();
                     String lines[7];
                     size_t nlines = 0;
-                    lines[nlines++] = "SLIP39 Error";
+                    lines[nlines++] = "SSKR Error";
                     lines[nlines++] = "";
-                    lines[nlines++] = SLIP39ShareSeq::error_msg(err);
+                    lines[nlines++] = SSKRShareSeq::error_msg(err);
                     lines[nlines++] = "";
                     lines[nlines++] = "";
                     lines[nlines++] = "Press # to revisit";
@@ -1571,10 +1547,11 @@ void restore_slip39() {
         }
     }
 }
-
+*/
+/*
 void enter_share() {
-    SLIP39WordlistState state(SLIP39ShareSeq::WORDS_PER_SHARE);
-    state.set_words(g_slip39_restore->get_share(g_restore_slip39_selected));
+    SSKRWordlistState state(SSKRShareSeq::WORDS_PER_SHARE);
+    state.set_words(g_sskr_restore->get_share(g_restore_sskr_selected));
 
     while (true) {
         int const xoff = 12;
@@ -1593,7 +1570,7 @@ void enter_share() {
             int yy = yoff + (H_FSB9 + YM_FSB9);
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
-            display_printf("SLIP39 Share %d", g_restore_slip39_selected+1);
+            display_printf("SSKR Share %d", g_restore_sskr_selected+1);
             yy += H_FSB9 + YM_FSB9;
 
             g_display->setFont(&FreeMonoBold12pt7b);
@@ -1691,36 +1668,36 @@ void enter_share() {
             switch (key) {
             case '0':
                 // If 'D' and then '0' are typed, fill with valid dummy data.
-                Serial.println("Loading dummy slip39 data");
-                state.set_words(selftest_dummy_slip39(
-                    g_restore_slip39_selected));
+                Serial.println("Loading dummy sskr data");
+                state.set_words(selftest_dummy_sskr(
+                    g_restore_sskr_selected));
                 break;
             case '9':
                 // If 'D' and then '9' are typed, fill with invalid
                 // share (but correct checksum).
-                Serial.println("Loading dummy slip39 data");
-                state.set_words(selftest_dummy_slip39_alt(
-                    g_restore_slip39_selected));
+                Serial.println("Loading dummy sskr data");
+                state.set_words(selftest_dummy_sskr_alt(
+                    g_restore_sskr_selected));
                 break;
             default:
                 break;
             }
             break;
         case '*':
-            // Don't add this share, go back to enter restore_slip39 menu.
-            serial_assert(g_slip39_restore);
-            g_slip39_restore->del_share(g_restore_slip39_selected);
-            g_uistate = RESTORE_SLIP39;
+            // Don't add this share, go back to enter restore_sskr menu.
+            serial_assert(g_sskr_restore);
+            g_sskr_restore->del_share(g_restore_sskr_selected);
+            g_uistate = RESTORE_SSKR;
             return;
         case '#':	// done
             {
-                uint16_t words[SLIP39ShareSeq::WORDS_PER_SHARE];
+                uint16_t words[SSKRShareSeq::WORDS_PER_SHARE];
                 state.get_words(words);
-                bool ok = SLIP39ShareSeq::verify_share_checksum(words);
+                bool ok = SSKRShareSeq::verify_share_checksum(words);
                 if (!ok) {
                     String lines[7];
                     size_t nlines = 0;
-                    lines[nlines++] = "SLIP39 Share";
+                    lines[nlines++] = "SSKR Share";
                     lines[nlines++] = "Checksum Error";
                     lines[nlines++] = "";
                     lines[nlines++] = "Check your word";
@@ -1729,10 +1706,10 @@ void enter_share() {
                     lines[nlines++] = "Press # to revisit";
                     interstitial_error(lines, nlines);
                 } else {
-                    serial_assert(g_slip39_restore);
-                    g_slip39_restore->set_share(
-                        g_restore_slip39_selected, words);
-                    g_uistate = RESTORE_SLIP39;
+                    serial_assert(g_sskr_restore);
+                    g_sskr_restore->set_share(
+                        g_restore_sskr_selected, words);
+                    g_uistate = RESTORE_SSKR;
                     return;
                 }
             }
@@ -1741,6 +1718,7 @@ void enter_share() {
         }
     }
 }
+*/
 
 void derivation_path(void) {
 
@@ -1756,14 +1734,13 @@ void derivation_path(void) {
           g_display->setTextColor(GxEPD_BLACK);
 
           const char * title = "Choose derivation path";
-          int yy = 20;
+          int yy = 30;
 
           g_display->setFont(&FreeSansBold9pt7b);
           Point p = text_center(title);
           g_display->setCursor(p.x, yy);
           g_display->println(title);
 
-          g_display->setFont(&FreeMonoBold9pt7b);
           yy += 50;
           g_display->setCursor(x_off, yy);
           g_display->println("A: native segwit");
@@ -1825,7 +1802,7 @@ void derivation_path(void) {
             return;
         case 'C':
             // slip132 option is not available for custom derivation paths
-            pg_derivation_path.slip132 = false;
+            pg_set_xpub_options.slip132 = false;
             pg_derivation_path.is_standard_derivation = false;
             g_uistate = CUSTOM_DERIVATION_PATH;
             return;
@@ -2254,6 +2231,8 @@ void display_seed(void) {
         g_uistate = ERROR_SCREEN;
         return;
     }
+
+    Serial.println(ur_string);
 
     while (true) {
       g_display->firstPage();
@@ -2936,14 +2915,16 @@ void ui_reset_into_state(UIState state) {
         delete g_bip39;
         g_bip39 = NULL;
     }
-    if (g_slip39_generate) {
-        delete g_slip39_generate;
-        g_slip39_generate = NULL;
+    /*
+    if (g_sskr_generate) {
+        delete g_sskr_generate;
+        g_sskr_generate = NULL;
     }
-    if (g_slip39_restore) {
-        delete g_slip39_restore;
-        g_slip39_restore = NULL;
+    if (g_sskr_restore) {
+        delete g_sskr_restore;
+        g_sskr_restore = NULL;
     }
+    */
 
     g_rolls = "";
     g_submitted = false;
@@ -2976,11 +2957,11 @@ void ui_dispatch() {
     case RESTORE_BIP39:
         restore_bip39();
         break;
-    case RESTORE_SLIP39:
-        restore_slip39();
+    case RESTORE_SSKR:
+        //restore_sskr();
         break;
     case ENTER_SHARE:
-        enter_share();
+        //enter_share(); TODO
         break;
     case SEEDY_MENU:
         seedy_menu();
@@ -2988,11 +2969,11 @@ void ui_dispatch() {
     case DISPLAY_BIP39:
         display_bip39();
         break;
-    case CONFIG_SLIP39:
-        config_slip39();
+    case CONFIG_SSKR:
+        config_sskr();
         break;
-    case DISPLAY_SLIP39:
-        display_slip39();
+    case DISPLAY_SSKR:
+        display_sskr();
         break;
     case DISPLAY_XPUBS:
         display_xpub();
@@ -3018,8 +2999,8 @@ void ui_dispatch() {
     case ERROR_SCREEN:
         error_screen();
         break;
-    case SET_SLIP39_FORMAT:
-        set_slip39_format();
+    case SET_SSKR_FORMAT:
+        set_sskr_format();
         break;
     case OPEN_WALLET:
         open_wallet();

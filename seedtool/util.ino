@@ -36,3 +36,21 @@ bool compare_bytes_with_hex(uint8_t *data, size_t len, const char * hex) {
 
   return true;
 }
+
+// This Chunk of code takes a string and separates it based on a given character and returns The item between the separating character
+// source https://arduino.stackexchange.com/questions/1013/how-do-i-split-an-incoming-string
+String get_word_from_sentence(String data, char separator, int index)
+{
+    int found = 0;
+    int strIndex[] = { 0, -1 };
+    int maxIndex = data.length() - 1;
+
+    for (int i = 0; i <= maxIndex && found <= index; i++) {
+        if (data.charAt(i) == separator || i == maxIndex) {
+            found++;
+            strIndex[0] = strIndex[1] + 1;
+            strIndex[1] = (i == maxIndex) ? i+1 : i;
+        }
+    }
+    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+}

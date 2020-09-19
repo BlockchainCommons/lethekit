@@ -94,7 +94,8 @@ size_t cbor_encode_crypto_seed(uint8_t *seed, size_t len, uint8_t **buff_out, ui
     return output.getSize();
 }
 
-size_t cbor_encode_slip39_share(SLIP39ShareSeq *slip39_generate, size_t share_wndx, uint8_t **buff_out) {
+/*
+size_t cbor_encode_sskr_share(SSKRShareSeq *sskr_generate, size_t share_wndx, uint8_t **buff_out) {
 
     CborDynamicOutput output;
     CborWriter writer(output);
@@ -102,10 +103,10 @@ size_t cbor_encode_slip39_share(SLIP39ShareSeq *slip39_generate, size_t share_wn
     writer.writeMap(1);
     writer.writeInt(1);
     writer.writeArray(1);
-    writer.writeArray(SLIP39ShareSeq::WORDS_PER_SHARE);
+    writer.writeArray(SSKRShareSeq::WORDS_PER_SHARE);
 
-    for (size_t i=0; i < SLIP39ShareSeq::WORDS_PER_SHARE; i++) {
-        const char *wrd = slip39_generate->get_share_word(share_wndx, i);
+    for (size_t i=0; i < SSKRShareSeq::WORDS_PER_SHARE; i++) {
+        const char *wrd = sskr_generate->get_share_word(share_wndx, i);
         writer.writeString(wrd, strlen(wrd));
     }
 
@@ -114,6 +115,7 @@ size_t cbor_encode_slip39_share(SLIP39ShareSeq *slip39_generate, size_t share_wn
 
     return output.getSize();
 }
+*/
 
 size_t cbor_encode_address(uint8_t *address, size_t len, uint8_t **buff_out) {
 
@@ -250,18 +252,19 @@ bool ur_encode_output_descriptor(String &ur, uint32_t *derivation, uint32_t deri
     return true;
 }
 
-bool ur_encode_slip39_share(SLIP39ShareSeq *slip39_generate, size_t share_wndx, String &ur) {
+/*
+bool ur_encode_sskr_share(SSKRShareSeq *sskr_generate, size_t share_wndx, String &ur) {
     bool retval;
     uint8_t *cbor = NULL;
 
-    size_t cbor_size = cbor_encode_slip39_share(slip39_generate, share_wndx, &cbor);
+    size_t cbor_size = cbor_encode_sskr_share(sskr_generate, share_wndx, &cbor);
     if (cbor_size == 0) {
         return false;
     }
 
     print_hex(cbor, cbor_size);
 
-    retval = ur_encode("crypto-slip39", cbor, cbor_size, ur);
+    retval = ur_encode("crypto-sskr", cbor, cbor_size, ur);
     if (retval == false) {
         return false;
     }
@@ -271,6 +274,7 @@ bool ur_encode_slip39_share(SLIP39ShareSeq *slip39_generate, size_t share_wndx, 
 
     return true;
 }
+*/
 
 bool test_ur(void) {
 
