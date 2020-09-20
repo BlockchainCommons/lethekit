@@ -2845,7 +2845,7 @@ void export_wallet(void) {
     String title = "Wallet";
     struct ext_key child_key;
     // TODO: currently only single native segwit wallet supported
-    String child_path_str = network.get_network() == MAINNET ? "m/48h/1h/0h" : "m/48h/0h/0h";
+    String child_path_str = network.get_network() == MAINNET ? "m/84h/0h/0h" : "m/84h/1h/0h";
     uint32_t child_path[10];
     uint32_t child_path_len;
     String address_family;
@@ -2862,11 +2862,10 @@ void export_wallet(void) {
     while (true) {
 
       keystore.calc_derivation_path(child_path_str.c_str(), child_path, child_path_len);
-      (void)bip32_key_from_parent_path(&keystore.root, child_path, child_path_len, BIP32_FLAG_KEY_PUBLIC, &child_key);
+      (void)bip32_key_from_parent_path(&keystore.root, child_path, child_path_len, BIP32_FLAG_KEY_PRIVATE, &child_key);
 
-      sprintf(derivation_path_with_fingerprint, "[%02x%02x%02x%02x%s]", child_key.parent160[0], child_key.parent160[1],
-                                                child_key.parent160[2], child_key.parent160[3], child_path_str.substring(1).c_str());
-
+      sprintf(derivation_path_with_fingerprint, "[%02x%02x%02x%02x%s]", ((uint8_t *)&keystore.fingerprint)[3], ((uint8_t *)&keystore.fingerprint)[2],
+                                                ((uint8_t *)&keystore.fingerprint)[1], ((uint8_t *)&keystore.fingerprint)[0], child_path_str.substring(1).c_str());
 
       (void)bip32_key_to_base58(&child_key, BIP32_FLAG_KEY_PUBLIC, &xpub_base58);
       wallet_text = "wpkh(" + String(derivation_path_with_fingerprint) + String(xpub_base58) + ")";
@@ -2877,7 +2876,7 @@ void export_wallet(void) {
       ((uint8_t *)&fingerprint)[1] = child_key.parent160[2];
       ((uint8_t *)&fingerprint)[2] = child_key.parent160[1];
       ((uint8_t *)&fingerprint)[3] = child_key.parent160[0];
-      (void)ur_encode_output_descriptor(wallet_ur, child_path, child_path_len, fingerprint); // TODO fingerprint
+      (void)ur_encode_output_descriptor(wallet_ur, child_path, child_path_len, fingerprint); // TODO this is parent fingerprint unlike above which is root fingerprint
 
       g_display->firstPage();
       do
