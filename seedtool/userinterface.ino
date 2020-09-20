@@ -76,6 +76,25 @@ Point text_center(const char * txt) {
     return p;
 }
 
+// @post  g_display->setTextColor(GxEPD_BLACK);
+void highlight(int yy) {
+    // Unique, highlight entire word.
+    g_display->fillRect(0,
+                       yy - H_FMB12 + YM_FMB12,
+                       W_FMB12 * (16 + 3) + 3,
+                       H_FMB12 + YM_FMB12,
+                       GxEPD_BLACK);
+    g_display->setTextColor(GxEPD_WHITE);
+}
+
+void display_text(char *txt, int x, int y, bool _highlight) {
+    if (_highlight)
+        highlight(y);
+    g_display->setCursor(x, y);
+    g_display->println(txt);
+    g_display->setTextColor(GxEPD_BLACK);
+}
+
 int text_right(const char * txt) {
     int16_t tbx, tby; uint16_t tbw, tbh;
     g_display->getTextBounds(txt, 0, 0, &tbx, &tby, &tbw, &tbh);
@@ -1733,7 +1752,7 @@ void derivation_path(void) {
           g_display->fillScreen(GxEPD_WHITE);
           g_display->setTextColor(GxEPD_BLACK);
 
-          const char * title = "Choose derivation path";
+          const char * title = "Set derivation path";
           int yy = 30;
 
           g_display->setFont(&FreeSansBold9pt7b);
@@ -1742,16 +1761,13 @@ void derivation_path(void) {
           g_display->println(title);
 
           yy += 50;
-          g_display->setCursor(x_off, yy);
-          g_display->println("A: native segwit");
+          display_text("A: native segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NATIVE_SEGWIT && pg_derivation_path.is_standard_derivation);
 
           yy += 30;
-          g_display->setCursor(x_off, yy);
-          g_display->println("B: nested segwit");
+          display_text("B: nested segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NESTED_SEGWIT && pg_derivation_path.is_standard_derivation);
 
           yy += 30;
-          g_display->setCursor(x_off, yy);
-          g_display->println("C: custom");
+          display_text("C: custom", x_off, yy, pg_derivation_path.is_standard_derivation == false);
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);
@@ -1788,7 +1804,7 @@ void derivation_path(void) {
               }
             }
             g_uistate = DISPLAY_XPUBS;
-            return;
+            break;
         case 'B': {
             pg_derivation_path.std_derivation = SINGLE_NESTED_SEGWIT;
             pg_derivation_path.is_standard_derivation = true;
@@ -1799,7 +1815,7 @@ void derivation_path(void) {
               }
             }
             g_uistate = DISPLAY_XPUBS;
-            return;
+            break;
         case 'C':
             // slip132 option is not available for custom derivation paths
             pg_set_xpub_options.slip132 = false;
