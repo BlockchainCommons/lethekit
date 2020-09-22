@@ -16,6 +16,14 @@
 //         f68d54efd0cf6f9943801412e273167c558c8189 (Single part UR only)
 
 
+bool crypto_coin_info(class CborWriter &writer, NetwtorkType network) {
+    writer.writeInt(5);
+    writer.writeTag(305);
+    writer.writeMap(1);
+    writer.writeInt(2);
+    writer.writeInt(network == MAINNET ? 0 : 1);
+}
+
 bool crypto_keypath(class CborWriter &writer, uint32_t *derivation, uint32_t derivation_len, uint32_t parent_fingerprint) {
     // crypto-keypath:
     writer.writeTag(304);
@@ -117,12 +125,14 @@ size_t cbor_encode_sskr_share(SSKRShareSeq *sskr_generate, size_t share_wndx, ui
 }
 */
 
-size_t cbor_encode_address(uint8_t *address, size_t len, uint8_t **buff_out) {
+size_t cbor_encode_address(uint8_t *address, size_t len, uint8_t **buff_out, NetwtorkType network) {
 
     CborDynamicOutput output;
     CborWriter writer(output);
 
-    writer.writeMap(1);
+    writer.writeMap(2);
+    // coin info is not mandatory for bech32 addresses
+    crypto_coin_info(writer, network);
     writer.writeInt(3);
     writer.writeBytes(address, len);
 
@@ -203,7 +213,7 @@ bool ur_encode_address(uint8_t *address, size_t address_len, String &address_ur)
     bool retval;
     uint8_t *cbor = NULL;
 
-    size_t cbor_size = cbor_encode_crypto_seed(address, address_len, &cbor);
+    size_t cbor_size = cbor_encode_address(address, address_len, &cbor, network.get_network());
     if (cbor_size == 0) {
         return false;
     }
@@ -212,6 +222,8 @@ bool ur_encode_address(uint8_t *address, size_t address_len, String &address_ur)
     if (retval == false) {
         return false;
     }
+
+    print_hex(cbor, cbor_size);
 
     // @FIXME: free also on premature exit
     free(cbor);

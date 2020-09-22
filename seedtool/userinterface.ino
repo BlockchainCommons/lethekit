@@ -2525,7 +2525,6 @@ void show_address(void) {
       size_t data_written;
       String address_ur;
       (void)wally_addr_segwit_to_bytes(addr_segwit, address_family.c_str(), 0, data, sizeof(data), &data_written);
-      // @FIXME check the spec if "including the version and data push opcode" is valid in cbor structure
       (void)ur_encode_address(data, data_written, address_ur);
 
       g_display->firstPage();
@@ -2558,6 +2557,7 @@ void show_address(void) {
             }
             case ur:
                 g_display->println(address_ur.c_str());
+                Serial.println(address_ur.c_str());
                 break;
             default:
                 break;
