@@ -25,3 +25,6 @@
 [submodule "deps/bc-sskr"]
 	path = deps/bc-sskr
 	url = git@github.com:BlockchainCommons/bc-sskr.git
+[submodule "deps/Library-Arduino-Cbor"]
+	path = deps/Library-Arduino-Cbor
+	url = git@github.com:jjtara/Library-Arduino-Cbor.git
