@@ -14,6 +14,7 @@
 #include "wally_core.h"
 #include "wally_bip32.h"
 #include "ur.h"
+#include "test_bc_ur.hpp"
 
 namespace selftest_internal {
 
@@ -246,6 +247,7 @@ bool test_sskr(void) {
     return true;
 }
 
+
 struct selftest_t {
     char const * testname;
     bool (*testfun)();
@@ -265,6 +267,7 @@ selftest_t g_selftests[] =
  { "BIP32", test_bip32 },
  { "UR", test_ur },
  { "SSKR", test_sskr},
+ { "test_bc_ur", test_bc_ur},
  // |--------------|
 };
 

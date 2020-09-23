@@ -40,4 +40,5 @@ enum format {
   qr_text
 };
 
+
 #endif // _UTIL_H

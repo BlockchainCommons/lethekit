@@ -111,11 +111,15 @@ bool Keystore::check_derivation_path(const char *path, bool save) {
       uint32_t derivationLen_tmp;
       uint32_t derivation_tmp[MAX_DERIVATION_PATH_LEN];
 
-      if (calc_derivation_path(path, derivation_tmp, derivationLen_tmp) == false)
+      if (calc_derivation_path(path, derivation_tmp, derivationLen_tmp) == false) {
+        Serial.println("calc_deriv fail 1");
         return false;
+      }
 
-      if (derivationLen > MAX_DERIVATION_PATH_LEN)
+      if (derivationLen_tmp > MAX_DERIVATION_PATH_LEN) {
+          Serial.println("calc_deriv fail 2");
           return false;
+      }
 
       if (save == false)
           return true;
