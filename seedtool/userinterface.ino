@@ -16,6 +16,7 @@
 #include "ur.h"
 #include "keystore.h"
 #include "wally_address.h"
+#include "test_bc_ur.hpp"
 
 namespace userinterface_internal {
 
@@ -173,8 +174,9 @@ void interstitial_error(String const lines[], size_t nlines) {
  *   @pre         g_display->firstPage();
  *   @post        while (g_display->nextPage());
  *   @param[in]   text: text to be qr encoded
+ *   @param[in]   _scale: if negative apply default scale
  */
-bool displayQR(char * text) {
+bool displayQR(char * text, int _scale = -1) {
     // source: https://github.com/arcbtc/koopa/blob/master/main.ino
 
     // auto detect best qr code size
@@ -215,7 +217,13 @@ bool displayQR(char * text) {
                     text);
 
     int width = 17 + 4*qrSize;
-    int scale = 130/width;
+
+    int scale;
+    if (_scale <= 0)
+        scale = 130/width;
+    else
+        scale = _scale/width;
+
     int padding = (200 - width*scale)/2;
 
     // for every pixel in QR code we draw a rectangle with size `scale`
@@ -410,6 +418,9 @@ void seedless_menu() {
         // deprecating sskr. TODO Replace it with bc-shamir
         //g_display->println("C - Restore SSKR");
 
+        // TODO: only for demonstration purposes, to be deleted
+        g_display->println("0 - UR Demo");
+
         yy = 190; // Absolute, stuck to bottom
         g_display->setFont(&FreeSansBold9pt7b);
         g_display->setCursor(xx, yy);
@@ -436,6 +447,9 @@ void seedless_menu() {
         //    g_sskr_restore = new SSKRShareSeq();
         //    g_uistate = RESTORE_SSKR;
         //    return;
+        case '0':
+            g_uistate = UR_DEMO;
+            return;
         default:
             break;
         }
@@ -2918,6 +2932,70 @@ void set_export_wallet_format(void) {
     }
 }
 
+void ur_demo(void) {
+
+    uint32_t dt;
+    uint32_t dt0;
+    const size_t CHUNK_SIZE = 100; // bytes
+
+    dt = millis();
+    auto ur = make_message_ur(5000);
+    dt = millis() - dt;
+    Serial.println("Make mesage: " + String(dt));
+
+    dt = millis();
+    auto encoder = UREncoder(ur, CHUNK_SIZE);
+    dt = millis() - dt;
+    Serial.println("UREncoder: " + String(dt));
+
+    while (true) {
+
+      // measure refresh rate
+      dt0 = millis();
+
+      dt = millis();
+      string _part = encoder.next_part();
+      dt = millis() - dt;
+      Serial.println("Encoder.next_part: " + String(dt));
+
+      const char * part_tmp = _part.c_str();
+      String part_Str = part_tmp;
+      part_Str.toUpperCase();
+
+      g_display->firstPage();
+      do
+      {
+          g_display->setPartialWindow(0, 0, 200, 200);
+          g_display->fillScreen(GxEPD_WHITE);
+          g_display->setTextColor(GxEPD_BLACK);
+
+          // measure QR generation/transfer to screen RAM
+          dt = millis();
+          displayQR((char *)part_Str.c_str(), 200);
+          // Delta time
+          dt = millis() - dt;
+          Serial.println("QR Code generated: " + String(dt));
+      }
+      while (g_display->nextPage());
+
+      // Delta time
+      dt0 = millis() - dt0;
+      Serial.println("QR updated: " + String(dt0));
+
+      char key;
+      key = g_keypad.getKey();
+
+      switch (key) {
+        case NO_KEY:
+            break;
+        default:
+            // return on any key
+            g_uistate = SEEDLESS_MENU;
+            return;
+      }
+    }
+}
+
 } // namespace userinterface_internal
 
 void ui_reset_into_state(UIState state) {
@@ -3035,6 +3113,9 @@ void ui_dispatch() {
        break;
     case SET_SEED_FORMAT:
        set_seed_format();
+       break;
+    case UR_DEMO:
+       ur_demo();
        break;
     default:
         Serial.println("loop: unknown g_uistate " + String(g_uistate));

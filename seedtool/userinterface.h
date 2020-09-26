@@ -34,6 +34,7 @@ enum UIState {
     SET_ADDRESS_FORMAT,
     EXPORT_WALLET,
     SET_EXPORT_WALLET_FORMAT,
+    UR_DEMO
 };
 
 extern void ui_reset_into_state(UIState state);
