@@ -1111,6 +1111,10 @@ void display_sskr() {
                 scroll = 0;
             } else {
                 g_uistate = SEEDY_MENU;
+                if (g_sskr_generate) {
+                    delete g_sskr_generate;
+                    g_sskr_generate = NULL;
+                }
                 return;
             }
             break;
@@ -3009,11 +3013,12 @@ void ui_reset_into_state(UIState state) {
         delete g_bip39;
         g_bip39 = NULL;
     }
-    /*
+
     if (g_sskr_generate) {
         delete g_sskr_generate;
         g_sskr_generate = NULL;
     }
+    /*
     if (g_sskr_restore) {
         delete g_sskr_restore;
         g_sskr_restore = NULL;

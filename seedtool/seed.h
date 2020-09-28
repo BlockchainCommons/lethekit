@@ -89,9 +89,6 @@ public:
 
 private:
     size_t nshares;
-
-    uint8_t * shares_buffer[MAX_SHARES];
-    size_t shares_buffer_len;
 };
 
 /**

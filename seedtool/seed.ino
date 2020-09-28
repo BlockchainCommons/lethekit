@@ -108,8 +108,6 @@ SSKRShareSeq * SSKRShareSeq::from_seed(Seed const * seed,
     }
 
     SSKRShareSeq * sskr = new SSKRShareSeq();
-    memcpy(sskr->shares_buffer, buff, buff_size);
-    sskr->shares_buffer_len = buff_size;
     sskr->shares_len = share_count;
     for (int i=0; i<share_count; i++) {
         sskr->shares[i] = strings[i];
