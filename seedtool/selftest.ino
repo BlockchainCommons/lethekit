@@ -46,6 +46,21 @@ const char* ref_bip39_mnemonics[BIP39Seq::WORD_COUNT] =
  "myth", "already", "payment", "owner"
 };
 
+
+// roundtrip compatible test vectors between skr and bip39 (generated with bc-seedtool-cli d91e1332)
+const String selftest_seed = F("f13ad5414aee7ca944e79669db8e4cb3");
+const uint8_t selftest_seed_arr[] = {0xf1, 0x3a, 0xd5, 0x41, 0x4a, 0xee, 0x7c, 0xa9, 0x44, 0xe7, 0x96, 0x69, 0xdb, 0x8e, 0x4c, 0xb3};
+const String selftest_bip39 = F("van stove expect noise treat feed bean version hawk symbol nasty grocery");
+const size_t selftest_sskr_thresh = 2;
+const size_t selftest_sskr_nshares = 3;
+const String selftest_sskr[3] = { F("tuna acid epic gyro pool hang able acid able whiz atom quiz ugly tomb when race slot cats fern purr chef inky jugs view swan time yell liar warm"),
+                             F("tuna acid epic gyro pool hang able acid acid tomb vast foxy heat cost noon love legs brag vast jowl drum cook judo even grim news race half user"),
+                             F("tuna acid epic gyro pool hang able acid also road tent glow saga hope dull stub glow barn note brew kept mint junk hard vows idle exit cash zinc")};
+// the same as selftest_sskr but represented with word indexes:
+const uint8_t selftest_sskr_indx[3][29] = { {217, 1, 53, 85, 174, 87, 0, 1, 0, 242, 6, 180, 219, 214, 241, 181, 199, 24, 60, 178, 25, 102, 113, 229, 205, 211, 247, 132, 235},
+                                        {217, 1, 53, 85, 174, 87, 0, 1, 1, 214, 224, 68, 90, 31, 158, 138, 131, 18, 224, 111, 46, 30, 112, 54, 82, 156, 181, 86, 223},
+                                        {217, 1, 53, 85, 174, 87, 0, 1, 2, 186, 209, 79, 194, 95, 47, 203, 79, 12, 159, 19, 119, 150, 115, 88, 232, 100, 56, 23, 252}};
+
 const char* ref_sha_input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
 
 uint8_t ref_sha256_output[] = {
@@ -166,6 +181,70 @@ bool test_bip39_bad_checksum() {
     return true;
 }
 
+bool test_sskr(void) {
+
+    Seed seed = Seed(selftest_seed_arr, sizeof(selftest_seed_arr));
+    SSKRShareSeq * sskr = SSKRShareSeq::from_seed(&seed, 2, 3, random_buffer);
+
+    Serial.println("sskr print");
+    for (int i=0; i < sskr->shares_len; i++) {
+         Serial.println(sskr->shares_bytewords[i]);
+    }
+
+    // restore with all shards
+    Seed *seed_restored = sskr->restore_seed();
+    if (seed_restored == NULL || seed != *seed_restored) {
+        seed.log();
+        seed_restored->log();
+        Serial.println("sskr failed");
+        return false;
+    }
+    delete seed_restored;
+    delete sskr;
+
+    // restore from the first and third shard:
+    SSKRShareSeq sskr2 = SSKRShareSeq();
+    bool ret = sskr2.get_share_from_ur(selftest_sskr[0], 0);
+    if (ret == false) {
+        Serial.println("get_share_from_ur failed");
+        return false;
+    }
+
+    ret = sskr2.get_share_from_ur(selftest_sskr[2], 1);
+    if (ret == false) {
+        Serial.println("get_share_from_ur failed");
+        return false;
+    }
+
+    seed_restored = sskr2.restore_seed();
+    if (seed_restored == NULL || seed != *seed_restored) {
+        Serial.println("sskr failed");
+        return false;
+    }
+
+    // is it round-trip compatible with bip39?
+    BIP39Seq * bip39 = new BIP39Seq(seed_restored);
+    if (bip39->get_mnemonic_as_string() != selftest_bip39) {
+          Serial.println("bip39-sskr: round-trip incompatible");
+          return false;
+    }
+
+    delete seed_restored;
+    delete bip39;
+
+    // change one shard a bit:
+    String shard_changed = selftest_sskr[2];
+    shard_changed.replace("zinc", "tuna");
+    // must fail due to incorrect bytewords checksum
+    ret = sskr2.get_share_from_ur(shard_changed, 1);
+    if (ret == true) {
+        Serial.println("get_share_from_ur failed");
+        return false;
+    }
+
+    return true;
+}
+
 bool test_bip32(void) {
     int res;
     ext_key root;
@@ -226,28 +305,6 @@ bool test_bip32(void) {
     return true;
 }
 
-bool test_sskr(void) {
-
-    uint8_t s[16] = {0x7d, 0xaa, 0x85, 0x12, 0x51, 0x00, 0x28, 0x74, 0xe1, 0xa1, 0x99, 0x5f, 0x08, 0x97, 0xe6, 0xb1};
-    Seed seed = Seed(s, 16);
-    SSKRShareSeq * sskr = SSKRShareSeq::from_seed(&seed, 2, 3, random_buffer);
-
-    for (int i=0; i < sskr->shares_len; i++) {
-         Serial.println(sskr->shares[i]);
-    }
-
-/*  
-    @TODO for now only visual inspection with bc-seedtool-cli 
-    gorazd@gorazd-MS-7C37:~$ seedtool --in sskr
-    tuna acid epic gyro love work able acid able puff news duty also visa jowl jury wand vast saga flew inky door join lion legs yell yurt gyro bald
-    tuna acid epic gyro love work able acid acid zero oboe paid tuna frog exam knob claw zinc back noon wasp runs able kept swan fizz many high cats
-    7daa851251002874e1a1995f0897e6b1
-*/
-
-    return true;
-}
-
-
 struct selftest_t {
     char const * testname;
     bool (*testfun)();
@@ -278,6 +335,13 @@ size_t const g_numtests = sizeof(g_selftests) / sizeof(*g_selftests);
 const uint16_t * selftest_dummy_bip39() {
     using namespace selftest_internal;
     return ref_bip39_words_correct;
+}
+
+const uint8_t * selftest_dummy_sskr(size_t ndx) {
+    using namespace selftest_internal;
+    if (ndx > selftest_sskr_nshares - 1)
+        ndx = selftest_sskr_nshares - 1;
+    return selftest_sskr_indx[ndx];
 }
 
 size_t selftest_numtests() {

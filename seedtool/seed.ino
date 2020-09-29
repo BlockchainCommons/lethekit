@@ -8,6 +8,8 @@
 #include "seed.h"
 #include "wally_crypto.h"
 #include "ur.h"
+#include "CborEncoder.h"
+#include "CborDecoder.h"
 
 namespace seed_internal {
 
@@ -52,10 +54,11 @@ SSKRShareSeq * SSKRShareSeq::from_seed(Seed const * seed,
     sskr_group_descriptor group = { thresh, nshares };
     sskr_group_descriptor groups[] = { group };
 
-    size_t bytes_in_each_share = 0;
     size_t buff_size = 1024;
     uint8_t buff[buff_size];
-    
+
+    size_t bytes_in_each_share;
+
     size_t share_len = Seed::SIZE + METADATA_LENGTH_BYTES;
     int share_count = sskr_count_shards(group_threshold, groups, group_len);
 
@@ -71,24 +74,25 @@ SSKRShareSeq * SSKRShareSeq::from_seed(Seed const * seed,
                              buff_size,
                              NULL,
                              randgen);
-    Serial.println(gen_share_count); Serial.println(share_count);
+
+    // currently we support only 29 words per share
+    serial_assert(bytes_in_each_share == BYTES_PER_SHARE);
     serial_assert(gen_share_count == (int)share_count);
-    Serial.println(bytes_in_each_share); Serial.println(share_len);
     serial_assert(bytes_in_each_share == share_len);
 
 
     String strings[MAX_SHARES];
     String ur_strings[MAX_SHARES];
-    uint8_t v[buff_size];
+    uint8_t shards_byte[MAX_SHARES][buff_size];
     for (int i = 0; i < share_count; i++) {
         uint8_t* bytes = buff + (i * bytes_in_each_share);
-        memcpy(v, bytes, bytes_in_each_share);
+        memcpy(shards_byte[i], bytes, bytes_in_each_share);
 
         CborDynamicOutput output;
         CborWriter writer(output);
 
         writer.writeTag(309);
-        writer.writeBytes(v, bytes_in_each_share);
+        writer.writeBytes(shards_byte[i], bytes_in_each_share);
 
         // Encode cbor payload as bytewords
         char *payload_bytewords = bytewords_encode(bw_standard, output.getData(), output.getSize());
@@ -108,32 +112,138 @@ SSKRShareSeq * SSKRShareSeq::from_seed(Seed const * seed,
     }
 
     SSKRShareSeq * sskr = new SSKRShareSeq();
+    sskr->nshares = nshares;
+    sskr->shares_len = thresh;
+    sskr->bytes_in_each_share = bytes_in_each_share;
     sskr->shares_len = share_count;
     for (int i=0; i<share_count; i++) {
-        sskr->shares[i] = strings[i];
-        sskr->shares_ur[i] = ur_strings[i];
+        sskr->shares_bytewords[i] = strings[i];  // bytewords format
+        sskr->shares_ur[i] = ur_strings[i];      // ur format
+        sskr->set_share(i, shards_byte[i], bytes_in_each_share); // byte format
     }
 
-    // how many words per (bytewords encoded) share are there?
-    // count spaces. 1 space means 2 words, therefore start with 1 word
-    sskr->words_per_share = 1;
-    int pos = 0;
-    while (pos < strings[0].length()) {
-      pos = strings[0].indexOf(" ", pos);
-      if (pos == -1) {
-          break;
-      }
-      else {
-          sskr->words_per_share++;
-          pos++;
-      }
-    }
-    
     return sskr;
 }
 
+size_t SSKRShareSeq::add_share(uint8_t const * share) {
+    serial_assert(nshares < MAX_SHARES);
+    size_t sharesz = sizeof(uint8_t) * BYTES_PER_SHARE;
+    shares[nshares] = (uint8_t *) malloc(sharesz);
+    memcpy(shares[nshares], share, sharesz);
+    return nshares++;
+}
+
 String SSKRShareSeq::get_share_word(int sharendx, int wndx) {
-    return get_word_from_sentence(shares[sharendx], ' ', wndx);
+    return get_word_from_sentence(shares_bytewords[sharendx], ' ', wndx);
+}
+
+uint8_t const * SSKRShareSeq::get_share(size_t ndx) const {
+    serial_assert(ndx < nshares);
+    return shares[ndx];
+}
+
+void SSKRShareSeq::set_share(size_t ndx, uint8_t const * share, size_t len) {
+    Serial.println("** **");
+    Serial.println(ndx); Serial.println(nshares);
+    serial_assert(ndx < nshares);
+    if (shares[ndx])
+        free(shares[ndx]);
+    size_t sharesz = sizeof(uint8_t) * len;
+    shares[ndx] = (uint8_t *) malloc(sharesz);
+    memcpy(shares[ndx], share, sharesz);
+}
+
+String SSKRShareSeq::get_share_strings(size_t ndx) const {
+    serial_assert(ndx < nshares);
+    return shares_bytewords[ndx];
+}
+
+Seed * SSKRShareSeq::restore_seed() const {
+    uint8_t seed_data[Seed::SIZE];
+
+    Serial.println("restore seed");
+    Serial.println(bytes_in_each_share);
+    Serial.println(nshares);
+
+    last_rv = sskr_combine(const_cast<const uint8_t **>(shares),
+                             bytes_in_each_share,
+                             nshares,
+                             seed_data,
+                             sizeof(seed_data));
+    Serial.println(last_rv);
+    return last_rv < 0 ? NULL : new Seed(seed_data, sizeof(seed_data));
+}
+
+class CborListen : public CborListener {
+  public:
+    void OnInteger(int32_t value){ };
+    void OnBytes(unsigned char *data, unsigned int size) {Serial.println("bytes"); memcpy(bytes, data, size); len = size;};
+    void OnString(String &str) {};
+    void OnArray(unsigned int size) {};
+    void OnMap(unsigned int size) {};
+    void OnTag(uint32_t tag) { tag_ = tag; };
+    void OnSpecial(uint32_t code) {Serial.println("tag");};
+    void OnError(const char *error) {Serial.println("error");};
+
+    // we are gonna collect the tag and bytes
+    uint32_t tag_;
+    uint8_t bytes[200];
+    size_t len;
+};
+
+bool SSKRShareSeq::get_share_from_ur(String bytewords, size_t sskr_shard_indx) {
+    uint8_t* decoded = NULL;
+    size_t decoded_len;
+
+    bool ret = bytewords_decode(bw_standard, bytewords.c_str(), &decoded, &decoded_len);
+    if (ret == false) {
+        if (decoded)
+            free(decoded);
+        return ret;
+    }
+
+    CborInput input(decoded, decoded_len);
+    CborReader reader(input);
+    CborListen listener;
+    reader.SetListener(listener);
+    reader.Run();
+
+    // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md
+    if (listener.tag_ != 309)
+        return false;
+
+    free(decoded);
+
+    if (sskr_shard_indx >= nshares) {
+        // init a new share
+        uint8_t empty_share[SSKRShareSeq::BYTES_PER_SHARE] = {0};
+        add_share(empty_share);
+    }
+
+    set_share(sskr_shard_indx, listener.bytes, listener.len);
+    bytes_in_each_share = listener.len;
+
+    return true;
+}
+
+void SSKRShareSeq::del_share(size_t ndx) {
+    serial_assert(ndx < nshares);
+    if (shares[ndx])
+        free(shares[ndx]);
+    // Compact any created gap.
+    for (size_t ii = ndx; ii < nshares-1; ++ii)
+        shares[ii] = shares[ii+1];
+    nshares -= 1;
+}
+
+
+String bytewords_get_word(uint8_t index) {
+    // FIXME bytewords are currently not exposed in the bytewords library. Once exposed, replace this function
+    char word[5] = {0};
+    static const char* bytewords = "ableacidalsoapexaquaarchatomauntawayaxisbackbaldbarnbeltbetabiasbluebodybragbrewbulbbuzzcalmcashcatschefcityclawcodecolacookcostcruxcurlcuspcyandarkdatadaysdelidicedietdoordowndrawdropdrumdulldutyeacheasyechoedgeepicevenexamexiteyesfactfairfernfigsfilmfishfizzflapflewfluxfoxyfreefrogfuelfundgalagamegeargemsgiftgirlglowgoodgraygrimgurugushgyrohalfhanghardhawkheathelphighhillholyhopehornhutsicedideaidleinchinkyintoirisironitemjadejazzjoinjoltjowljudojugsjumpjunkjurykeepkenokeptkeyskickkilnkingkitekiwiknoblamblavalazyleaflegsliarlistlimplionlogoloudloveluaulucklungmainmanymathmazememomenumeowmildmintmissmonknailnavyneednewsnextnoonnotenumbobeyoboeomitonyxopenovalowlspaidpartpeckplaypluspoempoolposepuffpumapurrquadquizraceramprealredorichroadrockroofrubyruinrunsrustsafesagascarsetssilkskewslotsoapsolosongstubsurfswantacotasktaxitenttiedtimetinytoiltombtoystriptunatwinuglyundouniturgeuservastveryvetovialvibeviewvisavoidvowswallwandwarmwaspwavewaxywebswhatwhenwhizwolfworkyankyawnyellyogayurtzapszestzinczonezoomzero";
+    memcpy(word, &bytewords[index * 4], 4);
+    word[4] = '\0';
+    return String(word);
 }
 
 BIP39Seq * BIP39Seq::from_words(uint16_t * words) {

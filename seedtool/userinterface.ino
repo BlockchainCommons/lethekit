@@ -415,9 +415,9 @@ void seedless_menu() {
         g_display->println("B - Restore BIP39");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
-        // deprecating sskr. TODO Replace it with bc-shamir
-        //g_display->println("C - Restore SSKR");
-
+        g_display->println("C - Restore SSKR");
+        yy += H_FSB9 + 2*YM_FSB9;
+        g_display->setCursor(xx, yy);
         // TODO: only for demonstration purposes, to be deleted
         g_display->println("0 - UR Demo");
 
@@ -442,11 +442,10 @@ void seedless_menu() {
             g_bip39 = new BIP39Seq();
             g_uistate = RESTORE_BIP39;
             return;
-        // deprecating sskr. TODO Replace it with bc-shamir
-        //case 'C':
-        //    g_sskr_restore = new SSKRShareSeq();
-        //    g_uistate = RESTORE_SSKR;
-        //    return;
+        case 'C':
+            g_sskr_restore = new SSKRShareSeq();
+            g_uistate = RESTORE_SSKR;
+            return;
         case '0':
             g_uistate = UR_DEMO;
             return;
@@ -994,7 +993,7 @@ void set_sskr_format() {
 }
 
 void display_sskr() {
-    int const nwords = g_sskr_generate->words_per_share;
+    int const nwords = SSKRShareSeq::WORDS_PER_SHARE;
     int sharendx = 0;
     int scroll = 0;
     String ur_string;
@@ -1153,13 +1152,32 @@ struct WordListState {
     virtual String refword(int ndx) = 0;
 
     void set_words(uint16_t const * wordlist) {
-        for (int ii = 0; ii < nwords; ++ii)
+
+        for (int ii = 0; ii < nwords; ++ii) {
             wordndx[ii] = wordlist ? wordlist[ii] : 0;
+        }
     }
 
+    void set_words(uint8_t const * wordlist) {
+        for (int ii = 0; ii < nwords; ++ii) {
+            wordndx[ii] = wordlist ? wordlist[ii] : 0;
+            Serial.println(String(wordndx[ii]) );
+        }
+    }
+
+    // for bip39
     void get_words(uint16_t * o_wordlist) const {
         for (int ii = 0; ii < nwords; ++ii)
             o_wordlist[ii] = wordndx[ii];
+    }
+
+    // for sskr
+    void get_words(String & o_wordlist) {
+        for (int ii = 0; ii < nwords; ++ii) {
+            o_wordlist += String(refword(wordndx[ii]));
+            if (ii < nwords-1)
+                o_wordlist += " ";
+        }
     }
 
     void compute_scroll() {
@@ -1252,6 +1270,13 @@ struct WordListState {
     }
 };
 
+struct SSKRWordlistState : WordListState {
+    SSKRWordlistState(int i_nwords) : WordListState(i_nwords, 1024) {}
+    virtual String refword(int ndx) {
+        return String(bytewords_get_word(ndx));
+    }
+};
+
 struct BIP39WordlistState : WordListState {
     BIP39Seq * bip39;
     BIP39WordlistState(BIP39Seq * i_bip39, int i_nwords)
@@ -1265,7 +1290,7 @@ struct BIP39WordlistState : WordListState {
 
 void restore_bip39() {
     BIP39WordlistState state(g_bip39, BIP39Seq::WORD_COUNT);
-    state.set_words(NULL);
+    state.set_words((uint16_t *)NULL);
 
     while (true) {
         int const xoff = 12;
@@ -1427,7 +1452,7 @@ void restore_bip39() {
     }
 }
 
-/*
+
 void restore_sskr() {
     int scroll = 0;
     int selected = g_sskr_restore->numshares();	// selects "add" initially
@@ -1534,9 +1559,7 @@ void restore_sskr() {
                 return;
             } else if (selected == (int)g_sskr_restore->numshares()) {
                 // Add new (zeroed) share
-                uint16_t share[SSKRShareSeq::WORDS_PER_SHARE] =
-                    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                uint8_t share[SSKRShareSeq::BYTES_PER_SHARE] = {0};
                 g_restore_sskr_selected = g_sskr_restore->add_share(share);
                 g_uistate = ENTER_SHARE;
                 return;
@@ -1549,10 +1572,9 @@ void restore_sskr() {
                 full_window_clear();
 
                 for (size_t ii = 0; ii < g_sskr_restore->numshares(); ++ii) {
-                    char * strings =
+                    String strings =
                         g_sskr_restore->get_share_strings(ii);
-                    serial_printf("%d %s\n", ii+1, strings);
-                    free(strings);
+                    serial_printf("%d %s\n", ii+1, strings.c_str());
                 }
                 Seed * seed = g_sskr_restore->restore_seed();
                 if (!seed) {
@@ -1561,7 +1583,7 @@ void restore_sskr() {
                     size_t nlines = 0;
                     lines[nlines++] = "SSKR Error";
                     lines[nlines++] = "";
-                    lines[nlines++] = SSKRShareSeq::error_msg(err);
+                    //lines[nlines++] = SSKRShareSeq::error_msg(err);
                     lines[nlines++] = "";
                     lines[nlines++] = "";
                     lines[nlines++] = "Press # to revisit";
@@ -1584,11 +1606,26 @@ void restore_sskr() {
         }
     }
 }
-*/
-/*
+
+
 void enter_share() {
     SSKRWordlistState state(SSKRShareSeq::WORDS_PER_SHARE);
     state.set_words(g_sskr_restore->get_share(g_restore_sskr_selected));
+
+    // We currently support only 16 byte seed so the first 4 words are always the same.
+    state.wordndx[0] = 0xd8 + 1;  // 'tuna'
+    state.wordndx[1] = 0x00 + 1;  // 'acid'
+    state.wordndx[2] = 0x30 + 5;  // 'epic'
+    state.wordndx[3] = 0x50 + 5;  // 'gyro'
+
+    if (g_restore_sskr_selected > 0) {
+        // words 4-7 are the same acrross all shares
+        const uint8_t * share_ = g_sskr_restore->get_share(0);
+        state.wordndx[4] = share_[4];
+        state.wordndx[5] = share_[5];
+        state.wordndx[6] = share_[6];
+        state.wordndx[7] = share_[7];
+    }
 
     while (true) {
         int const xoff = 12;
@@ -1697,7 +1734,7 @@ void enter_share() {
         case '8':
             state.word_up();
             break;
-        case 'D':
+        case 'D':   // TESTING
             do {
                 key = g_keypad.getKey();
             } while (key == NO_KEY);
@@ -1706,15 +1743,7 @@ void enter_share() {
             case '0':
                 // If 'D' and then '0' are typed, fill with valid dummy data.
                 Serial.println("Loading dummy sskr data");
-                state.set_words(selftest_dummy_sskr(
-                    g_restore_sskr_selected));
-                break;
-            case '9':
-                // If 'D' and then '9' are typed, fill with invalid
-                // share (but correct checksum).
-                Serial.println("Loading dummy sskr data");
-                state.set_words(selftest_dummy_sskr_alt(
-                    g_restore_sskr_selected));
+                state.set_words(selftest_dummy_sskr((size_t)g_restore_sskr_selected));
                 break;
             default:
                 break;
@@ -1728,9 +1757,13 @@ void enter_share() {
             return;
         case '#':	// done
             {
-                uint16_t words[SSKRShareSeq::WORDS_PER_SHARE];
+                uint8_t _share[SSKRShareSeq::BYTES_PER_SHARE];
+                size_t _share_len;
+                String words;
                 state.get_words(words);
-                bool ok = SSKRShareSeq::verify_share_checksum(words);
+
+                bool ok = g_sskr_restore->get_share_from_ur(words, g_restore_sskr_selected);
+
                 if (!ok) {
                     String lines[7];
                     size_t nlines = 0;
@@ -1744,8 +1777,6 @@ void enter_share() {
                     interstitial_error(lines, nlines);
                 } else {
                     serial_assert(g_sskr_restore);
-                    g_sskr_restore->set_share(
-                        g_restore_sskr_selected, words);
                     g_uistate = RESTORE_SSKR;
                     return;
                 }
@@ -1755,7 +1786,6 @@ void enter_share() {
         }
     }
 }
-*/
 
 void derivation_path(void) {
 
@@ -2943,7 +2973,7 @@ void ur_demo(void) {
     const size_t CHUNK_SIZE = 100; // bytes
 
     dt = millis();
-    auto ur = make_message_ur(5000);
+    auto ur = make_message_ur(1000);
     dt = millis() - dt;
     Serial.println("Make mesage: " + String(dt));
 
@@ -3009,6 +3039,7 @@ void ui_reset_into_state(UIState state) {
         delete g_master_seed;
         g_master_seed = NULL;
     }
+
     if (g_bip39) {
         delete g_bip39;
         g_bip39 = NULL;
@@ -3018,12 +3049,11 @@ void ui_reset_into_state(UIState state) {
         delete g_sskr_generate;
         g_sskr_generate = NULL;
     }
-    /*
+
     if (g_sskr_restore) {
         delete g_sskr_restore;
         g_sskr_restore = NULL;
     }
-    */
 
     g_rolls = "";
     g_submitted = false;
@@ -3057,10 +3087,10 @@ void ui_dispatch() {
         restore_bip39();
         break;
     case RESTORE_SSKR:
-        //restore_sskr();
+        restore_sskr();
         break;
     case ENTER_SHARE:
-        //enter_share(); TODO
+        enter_share(); //TODO
         break;
     case SEEDY_MENU:
         seedy_menu();
