@@ -56,10 +56,10 @@ struct pg_derivation_path_t {
 };
 
 struct pg_set_xpub_format_t {
-    format xpub_format;
+    format current;
 
     String get_xpub_format_as_string(void) {
-      switch(xpub_format) {
+      switch(current) {
           case text:
               return "base58";
           case qr_text:
@@ -81,6 +81,7 @@ struct pg_xpub_menu_t {
 struct pg_set_xpub_options_t {
     bool slip132;
     bool show_derivation_path;
+    bool current; // currently selected option out of 2
 };
 
 struct pg_set_seed_format_t {

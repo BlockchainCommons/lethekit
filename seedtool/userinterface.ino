@@ -78,19 +78,28 @@ Point text_center(const char * txt) {
 }
 
 // @post  g_display->setTextColor(GxEPD_BLACK);
-void highlight(int yy) {
+
+void highlight(int yy, int xx_start=0, int xx_end=0) {
     // Unique, highlight entire word.
-    g_display->fillRect(0,
+    g_display->fillRect(xx_start,
                        yy - H_FMB12 + YM_FMB12,
-                       W_FMB12 * (16 + 3) + 3,
+                       xx_end,
                        H_FMB12 + YM_FMB12,
                        GxEPD_BLACK);
     g_display->setTextColor(GxEPD_WHITE);
 }
 
-void display_text(char *txt, int x, int y, bool _highlight) {
+/**
+ * @brief display text optionally highlighted
+ *        xx_end: -1  highlight will fit the text
+ *                 0  highlight will fit the width of the screen
+ */
+void display_text(const char *txt, int x, int y, bool _highlight, int xx_end=-1) {
+    int16_t tbx, tby; uint16_t tbw, tbh;
+    g_display->getTextBounds(txt, 0, 0, &tbx, &tby, &tbw, &tbh);
+
     if (_highlight)
-        highlight(y);
+        highlight(y, x, xx_end < 0 ? tbw + 3 : (W_FMB12 * (16 + 3) + 3));
     g_display->setCursor(x, y);
     g_display->println(txt);
     g_display->setTextColor(GxEPD_BLACK);
@@ -544,9 +553,10 @@ void generate_seed() {
 }
 
 void set_network() {
-    int xoff = 5, yoff = 5;
+    int xoff = 10, yoff = 5;
     String title = "Set network";
     bool ret;
+    NetwtorkType net = network.get_network();
     g_display->firstPage();
     do
     {
@@ -562,17 +572,13 @@ void set_network() {
         g_display->println(title);
 
         yy += H_FSB9 + 2*YM_FSB9 + 15;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("A: Regtest");
+        display_text("A: Regtest", xx, yy, net == REGTEST, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 5;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("B: Testnet");
-
+        display_text("B: Testnet", xx, yy, net == TESTNET, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 5;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("C: Mainnet");
+        display_text("C: Mainnet", xx, yy, net == MAINNET, 0);
 
         // bottom-relative position
         xx = xoff + 2;
@@ -666,6 +672,13 @@ void seedy_menu() {
         g_display->setFont(&FreeSansBold9pt7b);
         g_display->setCursor(xx, yy);
         display_printf("%", GIT_DESCRIBE);
+
+        g_display->setFont(&FreeMono9pt7b);
+        String right_option = "1Netw.";
+        int x_r = text_right(right_option.c_str());
+        g_display->setCursor(x_r, yy+5);
+        g_display->println(right_option);
+
     }
     while (g_display->nextPage());
 
@@ -930,7 +943,7 @@ void config_sskr() {
 
 
 void set_sskr_format() {
-    int xoff = 5, yoff = 5;
+    int xoff = 10, yoff = 5;
     String title = "Set format";
     g_display->firstPage();
     do
@@ -947,17 +960,13 @@ void set_sskr_format() {
         g_display->println(title);
 
         yy += H_FSB9 + 2*YM_FSB9 + 15;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("A: Text");
+        display_text("A: Text", xx, yy, pg_set_sskr_format.sskr_format == text, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 5;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("B: UR");
-
+        display_text("B: UR", xx, yy, pg_set_sskr_format.sskr_format == ur, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 5;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("C: QR-UR");
+        display_text("C: QR-UR", xx, yy, pg_set_sskr_format.sskr_format == qr_ur, 0);
 
         // bottom-relative position
         xx = xoff + 2;
@@ -1809,13 +1818,13 @@ void derivation_path(void) {
           g_display->println(title);
 
           yy += 50;
-          display_text("A: native segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NATIVE_SEGWIT && pg_derivation_path.is_standard_derivation);
+          display_text("A: native segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NATIVE_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
 
           yy += 30;
-          display_text("B: nested segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NESTED_SEGWIT && pg_derivation_path.is_standard_derivation);
+          display_text("B: nested segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NESTED_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
 
           yy += 30;
-          display_text("C: custom", x_off, yy, pg_derivation_path.is_standard_derivation == false);
+          display_text("C: custom", x_off, yy, pg_derivation_path.is_standard_derivation == false, 0);
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);
@@ -1852,7 +1861,7 @@ void derivation_path(void) {
               }
             }
             g_uistate = DISPLAY_XPUBS;
-            break;
+            return;
         case 'B': {
             pg_derivation_path.std_derivation = SINGLE_NESTED_SEGWIT;
             pg_derivation_path.is_standard_derivation = true;
@@ -1863,7 +1872,7 @@ void derivation_path(void) {
               }
             }
             g_uistate = DISPLAY_XPUBS;
-            break;
+            return;
         case 'C':
             // slip132 option is not available for custom derivation paths
             pg_set_xpub_options.slip132 = false;
@@ -1983,7 +1992,7 @@ void custom_derivation_path(void) {
 }
 
 void set_xpub_format() {
-    int xoff = 5, yoff = 5;
+    int xoff = 10, yoff = 5;
     String title = "Set xpub format";
     g_display->firstPage();
     do
@@ -2000,20 +2009,16 @@ void set_xpub_format() {
         g_display->println(title);
 
         yy += H_FSB9 + 2*YM_FSB9 + 12;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("A: Qr-Base58");
+        display_text("A: Qr-Base58", xx, yy, pg_set_xpub_format.current == qr_text, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 1;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("B: Base58");
+        display_text("B: Base58", xx, yy, pg_set_xpub_format.current == text, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 1;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("C: Qr-UR");
+        display_text("C: Qr-UR", xx, yy, pg_set_xpub_format.current == qr_ur, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 1;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("D: UR");
+        display_text("D: UR", xx, yy, pg_set_xpub_format.current == ur, 0);
 
         // bottom-relative position
         xx = xoff + 2;
@@ -2032,16 +2037,16 @@ void set_xpub_format() {
     clear_full_window = false;
     switch (key) {
     case 'A':
-        pg_set_xpub_format.xpub_format = qr_text;
+        pg_set_xpub_format.current = qr_text;
         return;
     case 'B':
-        pg_set_xpub_format.xpub_format = text;
+        pg_set_xpub_format.current = text;
         return;
     case 'C':
-        pg_set_xpub_format.xpub_format = qr_ur;
+        pg_set_xpub_format.current = qr_ur;
         return;
     case 'D':
-        pg_set_xpub_format.xpub_format = ur;
+        pg_set_xpub_format.current = ur;
         return;
     case '*':
         return;
@@ -2053,7 +2058,6 @@ void set_xpub_format() {
 
 void set_xpub_options() {
     int xoff = 5, yoff = 5;
-    String title = "Slip132";
     g_display->firstPage();
     do
     {
@@ -2064,31 +2068,38 @@ void set_xpub_options() {
         int xx = xoff;
         int yy = yoff + (H_FSB9 + YM_FSB9);
         g_display->setFont(&FreeSansBold9pt7b);
+        String title = "Options";
         Point p = text_center(title.c_str());
         g_display->setCursor(p.x, yy);
         g_display->println(title);
 
-        yy += H_FSB9 + 2*YM_FSB9 + 5;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("A: True    B: False");
-
         yy += H_FSB9 + 2*YM_FSB9 + 20;
+        g_display->setCursor(xx, yy);
+        g_display->println("slip132: ");
 
-        title = "Show path";
-        p = text_center(title.c_str());
-        g_display->setCursor(p.x, yy);
-        g_display->println(title);
+        display_text(pg_set_xpub_options.slip132 ? "True" : "False", xx + 80, yy, pg_set_xpub_options.current == true);
+        g_display->setTextColor(GxEPD_BLACK);
+
+        yy += H_FSB9 + YM_FSB9;
+
 
         yy += H_FSB9 + 2*YM_FSB9 + 5;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("C: True    D: False");
-
-        // bottom-relative position
-        xx = xoff + 2;
-        yy = Y_MAX - (H_FSB9) + 2;
-        g_display->setFont(&FreeSansBold9pt7b);
         g_display->setCursor(xx, yy);
-        g_display->println("*-Cancel");
+        g_display->println("show path: ");
+
+        display_text(pg_set_xpub_options.show_derivation_path ? "True" : "False", xx + 100, yy, pg_set_xpub_options.current == false);
+        g_display->setTextColor(GxEPD_BLACK);
+
+        yy = 195; // Absolute, stuck to bottom
+        g_display->setFont(&FreeMono9pt7b);
+        String right_option = "# Done";
+        int x_r = text_right(right_option.c_str());
+        g_display->setCursor(x_r, yy);
+        g_display->println(right_option);
+
+        String left_option = "1->  A-Chg";
+        g_display->setCursor(0, yy);
+        g_display->println(left_option);
     }
     while (g_display->nextPage());
 
@@ -2100,19 +2111,20 @@ void set_xpub_options() {
     clear_full_window = false;
     switch (key) {
     case 'A':
-        pg_set_xpub_options.slip132 = true;
-        return;
-    case 'B':
-        pg_set_xpub_options.slip132 = false;
-        return;
-    case 'C':
-        pg_set_xpub_options.show_derivation_path = true;
-        return;
-    case 'D':
-        pg_set_xpub_options.show_derivation_path = false;
-        return;
+        if (pg_set_xpub_options.current)
+            pg_set_xpub_options.slip132 = !pg_set_xpub_options.slip132;
+        else
+            pg_set_xpub_options.show_derivation_path = !pg_set_xpub_options.show_derivation_path;
+        g_uistate = SET_XPUB_OPTIONS;
+        break;
     case '*':
         return;
+    case '#':
+        return;
+    case '1':
+        pg_set_xpub_options.current = !pg_set_xpub_options.current;
+        g_uistate = SET_XPUB_OPTIONS;
+        break;
     default:
         g_uistate = SET_XPUB_FORMAT;
         break;
@@ -2126,7 +2138,7 @@ void display_xpub(void) {
     const int nrows = 5;
     int scroll = 0;
     String derivation_path = keystore.get_derivation_path();
-    int scroll_strlen = 0;
+    int scroll_strlen = 18;
     bool ret;
 
     ret = keystore.update_root_key(g_bip39->mnemonic_seed, BIP39_SEED_LEN_512);
@@ -2169,17 +2181,24 @@ void display_xpub(void) {
           g_display->setCursor(p.x, yy);
           g_display->println(title);
 
-          switch(pg_set_xpub_format.xpub_format) {
+          switch(pg_set_xpub_format.current) {
             case text:
                 g_display->setFont(&FreeMonoBold9pt7b);
-                g_display->setCursor(0, yy + 30);
+                yy += 30;
                 if (pg_set_xpub_options.show_derivation_path) {
                     char fingerprint[9] = {0};
                     sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
-                    g_display->println("[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub));
+                    String txt = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub);
+                    for (int k = 0; k < nrows; ++k) {
+                        g_display->setCursor(0, yy);
+                        display_printf("%s", txt.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
+                        yy += H_FMB12 + YM_FMB12;
+                    }
                 }
-                else
+                else {
+                    g_display->setCursor(0, yy);
                     g_display->println(xpub);
+                }
                 break;
             case qr_text:
                 if (pg_set_xpub_options.show_derivation_path) {
@@ -2229,13 +2248,13 @@ void display_xpub(void) {
           g_display->println(left_option);
 
          yy = 195 - 20;
-         if (pg_set_xpub_format.xpub_format == ur) {
+         if (pg_set_xpub_format.current == ur) {
              g_display->setCursor(0, yy);
              left_option = "<-1/7->";
              g_display->println(left_option);
          }
-         else if (pg_set_xpub_format.xpub_format == text || pg_set_xpub_format.xpub_format == qr_text) {
-             left_option = "B Opt.";
+         else if (pg_set_xpub_format.current == text || pg_set_xpub_format.current == qr_text) {
+             left_option = "Opt. B";
              g_display->setCursor(0, yy);
              g_display->println(left_option);
          }
@@ -2367,7 +2386,7 @@ void display_seed(void) {
   }
 
 void set_seed_format() {
-    int xoff = 5, yoff = 5;
+    int xoff = 10, yoff = 5;
     String title = "Set seed format";
     g_display->firstPage();
     do
@@ -2384,12 +2403,10 @@ void set_seed_format() {
         g_display->println(title);
 
         yy += H_FSB9 + 2*YM_FSB9 + 15;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("A: ur");
+        display_text("A: ur", xx, yy, pg_set_seed_format.seed_format == ur, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 5;
-        g_display->setCursor(4*xx, yy);
-        g_display->println("B: qr-ur");
+        display_text("B: qr-ur", xx, yy, pg_set_seed_format.seed_format == qr_ur, 0);
 
         // bottom-relative position
         xx = xoff + 2;
@@ -2469,7 +2486,7 @@ void error_screen(void) {
   }
 
 void open_wallet(void) {
-    int xx = 0;
+    int xx = 10;
     
     while (true) {
       g_display->firstPage();
@@ -2479,8 +2496,8 @@ void open_wallet(void) {
           g_display->fillScreen(GxEPD_WHITE);
           g_display->setTextColor(GxEPD_BLACK);
 
-          const char * title = "Wallet";
-          int yy = 20;
+          const char * title = "Wallet: P2WPKH";
+          int yy = 25;
 
           g_display->setFont(&FreeSansBold9pt7b);
           Point p = text_center(title);
@@ -2667,7 +2684,7 @@ void show_address(void) {
 void set_address_format(void) {
 
     String title = "Set address format";
-    int xx = 5;
+    int xx = 10;
 
     while (true) {
       g_display->firstPage();
@@ -2684,21 +2701,16 @@ void set_address_format(void) {
           g_display->println(title);
           yy += H_FSB9 + 2*YM_FSB9 + 10;
 
-          g_display->setCursor(xx, yy);
-          g_display->println("A: text");
+          display_text("A: text", xx, yy, pg_show_address.addr_format == text, 0);
           yy += H_FSB9 + 2*YM_FSB9;
 
-          g_display->setCursor(xx, yy);
-          g_display->println("B: qr");
-          yy += H_FSB9 + 2*YM_FSB9;
+          display_text("B: qr", xx, yy, pg_show_address.addr_format == qr_text, 0);
+          yy += H_FSB9 + 2*YM_FSB9; 
 
-          g_display->setCursor(xx, yy);
-          g_display->println("C: ur");
-          yy += H_FSB9 + 2*YM_FSB9;
+          display_text("C: ur", xx, yy, pg_show_address.addr_format == ur, 0);
+          yy += H_FSB9 + 2*YM_FSB9; 
 
-          g_display->setCursor(xx, yy);
-          g_display->println("D: qr-ur");
-
+          display_text("D: qr-ur", xx, yy, pg_show_address.addr_format == qr_ur, 0);
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);
@@ -2907,21 +2919,16 @@ void set_export_wallet_format(void) {
           g_display->println(title);
           yy += H_FSB9 + 2*YM_FSB9 + 10;
 
-          g_display->setCursor(xx, yy);
-          g_display->println("A: text");
+          display_text("A: text", xx, yy, pg_export_wallet.wallet_format == text, 0);
           yy += H_FSB9 + 2*YM_FSB9;
 
-          g_display->setCursor(xx, yy);
-          g_display->println("B: qr");
+          display_text("B: qr", xx, yy, pg_export_wallet.wallet_format == qr_text, 0);
           yy += H_FSB9 + 2*YM_FSB9;
 
-          g_display->setCursor(xx, yy);
-          g_display->println("C: ur");
+          display_text("C: ur", xx, yy, pg_export_wallet.wallet_format == ur, 0);
           yy += H_FSB9 + 2*YM_FSB9;
 
-          g_display->setCursor(xx, yy);
-          g_display->println("D: qr-ur");
-
+          display_text("D: qr-ur", xx, yy, pg_export_wallet.wallet_format == qr_ur, 0);
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);

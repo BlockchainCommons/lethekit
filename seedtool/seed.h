@@ -115,8 +115,8 @@ public:
     int last_restore_error() { return last_rv; }
 
     uint8_t *shares[MAX_SHARES]; // shares in bytes format
-    String shares_ur[MAX_SHARES]; // shares in ur format   (read only)    
-    String shares_bytewords[MAX_SHARES]; // shares in bytewords format (read-only)
+    String shares_ur[MAX_SHARES]; // shares in ur format   @TODO: getter
+    String shares_bytewords[MAX_SHARES]; // shares in bytewords format @TODO: getter
     size_t shares_len; // threshold
     size_t bytes_in_each_share;
 
