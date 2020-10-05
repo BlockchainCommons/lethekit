@@ -1282,7 +1282,9 @@ struct WordListState {
 struct SSKRWordlistState : WordListState {
     SSKRWordlistState(int i_nwords) : WordListState(i_nwords, 1024) {}
     virtual String refword(int ndx) {
-        return String(bytewords_get_word(ndx));
+        char wrd[5];
+        bytewords_get_word(ndx, wrd);
+        return String(wrd);
     }
 };
 

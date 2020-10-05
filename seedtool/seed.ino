@@ -236,16 +236,6 @@ void SSKRShareSeq::del_share(size_t ndx) {
     nshares -= 1;
 }
 
-
-String bytewords_get_word(uint8_t index) {
-    // FIXME bytewords are currently not exposed in the bytewords library. Once exposed, replace this function
-    char word[5] = {0};
-    static const char* bytewords = "ableacidalsoapexaquaarchatomauntawayaxisbackbaldbarnbeltbetabiasbluebodybragbrewbulbbuzzcalmcashcatschefcityclawcodecolacookcostcruxcurlcuspcyandarkdatadaysdelidicedietdoordowndrawdropdrumdulldutyeacheasyechoedgeepicevenexamexiteyesfactfairfernfigsfilmfishfizzflapflewfluxfoxyfreefrogfuelfundgalagamegeargemsgiftgirlglowgoodgraygrimgurugushgyrohalfhanghardhawkheathelphighhillholyhopehornhutsicedideaidleinchinkyintoirisironitemjadejazzjoinjoltjowljudojugsjumpjunkjurykeepkenokeptkeyskickkilnkingkitekiwiknoblamblavalazyleaflegsliarlistlimplionlogoloudloveluaulucklungmainmanymathmazememomenumeowmildmintmissmonknailnavyneednewsnextnoonnotenumbobeyoboeomitonyxopenovalowlspaidpartpeckplaypluspoempoolposepuffpumapurrquadquizraceramprealredorichroadrockroofrubyruinrunsrustsafesagascarsetssilkskewslotsoapsolosongstubsurfswantacotasktaxitenttiedtimetinytoiltombtoystriptunatwinuglyundouniturgeuservastveryvetovialvibeviewvisavoidvowswallwandwarmwaspwavewaxywebswhatwhenwhizwolfworkyankyawnyellyogayurtzapszestzinczonezoomzero";
-    memcpy(word, &bytewords[index * 4], 4);
-    word[4] = '\0';
-    return String(word);
-}
-
 BIP39Seq * BIP39Seq::from_words(uint16_t * words) {
     BIP39Seq * retval = new BIP39Seq();
     for (size_t ii = 0; ii < WORD_COUNT; ++ii)

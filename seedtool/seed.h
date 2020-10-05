@@ -125,7 +125,6 @@ private:
     mutable int last_rv;
 };
 
-String bytewords_get_word(uint8_t index);
 
 /**
  *  This function is taken from libwally. We cannot import libwally_bip39 because it is clashing with
