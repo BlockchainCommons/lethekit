@@ -6,7 +6,6 @@
 #include "bc-bytewords.h"
 #include "CborEncoder.h"
 #include "wally_core.h"
-#include "crc32.h"
 #include "wally_bip32.h"
 #include "wally_address.h"
 #include "keystore.h"
