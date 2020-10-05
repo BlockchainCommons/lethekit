@@ -47,19 +47,19 @@ const char* ref_bip39_mnemonics[BIP39Seq::WORD_COUNT] =
 };
 
 
-// roundtrip compatible test vectors between skr and bip39 (generated with bc-seedtool-cli d91e1332)
+// roundtrip compatible test vectors between skr and bip39 (generated with bc-seedtool-cli 7a62535)
 const String selftest_seed = F("f13ad5414aee7ca944e79669db8e4cb3");
 const uint8_t selftest_seed_arr[] = {0xf1, 0x3a, 0xd5, 0x41, 0x4a, 0xee, 0x7c, 0xa9, 0x44, 0xe7, 0x96, 0x69, 0xdb, 0x8e, 0x4c, 0xb3};
 const String selftest_bip39 = F("van stove expect noise treat feed bean version hawk symbol nasty grocery");
 const size_t selftest_sskr_thresh = 2;
 const size_t selftest_sskr_nshares = 3;
-const String selftest_sskr[3] = { F("tuna acid epic gyro pool hang able acid able whiz atom quiz ugly tomb when race slot cats fern purr chef inky jugs view swan time yell liar warm"),
-                             F("tuna acid epic gyro pool hang able acid acid tomb vast foxy heat cost noon love legs brag vast jowl drum cook judo even grim news race half user"),
-                             F("tuna acid epic gyro pool hang able acid also road tent glow saga hope dull stub glow barn note brew kept mint junk hard vows idle exit cash zinc")};
+const String selftest_sskr[3] = { F("tuna acid epic gyro gray monk able acid able lava visa flux zero jolt runs miss vial need wand race drum kept yank safe taxi part into body away"),
+                             F("tuna acid epic gyro gray monk able acid acid play jolt grim toys quad eyes figs kiln exam inky fern fair soap atom task cats jowl cola void waxy"),
+                             F("tuna acid epic gyro gray monk able acid also tomb wave huts omit task paid trip song trip wall roof aqua brag away unit help keep vibe skew luau")};
 // the same as selftest_sskr but represented with word indexes:
-const uint8_t selftest_sskr_indx[3][29] = { {217, 1, 53, 85, 174, 87, 0, 1, 0, 242, 6, 180, 219, 214, 241, 181, 199, 24, 60, 178, 25, 102, 113, 229, 205, 211, 247, 132, 235},
-                                        {217, 1, 53, 85, 174, 87, 0, 1, 1, 214, 224, 68, 90, 31, 158, 138, 131, 18, 224, 111, 46, 30, 112, 54, 82, 156, 181, 86, 223},
-                                        {217, 1, 53, 85, 174, 87, 0, 1, 2, 186, 209, 79, 194, 95, 47, 203, 79, 12, 159, 19, 119, 150, 115, 88, 232, 100, 56, 23, 252}};
+const uint8_t selftest_sskr_indx[3][29] = { {217, 1, 53, 85, 81, 152, 0, 1, 0, 128, 230, 67, 251, 110, 191, 151, 227, 155, 234, 181, 46, 119, 245, 193, 208, 169, 103, 17, 8},
+                                        {217, 1, 53, 85, 81, 152, 0, 1, 1, 171, 110, 82, 215, 179, 57, 61, 122, 55, 102, 60, 59, 200, 6, 207, 24, 111, 29, 231, 238},
+                                        {217, 1, 53, 85, 81, 152, 0, 1, 2, 214, 237, 97, 163, 207, 168, 216, 202, 216, 233, 188, 4, 18, 8, 221, 91, 117, 228, 198, 139}};
 
 const char* ref_sha_input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
 
@@ -234,7 +234,7 @@ bool test_sskr(void) {
 
     // change one shard a bit:
     String shard_changed = selftest_sskr[2];
-    shard_changed.replace("zinc", "tuna");
+    shard_changed.replace("luau", "tuna");
     // must fail due to incorrect bytewords checksum
     ret = sskr2.get_share_from_ur(shard_changed, 1);
     if (ret == true) {
