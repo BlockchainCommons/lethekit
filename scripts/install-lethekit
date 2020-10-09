@@ -71,6 +71,7 @@ gxepd2_path="${aroot}/libraries/GxEPD2"
 [ -d ${gxepd2_path} ] && ! [ -L ${gxepd2_path} ] && echo "GxEPD2 already installed in ${libpath}. Please remove it; we need to replace with SW SPI enabled version." && exit 1
 
 declare -a libs=(
+    ArduinoSTL
     bc-ur-arduino
     Library-Arduino-Cbor
     secp256k1-embedded

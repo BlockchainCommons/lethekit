@@ -28,3 +28,6 @@
 [submodule "deps/Library-Arduino-Cbor"]
 	path = deps/Library-Arduino-Cbor
 	url = git@github.com:jjtara/Library-Arduino-Cbor.git
+[submodule "deps/ArduinoSTL"]
+	path = deps/ArduinoSTL
+	url = git@github.com:mike-matera/ArduinoSTL.git
