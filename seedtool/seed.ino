@@ -1,12 +1,15 @@
 // Copyright © 2020 Blockchain Commons, LLC
 
 #include <stdarg.h>
-
-#include <bc-slip39.h>
+#include <bc-sskr.h>
 #include <bc-crypto-base.h>
 
 #include "util.h"
 #include "seed.h"
+#include "wally_crypto.h"
+#include "ur.h"
+#include "CborEncoder.h"
+#include "CborDecoder.h"
 
 namespace seed_internal {
 
@@ -42,10 +45,205 @@ void Seed::log() const {
     serial_printf("\n");
 }
 
+SSKRShareSeq * SSKRShareSeq::from_seed(Seed const * seed,
+                                           uint8_t thresh,
+                                           uint8_t nshares,
+                                           void(*randgen)(uint8_t *, size_t, void *)) {
+    uint8_t group_threshold = 1;
+    uint8_t group_len = 1;
+    sskr_group_descriptor group = { thresh, nshares };
+    sskr_group_descriptor groups[] = { group };
+
+    size_t buff_size = 1024;
+    uint8_t buff[buff_size];
+
+    size_t bytes_in_each_share;
+
+    size_t share_len = Seed::SIZE + METADATA_LENGTH_BYTES;
+    int share_count = sskr_count_shards(group_threshold, groups, group_len);
+
+    buff_size = share_len * share_count;
+
+    int gen_share_count = sskr_generate(group_threshold,
+                             groups,
+                             group_len,
+                             seed->data,
+                             Seed::SIZE,
+                             &bytes_in_each_share,
+                             buff,
+                             buff_size,
+                             NULL,
+                             randgen);
+
+    // currently we support only 29 words per share
+    serial_assert(bytes_in_each_share == BYTES_PER_SHARE);
+    serial_assert(gen_share_count == (int)share_count);
+    serial_assert(bytes_in_each_share == share_len);
+
+
+    String strings[MAX_SHARES];
+    String ur_strings[MAX_SHARES];
+    uint8_t shards_byte[MAX_SHARES][buff_size];
+    for (int i = 0; i < share_count; i++) {
+        uint8_t* bytes = buff + (i * bytes_in_each_share);
+        memcpy(shards_byte[i], bytes, bytes_in_each_share);
+
+        CborDynamicOutput output;
+        CborWriter writer(output);
+
+        writer.writeTag(309);
+        writer.writeBytes(shards_byte[i], bytes_in_each_share);
+
+        // Encode cbor payload as bytewords
+        char *payload_bytewords = bytewords_encode(bw_standard, output.getData(), output.getSize());
+        if(payload_bytewords == NULL) {
+            Serial.println("ur_encode bytewords failed");
+            return NULL;
+        }
+        else {
+            Serial.println(payload_bytewords);
+            strings[i] = String(payload_bytewords);
+        }
+
+        // and encode also as UR
+        String ur;
+        (void)ur_encode("crypto-sskr", output.getData(), output.getSize(), ur);
+        ur_strings[i] = ur;
+    }
+
+    SSKRShareSeq * sskr = new SSKRShareSeq();
+    sskr->nshares = nshares;
+    sskr->shares_len = thresh;
+    sskr->bytes_in_each_share = bytes_in_each_share;
+    sskr->shares_len = share_count;
+    for (int i=0; i<share_count; i++) {
+        sskr->shares_bytewords[i] = strings[i];  // bytewords format
+        sskr->shares_ur[i] = ur_strings[i];      // ur format
+        sskr->set_share(i, shards_byte[i], bytes_in_each_share); // byte format
+    }
+
+    return sskr;
+}
+
+size_t SSKRShareSeq::add_share(uint8_t const * share) {
+    serial_assert(nshares < MAX_SHARES);
+    size_t sharesz = sizeof(uint8_t) * BYTES_PER_SHARE;
+    shares[nshares] = (uint8_t *) malloc(sharesz);
+    memcpy(shares[nshares], share, sharesz);
+    return nshares++;
+}
+
+String SSKRShareSeq::get_share_word(int sharendx, int wndx) {
+    return get_word_from_sentence(shares_bytewords[sharendx], ' ', wndx);
+}
+
+uint8_t const * SSKRShareSeq::get_share(size_t ndx) const {
+    serial_assert(ndx < nshares);
+    return shares[ndx];
+}
+
+void SSKRShareSeq::set_share(size_t ndx, uint8_t const * share, size_t len) {
+    Serial.println("** **");
+    Serial.println(ndx); Serial.println(nshares);
+    serial_assert(ndx < nshares);
+    if (shares[ndx])
+        free(shares[ndx]);
+    size_t sharesz = sizeof(uint8_t) * len;
+    shares[ndx] = (uint8_t *) malloc(sharesz);
+    memcpy(shares[ndx], share, sharesz);
+}
+
+String SSKRShareSeq::get_share_strings(size_t ndx) const {
+    serial_assert(ndx < nshares);
+    return shares_bytewords[ndx];
+}
+
+Seed * SSKRShareSeq::restore_seed() const {
+    uint8_t seed_data[Seed::SIZE];
+
+    Serial.println("restore seed");
+    Serial.println(bytes_in_each_share);
+    Serial.println(nshares);
+
+    last_rv = sskr_combine(const_cast<const uint8_t **>(shares),
+                             bytes_in_each_share,
+                             nshares,
+                             seed_data,
+                             sizeof(seed_data));
+    Serial.println(last_rv);
+    return last_rv < 0 ? NULL : new Seed(seed_data, sizeof(seed_data));
+}
+
+class CborListen : public CborListener {
+  public:
+    void OnInteger(int32_t value){ };
+    void OnBytes(unsigned char *data, unsigned int size) {Serial.println("bytes"); memcpy(bytes, data, size); len = size;};
+    void OnString(String &str) {};
+    void OnArray(unsigned int size) {};
+    void OnMap(unsigned int size) {};
+    void OnTag(uint32_t tag) { tag_ = tag; };
+    void OnSpecial(uint32_t code) {Serial.println("tag");};
+    void OnError(const char *error) {Serial.println("error");};
+
+    // we are gonna collect the tag and bytes
+    uint32_t tag_;
+    uint8_t bytes[200];
+    size_t len;
+};
+
+bool SSKRShareSeq::get_share_from_ur(String bytewords, size_t sskr_shard_indx) {
+    uint8_t* decoded = NULL;
+    size_t decoded_len;
+
+    bool ret = bytewords_decode(bw_standard, bytewords.c_str(), &decoded, &decoded_len);
+    if (ret == false) {
+        if (decoded)
+            free(decoded);
+        return ret;
+    }
+
+    CborInput input(decoded, decoded_len);
+    CborReader reader(input);
+    CborListen listener;
+    reader.SetListener(listener);
+    reader.Run();
+
+    // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md
+    if (listener.tag_ != 309)
+        return false;
+
+    free(decoded);
+
+    if (sskr_shard_indx >= nshares) {
+        // init a new share
+        uint8_t empty_share[SSKRShareSeq::BYTES_PER_SHARE] = {0};
+        add_share(empty_share);
+    }
+
+    set_share(sskr_shard_indx, listener.bytes, listener.len);
+    bytes_in_each_share = listener.len;
+
+    return true;
+}
+
+void SSKRShareSeq::del_share(size_t ndx) {
+    serial_assert(ndx < nshares);
+    if (shares[ndx])
+        free(shares[ndx]);
+    // Compact any created gap.
+    for (size_t ii = ndx; ii < nshares-1; ++ii)
+        shares[ii] = shares[ii+1];
+    nshares -= 1;
+}
+
 BIP39Seq * BIP39Seq::from_words(uint16_t * words) {
     BIP39Seq * retval = new BIP39Seq();
     for (size_t ii = 0; ii < WORD_COUNT; ++ii)
         retval->set_word(ii, words[ii]);
+
+    // this function takes a couple of seconds!
+    retval->calc_mnemonic_seed();
+
     return retval;
 }
 
@@ -60,6 +258,9 @@ BIP39Seq::BIP39Seq(Seed const * seed) {
     ctx = bip39_new_context();
     bip39_set_byte_count(ctx, Seed::SIZE);
     bip39_set_payload(ctx, Seed::SIZE, seed->data);
+
+    // this function takes a couple of seconds!
+    calc_mnemonic_seed();
 }
 
 BIP39Seq::~BIP39Seq() {
@@ -87,128 +288,70 @@ String BIP39Seq::get_string(size_t ndx) {
     return String(mnemonic);
 }
 
+String BIP39Seq::get_mnemonic_as_string() {
+    String mnemonic;
+    for (size_t i=0; i< WORD_COUNT; i++) {
+        mnemonic += get_string(i);
+        if (i != WORD_COUNT - 1)
+            mnemonic += " ";
+    }
+    return mnemonic;
+}
+
+bool BIP39Seq::calc_mnemonic_seed() {
+
+    String mnemonic_str = get_mnemonic_as_string();
+    size_t written;
+
+    // TODO: password currently NULL
+    int ret = bip39_mnemonic_to_seed(mnemonic_str.c_str(), NULL, mnemonic_seed, sizeof(mnemonic_seed), &written);
+    if (ret != WALLY_OK)
+        return false;
+    return true;
+}
+
 Seed * BIP39Seq::restore_seed() const {
     return bip39_verify_checksum(ctx)
         ? new Seed(bip39_get_bytes(ctx), Seed::SIZE)
         : NULL;
 }
 
-bool SLIP39ShareSeq::verify_share_checksum(uint16_t const * share) {
-    return rs1024_verify_checksum(share, WORDS_PER_SHARE);
-}
+int bip39_mnemonic_to_seed(const char *mnemonic, const char *passphrase,
+                            unsigned char *bytes_out, size_t len,
+                            size_t *written)
+{
+    const uint32_t bip9_cost = 2048u;
+    const char *prefix = "mnemonic";
+    const size_t prefix_len = strlen(prefix);
+    const size_t passphrase_len = passphrase ? strlen(passphrase) : 0;
+    const size_t salt_len = prefix_len + passphrase_len;
+    unsigned char *salt;
+    int ret;
 
-SLIP39ShareSeq * SLIP39ShareSeq::from_seed(Seed const * seed,
-                                           uint8_t thresh,
-                                           uint8_t nshares,
-                                           void(*randgen)(uint8_t *, size_t)) {
-    const char * password = "";
-    uint8_t group_threshold = 1;
-    uint8_t group_count = 1;
-    group_descriptor group = { thresh, nshares, NULL };
-    group_descriptor groups[] = { group };
+    if (written)
+        *written = 0;
 
-    uint8_t iteration_exponent = 0;
+    if (!mnemonic || !bytes_out || len != BIP39_SEED_LEN_512)
+        return WALLY_EINVAL;
 
-    uint32_t words_in_each_share = 0;
-    size_t shares_buffer_size = 1024;
-    uint16_t shares_buffer[shares_buffer_size];
+    salt = (unsigned char *)malloc(salt_len);
+    if (!salt)
+        return WALLY_ENOMEM;
 
-    int rv = slip39_generate(group_threshold,
-                             groups,
-                             group_count,
-                             seed->data,
-                             Seed::SIZE,
-                             password,
-                             iteration_exponent,
-                             &words_in_each_share,
-                             shares_buffer,
-                             shares_buffer_size,
-                             randgen);
-    serial_assert(rv == (int)nshares);
-    serial_assert(words_in_each_share == WORDS_PER_SHARE);
+    memcpy(salt, prefix, prefix_len);
+    if (passphrase_len)
+        memcpy(salt + prefix_len, passphrase, passphrase_len);
 
-    SLIP39ShareSeq * slip39 = new SLIP39ShareSeq();
-    for (size_t ii = 0; ii < nshares; ++ii)
-        slip39->add_share(shares_buffer + (ii * WORDS_PER_SHARE));
-    return slip39;
-}
+    ret = wally_pbkdf2_hmac_sha512((unsigned char *)mnemonic, strlen(mnemonic),
+                                   salt, salt_len, 0,
+                                   bip9_cost, bytes_out, len);
 
-char const * SLIP39ShareSeq::error_msg(int errval) {
-    static char buffer[1024];
-    switch (errval) {
-        // max message size 18 chars                |----------------|
-    case ERROR_INVALID_SHARD_SET:			return "Invalid shard set";
-    case ERROR_DUPLICATE_MEMBER_INDEX:		return "Duplicate shard";
-    case ERROR_NOT_ENOUGH_MEMBER_SHARDS:	return "Not enough shards";
-    default:
-        snprintf(buffer, sizeof(buffer),           "unknown err %d", errval);
-        return buffer;
-        // max message size 18 chars                |----------------|
-    }
-}
+    if (!ret && written)
+        *written = BIP39_SEED_LEN_512; /* Succeeded */
 
-SLIP39ShareSeq::SLIP39ShareSeq() {
-    nshares = 0;
-    memset(shares, 0x00, sizeof(shares));
-}
+    //clear_and_free(salt, salt_len);
+    memset(salt, 0, salt_len);
+    free(salt);
 
-SLIP39ShareSeq::~SLIP39ShareSeq() {
-    for (size_t ii = 0; ii < nshares; ++ii)
-        free(shares[ii]);
-}
-
-size_t SLIP39ShareSeq::add_share(uint16_t const * share) {
-    serial_assert(nshares < MAX_SHARES);
-    size_t sharesz = sizeof(uint16_t) * WORDS_PER_SHARE;
-    shares[nshares] = (uint16_t *) malloc(sharesz);
-    memcpy(shares[nshares], share, sharesz);
-    return nshares++;
-}
-
-uint16_t const * SLIP39ShareSeq::get_share(size_t ndx) const {
-    serial_assert(ndx < nshares);
-    return shares[ndx];
-}
-
-void SLIP39ShareSeq::set_share(size_t ndx, uint16_t const * share) {
-    serial_assert(ndx < nshares);
-    if (shares[ndx])
-        free(shares[ndx]);
-    size_t sharesz = sizeof(uint16_t) * WORDS_PER_SHARE;
-    shares[ndx] = (uint16_t *) malloc(sharesz);
-    memcpy(shares[ndx], share, sharesz);
-}
-
-void SLIP39ShareSeq::del_share(size_t ndx) {
-    serial_assert(ndx < nshares);
-    if (shares[ndx])
-        free(shares[ndx]);
-    // Compact any created gap.
-    for (size_t ii = ndx; ii < nshares-1; ++ii)
-        shares[ii] = shares[ii+1];
-    nshares -= 1;
-}
-
-char * SLIP39ShareSeq::get_share_strings(size_t ndx) const {
-    serial_assert(ndx < nshares);
-    return slip39_strings_for_words(shares[ndx], WORDS_PER_SHARE);
-}
-
-char const * SLIP39ShareSeq::get_share_word(size_t sndx, size_t wndx) const {
-    serial_assert(sndx < nshares);
-    serial_assert(wndx < WORDS_PER_SHARE);
-    return slip39_string_for_word(shares[sndx][wndx]);
-}
-
-Seed * SLIP39ShareSeq::restore_seed() const {
-    uint8_t seed_data[Seed::SIZE];
-    const char * password = "";
-    last_rv = slip39_combine(const_cast<const uint16_t **>(shares),
-                             WORDS_PER_SHARE,
-                             nshares,
-                             password,
-                             NULL,
-                             seed_data,
-                             sizeof(seed_data));
-    return last_rv < 0 ? NULL : new Seed(seed_data, sizeof(seed_data));
+    return ret;
 }

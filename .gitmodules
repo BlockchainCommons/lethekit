@@ -4,9 +4,6 @@
 [submodule "deps/bc-shamir"]
 	path = deps/bc-shamir
 	url = git@github.com:BlockchainCommons/bc-shamir.git
-[submodule "deps/bc-slip39"]
-	path = deps/bc-slip39
-	url = git@github.com:BlockchainCommons/bc-slip39.git
 [submodule "deps/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-"]
 	path = deps/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
 	url = git@github.com:SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-.git
@@ -16,3 +13,21 @@
 [submodule "deps/GxEPD2"]
 	path = deps/GxEPD2
 	url = git@github.com:BlockchainCommons/GxEPD2.git
+[submodule "deps/libwally-core"]
+	path = deps/libwally-core
+	url = git@github.com:ElementsProject/libwally-core.git
+[submodule "deps/secp256k1-embedded"]
+	path = deps/secp256k1-embedded
+	url = git@github.com:BlockchainCommons/secp256k1-embedded.git
+[submodule "deps/bc-bytewords"]
+	path = deps/bc-bytewords
+	url = git@github.com:BlockchainCommons/bc-bytewords.git
+[submodule "deps/bc-sskr"]
+	path = deps/bc-sskr
+	url = git@github.com:BlockchainCommons/bc-sskr.git
+[submodule "deps/Library-Arduino-Cbor"]
+	path = deps/Library-Arduino-Cbor
+	url = git@github.com:jjtara/Library-Arduino-Cbor.git
+[submodule "deps/ArduinoSTL"]
+	path = deps/ArduinoSTL
+	url = git@github.com:mike-matera/ArduinoSTL.git

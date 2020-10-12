@@ -30,9 +30,9 @@ Launch the Arduino IDE in the `seedtool` subdirectory:
     arduino ./
     
 Open `Tools` -> `Manage Libraries...`, install the following:
-* `GxEPD2`
 * `Adafruit GFX Library`
 * `Keypad`
+* `QRCode`
 
 ### Build and Upload *seedtool*
 

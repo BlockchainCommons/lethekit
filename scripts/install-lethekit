@@ -46,15 +46,40 @@ lkroot=${args[0]}
 aroot=${args[1]}
 libpath="${aroot}/libraries"
 
+# We need python to create libwally for arduino
+if ! python --version -v COMMAND &> /dev/null
+then
+    echo "Please, install python2 or python3."
+    exit
+fi
+
+# Create arduino compatible libwally library, i.e. libwally-embedded
+pushd deps
+pwd
+rm -rf libwally-embedded
+mkdir -p libwally-embedded
+cp -R libwally-core libwally-embedded
+pushd libwally-embedded
+python ../../scripts/libwally_build.py
+popd
+popd
+
+
 # First, check if GxEPD2 is already installed (as a directory), warn
 # and stop in this case.
 gxepd2_path="${aroot}/libraries/GxEPD2"
 [ -d ${gxepd2_path} ] && ! [ -L ${gxepd2_path} ] && echo "GxEPD2 already installed in ${libpath}. Please remove it; we need to replace with SW SPI enabled version." && exit 1
 
 declare -a libs=(
+    ArduinoSTL
+    bc-ur-arduino
+    Library-Arduino-Cbor
+    secp256k1-embedded
+    libwally-embedded
+    bc-bytewords
     bc-crypto-base
     bc-shamir
-    bc-slip39
+    bc-sskr
     bc-bip39
     TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-
     GxEPD2

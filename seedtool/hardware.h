@@ -14,6 +14,7 @@ void hw_green_led(int value);
 
 extern "C" {
 void hw_random_buffer(uint8_t *buf, size_t len);
+void random_buffer(uint8_t *buf, size_t len, void * p = NULL);
 }
 
 #endif // HARDWARE_H

@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
+
 void serial_printf(const char *format, ...);
 
 #ifdef __cplusplus
@@ -21,5 +23,22 @@ void serial_printf(const char *format, ...);
             abort();                                                    \
         }                                                               \
     } while (false)
+
+void print_hex(uint8_t *data, size_t len);
+bool compare_bytes_with_hex(uint8_t *data, size_t len, const char * hex);
+String get_word_from_sentence(String data, char separator, int index);
+
+struct Point {
+  int x;
+  int y;
+};
+
+enum format {
+  qr_ur,
+  ur,
+  text,
+  qr_text
+};
+
 
 #endif // _UTIL_H
