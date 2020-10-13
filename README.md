@@ -16,19 +16,17 @@ The following files contain everything you need to set up your *LetheKit* hardwa
 * The [Lethekit Installation Instructions](doc/installation.md) show how to install LetheKit in your Arduino development environment.
 * The [Seedtool Installation Instructions](seedtool/doc/build.md) show to install Seedtool on your *LetheKit* using the Arduino IDE.
 * The [Seedtool Application Instuctions](seedtool/README.md) describe how to generate and recover
-[BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD wallet master seeds in [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and [SLIP-39](https://github.com/satoshilabs/slips/blob/master/slip-0039.md) formats.
+[BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD wallet master seeds in [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and [SSKR](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md) formats.
 
 ## Status - Late Alpha
 
 *LetheKit* is currently under active development and in the late alpha testing phase. It should not be used for production tasks until it has had further testing and auditing.
 
-### Known Issues
-
-#### ⚠️ Warning: Lack of Round-trip Compatibility between BIP-39 and SLIP-39
+### ⚠️ Warning: Lack of Round-trip Compatibility between BIP-39 and SLIP-39
 
 At first glance, BIP-39 and SLIP-39 both appear to be means of converting a binary seed to a set of backup words and back. You might assume you could simply convert a BIP-39 backup to a binary seed, from that binary seed to SLIP-39, and then use the SLIP-39 backup to recover the same wallet as the original BIP-39 backup, but this is **NOT** the case. This is because the SLIP-39 algorithm that SatoshiLabs uses in their Trezor wallet does not derive the master secret in the same way as their BIP-39 algorithm does.
 
-Currently Blockchain Commons is investigating an alternative to SLIP-39 that allows round-trips with BIP-39. We want to ensure that the same seed will result in the same derived keys using either BIP-39 or our alternative approach.
+Currently Blockchain Commons and LetheKit implement an alternative to SLIP-39, called [Shamir Secret Key Recovery](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md) (**SSKR**), that allows round-trips with BIP-39. We want to ensure that the same seed will result in the same derived keys using either BIP-39 or our alternative approach.
 
 As SLIP-39 is not round-trip compatible with BIP-39, and SLIP-39 is under the control of SatoshiLabs and does not appear to be a fully community-controlled standard, Blockchain Commons is no longer endorsing SLIP-39.
 
@@ -48,7 +46,8 @@ This table below also establishes provenance (repository of origin, permalink, a
 | bip39 | [https://github.com/ksedgwic/bip39](https://github.com/ksedgwic/bip39) | 9b8fa3c7d145c39558c2534f6cf40879477d93a1 | 2018 Chris Howe | [MIT License](https://github.com/ksedgwic/bip39/blob/master/LICENSE) |
 | TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4- | [https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-](https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-) | 17d5e36cd922ce7df8047d9c89633dca9b5ae122 | 2019 Ron Sutton | [MIT License](https://github.com/SapientHetero/TRNG-for-ATSAMD51J19A-Adafruit-Metro-M4-/blob/master/LICENSE.txt) |
 | libwally-core | [https://github.com/ElementsProject/libwally-core](https://github.com/ElementsProject/libwally-core) | e0d0634aea716d813744326ea6c7590eb9fc381c | Jon Griffiths (Blockstream) 2016 | [BSD/MIT license](https://github.com/ElementsProject/libwally-core/blob/master/LICENSE) |
-| Library-arduino-cbor | [https://github.com/jjtara/Library-Arduino-Cbor](https://github.com/jjtara/Library-Arduino-Cbor) | 996bf4a853513ee1fb94286691209a067c915bfb | jjtara 20014 | [Apache license](https://github.com/jjtara/Library-Arduino-Cbor/blob/master/LICENSE) |
+| Library-arduino-cbor | [https://github.com/jjtara/Library-Arduino-Cbor](https://github.com/jjtara/Library-Arduino-Cbor) | 996bf4a853513ee1fb94286691209a067c915bfb | jjtara 2014 | [Apache license](https://github.com/jjtara/Library-Arduino-Cbor/blob/master/LICENSE) |
+| ArduinoSTL | [https://github.com/mike-matera/ArduinoSTL](https://github.com/mike-matera/ArduinoSTL) | 7411816e2d8f49d96559dbaa47e327816dde860c | Mike Matera 1999 | [GNU LGPL](https://github.com/mike-matera/ArduinoSTL/blob/master/LICENSE) |
 
 ### Dependencies
 
@@ -60,7 +59,8 @@ The following internal Blockchain Commons projects are leveraged by *LetheKit*:
 
 - [BlockchainCommons/bc-crypto-base](https://github.com/blockchaincommons/bc-crypto-base) — Well-Reviewed and Audited Cryptographic Functions for Use in Blockchain Commons Software Projects
 - [BlockchainCommons/bc-shamir](https://github.com/BlockchainCommons/bc-shamir) - C Implementation of Shamir Secret Sharing for use in Blockchain Commons Software Projects
-- [BlockchainCommons/bc-slip39](https://github.com/BlockchainCommons/bc-slip39) - C Implementation of SLIP-39 Shamir Secret Sharing standard.
+- [BlockchainCommons/bc-bytewords](https://github.com/BlockchainCommons/bc-bytewords) - C library for encoding and decoding Bytewords.
+- [BlockchainCommons/bc-sskr](https://github.com/BlockchainCommons/bc-sskr) - Implementation of Shamir Secret Key Recovery (SSKR)
 
 ### Derived from ...
 
@@ -107,6 +107,7 @@ The following people directly contributed to this repository. You can add your n
 | ----------------- | ------------------- | ------------------------------------------------- | ------------------------------------- | -------------------------------------------------- |
 | Christopher Allen | Principal Architect | [@ChristopherA](https://github.com/ChristopherA) | \<ChristopherA@LifeWithAlacrity.com\> | FDFE 14A5 4ECB 30FC 5D22  74EF F8D3 6C91 3574 05ED |
 | Ken Sedgwick      | Project Lead        | [@ksedgwic](https://github.com/ksedgwic)          | \<ken@bonsai.com\>                  | 4695 E5B8 F781 BF85 4326 9639 BBFC E515 8602 5550  |
+| Gorazd Kovacic     | Project Maintainer  | [@gorazdko](https://github.com/gorazdko)  | \<gorazdko@gmail.com\>  | 41F0 EA16 99A7 4C1E 2FA4 1B53 8CF9 6BC3 FF9D BBCE  |
 
 ## Responsible Disclosure
 

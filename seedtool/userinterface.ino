@@ -428,7 +428,7 @@ void seedless_menu() {
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         // TODO: only for demonstration purposes, to be deleted
-        g_display->println("0 - UR Demo");
+        //g_display->println("0 - UR Demo");
 
         yy = 190; // Absolute, stuck to bottom
         g_display->setFont(&FreeSansBold9pt7b);
