@@ -1,50 +1,3 @@
-# Warning!  There is a problem with LetheKit/seedtool BIP39/SLIP39 interoperability.
-
-### The following is being tracked as [Issue #38](https://github.com/BlockchainCommons/bc-lethekit/issues/38):
-
-#### What is the problem?
-
-The LetheKit seedtool application generates new wallets using dice
-entropy to create BIP39 and SLIP39 recovery mnemonics. The BIP39 and
-SLIP39 mnemonics represent valid wallets, but they are not the same
-wallet.
-
-This is a serious problem.  If both BIP39 and SLIP39 backups are
-created at the same time and funds are placed in the BIP39 wallet the
-SLIP39 backup will fail to recover the same wallet and the funds would
-be lost.
-
-#### Why is this the case?
-
-Andrew Kozlik explains it well in this [GitHub comment]
-(https://github.com/iancoleman/slip39/issues/1#issuecomment-563213494)
-
-#### How can matching BIP39 and SLIP39 backups be made?
-
-Andrew Kozlik explains (above) that in principle, SLIP39 shares which
-are 59 words long could match a BIP39 mnemonic.  In practice SLIP39
-shares of this length are non-standard and unlikely to be supported by
-any devices or applications.  The extreme length is also significantly
-painful to record and enter.
-
-#### Impact on LetheKit/seedtool:
-
-The desired feature of (standard) matching BIP39 and SLIP39 backups is
-not possible.
-
-The conversion of a BIP39 backup into a SLIP39 backup is not possible.
-
-The conversion of a SLIP39 backup into a BIP39 backup is not possible.
-
-LetheKit/seedtool can generate valid BIP39 and SLIP39 wallets but
-should not allow generation of both at the same time or suggest it
-can convert between the two.
-
-LetheKit can restore SLIP39 backups, but a mechanism to export the
-master secret (likely via QR code) would need to be added.
-
-## The original (invalid) directions follow:
-
 # Seedtool Application Instructions
 
 The *seedtool* utility allows you to generate and recover
@@ -52,8 +5,8 @@ The *seedtool* utility allows you to generate and recover
 HD wallet master seeds using
 [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
 and
-[SLIP-39](https://github.com/satoshilabs/slips/blob/master/slip-0039.md)
-formats.
+[SSKR](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md)
+formats. In addition, it supports viewing XPUB keys and addresses in different formats.
 
 ## Compile and Upload Instruction
 
@@ -67,7 +20,7 @@ There are three ways to insert a key into the *seedtool*:
 
 ### Key Generation with Dice
 
-By rolling dice and typing the values, you can gather enough auditable entropy to generate a secure master seed.  Rolling 50 dice gathers
+By rolling dice and typing the values, you can gather enough auditable entropy to generate a secure master seed. Rolling 50 dice gathers
 roughly 128 bits of entropy.
 
 ![Generate Seed](doc/images/generate-seed.png)
@@ -75,23 +28,24 @@ roughly 128 bits of entropy.
 ### BIP-39 Key Recovery
 
 You can insert a key into the *seedtool* by entering its BIP-39
-recovery mnemonic passphrase.  From there you can generate SLIP-39
+recovery mnemonic passphrase.  From there you can generate SSKR
 shares.
 
 ![BIP-39 Restore](doc/images/bip39-restore.png)
 
-### SLIP-39 Key Recovery
+### SSKR Recovery
 
-If you possess enough shares of a SLIP-39 set, you can recover the
+If you possess enough shares of a SSKR set, you can recover the
 master seed with *seedtool*.  From there you can generate the BIP-39
 mnemonic passphrase which will allow you to use it with most wallets.
 
-![SLIP-39 Recovery Menu](doc/images/slip39-restore-menu.png) ![SLIP-39 Share Entry](doc/images/slip39-share-restore.png)
+![SSKR Recovery Menu](doc/images/sskr-restore-menu.png) ![SSKR Share Entry](doc/images/sskr-share-restore.png)
 
 ## Functions with a Seed
 
 Once you have a seed through any of the prior flows, you can create
-BIP-39 and SLIP-39 mnemonic passphrases.
+BIP-39 and SSKR mnemonic passphrases. In addition you can view extended public
+keys, wallet addresses etc. 
 
 ![Seed Present Menu](doc/images/seed-present.png)
 
@@ -102,12 +56,48 @@ offline fashion (e.g., hammering into metal).
 
 ![BIP-39 View](doc/images/bip39-view.png)
 
-### SLIP-39 Generation
+### SSKR Generation
 
-SLIP-39 requires some configuration choices to determine total number of shares
+SSKR requires some configuration choices to determine total number of shares
 and the required number of shares present to recover.
 
-![SLIP-39 Generation Config](doc/images/config-slip39.png) ![SLIP-39 Share View](doc/images/slip39-share-view.png)
+![SSKR Generation Config](doc/images/config-sskr.png) ![SSKR Share View](doc/images/sskr-share-view.png)
+
+You can choose among different formats:  
+![SSKR Share Format](doc/images/sskr-share-format.png)
+![SSKR Share View UR](doc/images/sskr-share-view-ur.png) ![SSKR Share View QRUR](doc/images/sskr-share-view-qrur.png)
+
+### Displaying XPUBs
+
+Extended public keys (XPUBs) can be shown in different formats (base58, UR, QR) with different
+options (slip132, with derivation path). Derivation path can be manually set.
+
+![XPUB BASE58](doc/images/xpub_base58.png)
+![XPUB OPTIONS](doc/images/xpub_options.png)
+![XPUB UR](doc/images/xpub_ur.png)
+
+![XPUB OPTIONS](doc/images/xpub_qr_text.png)
+![XPUB OPTIONS](doc/images/xpub_qrur.png)
+![XPUB DERIVATION](doc/images/xpub_derivation.png)
+
+### Displaying Seed
+
+You can choose to export seed in UR or QR-UR format.
+
+![seed ur](doc/images/seed_ur.png)
+![seed qrur](doc/images/seed_qrur.png)
+
+
+### Displaying Addresses
+
+![ADDR TEXT](doc/images/address_bech32.png) ![ADDR ur](doc/images/address_ur.png)
+![ADDR qr](doc/images/address_qr.png) ![ADDR qrur](doc/images/address_qrur.png)
+![ADDR format](doc/images/address_format.png)
+
+A wallet can be exported in the 4 different formats (text, QR, UR and QR-UR):
+
+![wallet export](doc/images/wallet_export.png) ![wallet export text](doc/images/wallet_export_text.png)
+![wallet export text](doc/images/wallet_export_qr.png) ![wallet export text](doc/images/wallet_export_qrur.png)
 
 ## Common Workflows
 
@@ -124,20 +114,20 @@ To execute this flow with *seedtool*:
 1. Generate a new master seed using 50+ die rolls.
 2. Record your master BIP-39 backup in a secure manner (hammer into metal).
    This BIP-39 backup may be restored into most other wallets for common use.
-3. Optionally create a SLIP-39 sharded backup set which can serve as
+3. Optionally create a SSKR sharded backup set which can serve as
    long-term cold storage.
    
-### Generate a SLIP-39 Backup Set for an Existing Wallet
+### Generate a SSKR Backup Set for an Existing Wallet
 
 If you've already got a wallet in use, and have the BIP-39 backup for
-it, you can generate a SLIP-39 backup set as well:
+it, you can generate a SSKR backup set as well:
 1. Restore your seed in *seedtool* using your BIP-39 backup.
-2. Create a SLIP-39 sharded backup.
+2. Create a SSKR sharded backup.
 
-### Recover a Master Seed from SLIP-39 Backup Shards
+### Recover a Master Seed from SSKR Backup Shards
 
 If you need to recover your master seed and have enough shards from a
-SLIP-39 backup set:
-1. Recover the master seed from the SLIP-39 shards.
+SSKR backup set:
+1. Recover the master seed from the SSKR shards.
 2. Create a BIP-39 mnemonic which may then be directly restored into
    most wallets for use.
