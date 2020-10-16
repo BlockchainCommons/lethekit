@@ -571,7 +571,12 @@ void generate_seed() {
                 g_master_seed = Seed::from_rolls(g_rolls);
             }
             g_master_seed->log();
-            serial_assert(!g_bip39);
+
+            // This will take a few seconds; clear the screen
+            // immediately to let the user know something is
+            // happening ..
+            full_window_clear();
+
             if (g_bip39)
                 delete g_bip39;
             g_bip39 = new BIP39Seq(g_master_seed);
