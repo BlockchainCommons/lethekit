@@ -107,8 +107,18 @@ bool test_seed_generate() {
     Seed * seed0 = new Seed(ref_secret, sizeof(ref_secret));
     if (*seed != *seed0)
         return test_failed("test_seed_generate failed: seed mismatch\n");
+
+    Seed * seed_mixed = Seed::from_rolls("123", (uint8_t *)"456", 3);
+    if (*seed_mixed != *seed0)
+        return test_failed("test_seed_generate failed: seed mismatch when mixing entropy\n");
+
+    seed_mixed = Seed::from_rolls("123", (uint8_t *)"4567", 4);
+    if (*seed_mixed == *seed0)
+        return test_failed("test_seed_generate failed: seed mismatch when mixing entropy\n");
+
     delete seed0;
     delete seed;
+    delete seed_mixed;
     serial_printf("test_seed_generate finished\n");
     return true;
 }

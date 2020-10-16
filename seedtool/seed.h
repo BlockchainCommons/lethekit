@@ -16,7 +16,7 @@ class Seed {
 public:
     static size_t const SIZE = 16;
 
-    static Seed * from_rolls(String const & rolls);
+    static Seed * from_rolls(String const & rolls, uint8_t *trng_entropy = NULL, uint8_t trng_entropy_size = 0);
 
     Seed(uint8_t const * data, size_t len);
 

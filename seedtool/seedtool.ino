@@ -18,7 +18,7 @@ void setup() {
     //
     // delay(5000);
 
-    ui_reset_into_state(SEEDLESS_MENU);
+    ui_reset_into_state(SELF_TEST);
 
     Serial.println("seedtool starting");
 }
