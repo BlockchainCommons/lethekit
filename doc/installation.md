@@ -1,45 +1,48 @@
 ## LetheKit Installation Instructions
 
 These instructions describe how to install LetheKit into your local
-development environment.  We presume you already have the Arduino IDE
-installed, which will allow you upload software to your **SAMD51 Thing Plus**, contained in your LetheKit hardware.
+development environment.
 
 LetheKit provides a collection of security modules (libraries) that
-work well together.  You install them into your local Arduinio
+work well together. You install them into your local Arduino
 development environment and then build the provided sample applications or
 develop your own applications before uploading them to your SAMD51.
 
-### Install the Arduino IDE
 
-After installing the Arduino IDE, run it once and let it create the
-default sketchbook `~/Arduino`.
+### Installing Arduino IDE
 
-Follow the directions at
-[SAMD51 Thing Plus Hookup Guide](https://learn.sparkfun.com/tutorials/samd51-thing-plus-hookup-guide/setting-up-the-arduino-ide) to setup the Arduino IDE for
-working with your SAMD51.
+If you don't already have the *Arduino IDE* installed (recommended v1.8.13) in your local development environment, here are the instructions:
 
-### Install LetheKit on your system
+- For macOS we recommend using `$ brew cask install arduino` which will install the Arduino.app in your `/Applications/` folder.
+- For Linux users we recommend installing with:
+```bash
+$ wget https://downloads.arduino.cc/arduino-1.8.13-linux64.tar.xz
+$ tar -xvf arduino-1.8.13-linux64.tar.xz
+$ cd arduino-1.8.13
+$ ./install.sh # sudo ./install.sh
+```
 
-The LetheKit software can be placed anywhere you like.  It does not
-need to be inside your Arduino sketchbook.  In these instructions
-we'll presume you want to install it in `~/src/bc-lethekit`
+### Installing Toolchain for SAMD51
 
-Clone the git repository, being sure to enable `--recurse-submodules`:
+This is an excerpt from [SAMD51 Thing Plus Hookup Guide](https://learn.sparkfun.com/tutorials/samd51-thing-plus-hookup-guide/setting-up-the-arduino-ide):
 
-    cd ~/src
-    git clone --recurse-submodules \
-        git@github.com:BlockchainCommons/bc-lethekit.git
-    cd bc-lethekit
-    export LK_ROOT=`pwd`
-    
-Install LetheKit into your Arduino sketchbook:
+- In the Arduino IDE, open **Preferences** (**Arduino** > **Preferences**), find the  **Additional Board Manager URLs** text box, and copy this  URL to it and click OK.
+  -  `https://raw.githubusercontent.com/sparkfun/Arduino_Boards/master/IDE_Board_Manager/package_sparkfun_index.json`
+- Now we need to install the correct Arduino SAMD Core. Navigate to your **Board Manager** (**Tools** > **Board**: > **Boards Manager...**), then find an entry for **Arduino SAMD Boards (32-bits ARM Cortex-M0+)**. It may help to enter `SAMD` into the search bar. Select that Arduino core and install the latest version.
+- Now we need to install the **SparkFun SAMD** Add-on. Enter `sparkfun samd` in the **Board Manager**'s search bar, which should show **SparkFun SAMD Boards**. Install it.
+- Now select from the **Tools** > **Board**: > list, choose **SparkFun SAMD51 Thing Plus**. Now when you look at the **Tools** menu you should see this board selected as default.
+- Connect the LetheKit to your computer and turn it on, and then navigate back up to the **Tool** > **Port** menu. The port menu should magically know which of your ports is the SAMD51 Thing Plus board.
 
-    # Adjust this, if neccessary for your own sketchbook location.
-    export ARDUINO_ROOT=~/Arduino
+### Installing LetheKit on your system
 
-    # Do the installation.
-    $LK_ROOT/scripts/install-lethekit $LK_ROOT $ARDUINO_ROOT
-    
+Clone the git repository anywhere you like and install LetheKit:
+
+```bash
+$ git clone --recursive https://github.com/BlockchainCommons/bc-lethekit
+$ cd bc-lethekit
+$ export LK_ROOT=`pwd` && export ARDUINO_ROOT=~/Arduino && $LK_ROOT/scripts/install-lethekit $LK_ROOT $ARDUINO_ROOT
+```
+
 The installation script creates symbolic links in
 `$ARDUINO_ROOT/Libraries` which point back to the appropriate
 dependencies in `$LK_ROOT/deps`.
@@ -48,9 +51,15 @@ dependencies in `$LK_ROOT/deps`.
 
 It's safe to re-run the installation at any time.
 
-If you move your LetheKit source tree, just run the installation
-script again from the new location (with the new value of `$LK_ROOT`).
+If you move your LetheKit source tree or pull new changes in from Github, just run the installation
+script again:
 
+```bash
+$ cd bc-lethekit
+$ export LK_ROOT=`pwd` && export ARDUINO_ROOT=~/Arduino && $LK_ROOT/scripts/install-lethekit $LK_ROOT $ARDUINO_ROOT
+```
+
+<!-- TODO
 If you want to uninstall LetheKit use the installation script with
 the `--uninstall` option:
 
@@ -67,3 +76,4 @@ the install script after upgrading LetheKit:
     # After upgrading LetheKit
     # FIXME - implement this!
     $LK_ROOT/scripts/install-lethekit --upgrade $LK_ROOT $ARDUINO_ROOT
+-->
