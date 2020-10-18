@@ -40,11 +40,11 @@ Clone the git repository anywhere you like and install LetheKit:
 ```bash
 $ git clone --recursive https://github.com/BlockchainCommons/bc-lethekit
 $ cd bc-lethekit
-$ export LK_ROOT=`pwd` && export ARDUINO_ROOT=~/Arduino && $LK_ROOT/scripts/install-lethekit $LK_ROOT $ARDUINO_ROOT
+$ export LK_ROOT=`pwd` && $LK_ROOT/scripts/install-lethekit $LK_ROOT
 ```
 
 The installation script creates symbolic links in
-`$ARDUINO_ROOT/Libraries` which point back to the appropriate
+`Arduino/Libraries` which point back to the appropriate
 dependencies in `$LK_ROOT/deps`.
 
 ### Notes
@@ -56,7 +56,7 @@ script again:
 
 ```bash
 $ cd bc-lethekit
-$ export LK_ROOT=`pwd` && export ARDUINO_ROOT=~/Arduino && $LK_ROOT/scripts/install-lethekit $LK_ROOT $ARDUINO_ROOT
+$ export LK_ROOT=`pwd` && $LK_ROOT/scripts/install-lethekit $LK_ROOT
 ```
 
 <!-- TODO
