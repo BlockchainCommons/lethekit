@@ -1,51 +1,57 @@
 # Seedtool Installation Instructions
 
-### Install LetheKit in your Arduino Sketchbook
-
-If you haven't already, install LetheKit:
-
+This guide assumes you have successfully completed
 [LetheKit Installation Instructions](../../doc/installation.md)
 
-### Install gitrevision.h
+### Open project in Arduino IDE
 
-The `gitrevision.h` file is generated with git hooks and contains the
-latest version information, allowing that information to be built into the application and
-reported to the user.  It is not critical, but is very helpful when
-reporting bugs, requesting features etc.
+Launch the Arduino IDE in the `bc-lethekit/seedtool` directory:
 
-Enable the generation of the `gitrevision.h` file.  This only needs to
-be done once, but is safe to do anytime you like.
+```bash
+$ arduino ./
+```
+Alternatively, you can launch the Arduino IDE, click `File->Open`,
+locate `seedtool` directory and double click on the `seedtool.ino`.
 
-    # Must be run in the seedtool directory
-    ./enable-gitrevision-hooks.sh
-
-You may disable `gitrevision.h` generation with:
-
-    ./disable-gitrevision-hooks.sh
-
-### Add Libraries
-
-Launch the Arduino IDE in the `seedtool` subdirectory:
-
-    arduino ./
-    
-Open `Tools` -> `Manage Libraries...`, install the following:
-* `Adafruit GFX Library`
-* `Keypad`
-* `QRCode`
+*Note:* Make sure you have installed libraries required by LetheKit.
+Navigate to your Library Manager (**Tools** > **Manage Libraries…**)
+  * `Adafruit GFX Library`
+  * `Keypad`
+  * `QRCode`
 
 ### Build and Upload *seedtool*
 
-Launch the Arduino IDE in the `seedtool` subdirectory:
-
-    arduino ./
-
 Connect a LetheKit hardware device to an appropriate USB port.
 
-To upload code to the SAMD51 module you will need to manually enter
-bootloader mode. There are two approaches, the first involves opening
-the case and pressing the reset button twice in rapid succession.  It
-is also possible to enter bootloader mode by power cycling with the
+To upload code to the SAMD51 module you will need to [enter the
+bootloader mode](#entering-bootloader) and press the `Upload` button on the Arduino IDE. The *seedtool*
+application will be built and uploaded to your device.
+
+![](images/arduino-upload.png)
+
+You should see LetheKit refreshing its screen and starting selftest.
+
+*Note:* once you enter the bootloader mode it may take some moments for your system
+to recognize your device and port again. Uploading immediately may result in error.
+
+### Use *seedtool*
+
+See the [Seedtool Application Instructions](../README.md) for information on using the *seedtool*.
+
+### Entering Bootloader
+
+#### Approach 1
+
+Press the reset button twice in rapid succession. The blue LED
+will start glowing bright.
+
+![](https://cdn.sparkfun.com/assets/learn_tutorials/8/8/8/Dbl-Tap_Bootloader.gif)
+
+[Source](https://learn.sparkfun.com/tutorials/samd51-thing-plus-hookup-guide/setting-up-the-arduino-ide)
+
+#### Approach 2
+
+It is also possible to enter bootloader mode by power cycling with the
 external power switch.  Here are the steps for the external power
 switch method:
 
@@ -58,13 +64,24 @@ switch method:
    be on, even though it is plugged in and the switch is left in the
    "on" position.
 
-A description of using the internal reset button can be found at the
-[SAMD51 Thing Plus Hookup Guide](https://learn.sparkfun.com/tutorials/samd51-thing-plus-hookup-guide/setting-up-the-arduino-ide),
-search for "Don't Forget to Launch the Bootloader".
+### For Developers
 
-Press the "Upload" button on the Arduino IDE. The *seedtool*
-application will be built and uploaded to your device.
+#### Install gitrevision.h
 
-### Use *seedtool*
+The `gitrevision.h` file is generated with git hooks and contains the
+latest version information, allowing that information to be built into the application and
+reported to the user.  It is not critical, but is very helpful when
+reporting bugs, requesting features etc.
 
-See the [Seedtool Application Instructions](../README.md) for information on using the *seedtool*.
+Enable the generation of the `gitrevision.h` file.  This only needs to
+be done once, but is safe to do anytime you like.
+
+```bash
+# Must be run in the seedtool directory
+./enable-gitrevision-hooks.sh
+```
+
+You may disable `gitrevision.h` generation with:
+```bash
+$ ./disable-gitrevision-hooks.sh
+```
