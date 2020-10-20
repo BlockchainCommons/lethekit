@@ -2,12 +2,6 @@
 
 git submodule update --init --recursive
 
-if [ "$(uname)" == "Darwin" ]; then
-    aroot=~/Documents/Arduino
-elif [ "$(uname)" == "Linux" ]; then
-    aroot=~/Arduino
-fi
-
 # usage: install-lethkit <lethkit-root> <arduino-sketchbook>
 
 function usage {
@@ -44,6 +38,33 @@ if [ ${#args[@]} -ne 1 ]
 then
     usage_error "must be 1 argument"
 fi
+
+echo "Note: Arduino sketchbook location is set in Arduino IDE: click File->Preferences"
+
+if [ "$(uname)" == "Darwin" ]; then
+    aroot=~/Documents/Arduino
+elif [ "$(uname)" == "Linux" ]; then
+    aroot=~/Arduino
+fi
+
+while true
+do
+  # (1) prompt user, and read command line argument
+  read -p "Do you use default Arduino sketchbook location (${aroot})? [Y/n]" answer
+
+  # (2) handle the input we were given
+  case $answer in
+   [yY]* )
+           echo "Default path taken: ${aroot}"
+           break;;
+
+   [nN]* ) read -p "Enter Arduino sketchbook location: " aroot
+           echo "Custom path taken: ${aroot}"
+           break;;
+
+   * )     echo "Enter Y or N, please.";;
+  esac
+done
 
 lkroot=${args[0]}
 libpath="${aroot}/libraries"
