@@ -7,7 +7,7 @@ using namespace std;
 typedef std::vector<uint8_t> ByteVector;
 
 
-bool test_rng_1(void) {
+void test_rng_1(void) {
     auto rng = Xoshiro256("Wolf");
     vector<uint64_t> numbers;
     for(int i = 0; i < 100; i++) {
@@ -16,11 +16,11 @@ bool test_rng_1(void) {
     vector<uint64_t> expected_numbers = {42, 81, 85, 8, 82, 84, 76, 73, 70, 88, 2, 74, 40, 48, 77, 54, 88, 7, 5, 88, 37, 25, 82, 13, 69, 59, 30, 39, 11, 82, 19, 99, 45, 87, 30, 15, 32, 22, 89, 44, 92, 77, 29, 78, 4, 92, 44, 68, 92, 69, 1, 42, 89, 50, 37, 84, 63, 34, 32, 3, 17, 62, 40, 98, 82, 89, 24, 43, 85, 39, 15, 3, 99, 29, 20, 42, 27, 10, 85, 66, 50, 35, 69, 70, 70, 74, 30, 13, 72, 54, 11, 5, 70, 55, 91, 52, 10, 43, 43, 52};
 
     for(int i=0; i < expected_numbers.size(); i++) {
-        assert(expected_numbers.at(i) == numbers.at(i));
+        serial_assert(expected_numbers.at(i) == numbers.at(i));
     }
 }
 
-bool test_rng_2() {
+void test_rng_2() {
     auto checksum = bytes_to_int(crc32_bytes(string_to_bytes("Wolf")));
     auto rng = Xoshiro256(checksum);
     vector<uint64_t> numbers;
@@ -30,17 +30,17 @@ bool test_rng_2() {
     vector<uint64_t> expected_numbers = {88, 44, 94, 74, 0, 99, 7, 77, 68, 35, 47, 78, 19, 21, 50, 15, 42, 36, 91, 11, 85, 39, 64, 22, 57, 11, 25, 12, 1, 91, 17, 75, 29, 47, 88, 11, 68, 58, 27, 65, 21, 54, 47, 54, 73, 83, 23, 58, 75, 27, 26, 15, 60, 36, 30, 21, 55, 57, 77, 76, 75, 47, 53, 76, 9, 91, 14, 69, 3, 95, 11, 73, 20, 99, 68, 61, 3, 98, 36, 98, 56, 65, 14, 80, 74, 57, 63, 68, 51, 56, 24, 39, 53, 80, 57, 51, 81, 3, 1, 30};
     
     for(int i=0; i < expected_numbers.size(); i++) {
-        //assert(expected_numbers.at(i) == numbers.at(i));
+        //serial_assert(expected_numbers.at(i) == numbers.at(i));
         std::cout << (uint32_t)numbers.at(i) << ' ';
     }
 
     for(int i=0; i < expected_numbers.size(); i++) {
-        //assert(expected_numbers.at(i) == numbers.at(i));
+        //serial_assert(expected_numbers.at(i) == numbers.at(i));
         std::cout << (uint32_t)expected_numbers.at(i) << ' ';
     }
 }
 
-bool test_rng_3() {
+void test_rng_3() {
     auto rng = Xoshiro256("Wolf");
     vector<uint64_t> numbers;
     for(int i = 0; i < 100; i++) {
@@ -50,17 +50,17 @@ bool test_rng_3() {
     vector<uint64_t> expected_numbers = {6, 5, 8, 4, 10, 5, 7, 10, 4, 9, 10, 9, 7, 7, 1, 1, 2, 9, 9, 2, 6, 4, 5, 7, 8, 5, 4, 2, 3, 8, 7, 4, 5, 1, 10, 9, 3, 10, 2, 6, 8, 5, 7, 9, 3, 1, 5, 2, 7, 1, 4, 4, 4, 4, 9, 4, 5, 5, 6, 9, 5, 1, 2, 8, 3, 3, 2, 8, 4, 3, 2, 1, 10, 8, 9, 3, 10, 8, 5, 5, 6, 7, 10, 5, 8, 9, 4, 6, 4, 2, 10, 2, 1, 7, 9, 6, 7, 4, 2, 5};
     
     for(int i=0; i < expected_numbers.size(); i++) {
-        assert(expected_numbers.at(i) == numbers.at(i));
+        serial_assert(expected_numbers.at(i) == numbers.at(i));
     }
 
 }
 
-bool test_find_fragment_length() {
-    assert(FountainEncoder::find_nominal_fragment_length(12345, 1005, 1955) == 1764);
-    assert(FountainEncoder::find_nominal_fragment_length(12345, 1005, 30000) == 12345);
+void test_find_fragment_length() {
+    serial_assert(FountainEncoder::find_nominal_fragment_length(12345, 1005, 1955) == 1764);
+    serial_assert(FountainEncoder::find_nominal_fragment_length(12345, 1005, 30000) == 12345);
 }
 
-bool test_random_sampler() {
+void test_random_sampler() {
     vector<double> probs = { 1, 2, 4, 8 };
     auto sampler = RandomSampler(probs);
     auto rng = Xoshiro256("Wolf");
@@ -73,7 +73,7 @@ bool test_random_sampler() {
     vector<int> expected_samples = {3, 3, 3, 3, 3, 3, 3, 0, 2, 3, 3, 3, 3, 1, 2, 2, 1, 3, 3, 2, 3, 3, 1, 1, 2, 1, 1, 3, 1, 3, 1, 2, 0, 2, 1, 0, 3, 3, 3, 1, 3, 3, 3, 3, 1, 3, 2, 3, 2, 2, 3, 3, 3, 3, 2, 3, 3, 0, 3, 3, 3, 3, 1, 2, 3, 3, 2, 2, 2, 1, 2, 2, 1, 2, 3, 1, 3, 0, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 1, 3, 3, 2, 0, 2, 2, 3, 1, 1, 2, 3, 2, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 2, 3, 1, 2, 1, 1, 3, 1, 3, 2, 2, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 2, 3, 3, 1, 2, 3, 3, 1, 3, 2, 3, 3, 3, 2, 3, 1, 3, 0, 3, 2, 1, 1, 3, 1, 3, 2, 3, 3, 3, 3, 2, 0, 3, 3, 1, 3, 0, 2, 1, 3, 3, 1, 1, 3, 1, 2, 3, 3, 3, 0, 2, 3, 2, 0, 1, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 0, 2, 3, 3, 3, 3, 2, 1, 1, 1, 2, 1, 3, 3, 3, 2, 2, 3, 3, 1, 2, 3, 0, 3, 2, 3, 3, 3, 3, 0, 2, 2, 3, 2, 2, 3, 3, 3, 3, 1, 3, 2, 3, 3, 3, 3, 3, 2, 2, 3, 1, 3, 0, 2, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 2, 2, 2, 3, 1, 1, 3, 2, 2, 0, 3, 2, 1, 2, 1, 0, 3, 3, 3, 2, 2, 3, 2, 1, 2, 0, 0, 3, 3, 2, 3, 3, 2, 3, 3, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 3, 1, 1, 3, 2, 2, 3, 1, 1, 0, 1, 3, 2, 3, 3, 2, 3, 3, 2, 3, 3, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 1, 2, 3, 3, 2, 2, 2, 2, 3, 3, 2, 0, 2, 1, 3, 3, 3, 3, 0, 3, 3, 3, 3, 2, 2, 3, 1, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3, 2, 3, 2, 1, 3, 3, 3, 3, 2, 2, 0, 1, 2, 3, 2, 0, 3, 3, 3, 3, 3, 3, 1, 3, 3, 2, 3, 2, 2, 3, 3, 3, 3, 3, 2, 2, 3, 3, 2, 2, 2, 1, 3, 3, 3, 3, 1, 2, 3, 2, 3, 3, 2, 3, 2, 3, 3, 3, 2, 3, 1, 2, 3, 2, 1, 1, 3, 3, 2, 3, 3, 2, 3, 3, 0, 0, 1, 3, 3, 2, 3, 3, 3, 3, 1, 3, 3, 0, 3, 2, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 0, 3, 3, 2};
 
     for(int i=0; i < expected_samples.size(); i++) {
-        assert(expected_samples.at(i) == samples.at(i));
+        serial_assert(expected_samples.at(i) == samples.at(i));
     }
 }
 
@@ -96,7 +96,7 @@ static void test_shuffle() {
         {6, 7, 10, 4, 8, 9, 2, 3, 1, 5},
         {10, 2, 1, 7, 9, 5, 6, 3, 4, 8}
     };
-    assert(result == expectedResult);
+    serial_assert(result == expectedResult);
 }
 
 /*
@@ -119,29 +119,36 @@ bool test_partition_and_join() {
         "23880789bdf9ed73be57fa84d555134630e8d0f7df48349f29869a477c13ccca9cd555ac42ad7f568416c3d61959d0ed568b2b81c7771e9088ad7fd55fd4386bafbf5a528c30f107139249357368ffa980de2c76ddd9ce4191376be0e6b5",
         "170010067e2e75ebe2d2904aeb1f89d5dc98cd4a6f2faaa8be6d03354c990fd895a97feb54668473e9d942bb99e196d897e8f1b01625cf48a7b78d249bb4985c065aa8cd1402ed2ba1b6f908f63dcd84b66425df00000000000000000000"
     };
-    assert(fragments_hex == expected_fragments);
+    serial_assert(fragments_hex == expected_fragments);
     auto rejoined_message = FountainDecoder::join_fragments(fragments, message.size());
-    assert(message == rejoined_message);
+    serial_assert(message == rejoined_message);
 }
 */
 
-bool test_choose_degree() {
+// Note: this test is quite heavy for MCU (memory problems). Turned off for now.
+void test_choose_degree() {
 
     Serial.println("test_choose_degree");
     auto message = make_message(1024);
     auto fragment_len = FountainEncoder::find_nominal_fragment_length(message.size(), 10, 100);
     auto fragments = FountainEncoder::partition_message(message, fragment_len);
-    vector<size_t> degrees;
+    vector<size_t> _degrees;
     char * nonce_str = NULL;
     string nonce_string;
     for(int nonce = 1; nonce <= 200; nonce++) {
-        nonce_str = (char *)String(nonce).c_str();
+        char * nonce_str = (char *)String(nonce).c_str();
         nonce_string = nonce_str;
         auto part_rng = Xoshiro256("Wolf-" + nonce_string);
-        degrees.push_back(choose_degree(fragments.size(), part_rng));
+        _degrees.push_back(choose_degree(fragments.size(), part_rng));
     }
+
+    //for(int i=0; i < degrees.size(); i++) {
+    //    Serial.print(degrees.at(i));
+    //}
+    //Serial.println("");
+
     vector<size_t> expected_degrees = {11, 3, 6, 5, 2, 1, 2, 11, 1, 3, 9, 10, 10, 4, 2, 1, 1, 2, 1, 1, 5, 2, 4, 10, 3, 2, 1, 1, 3, 11, 2, 6, 2, 9, 9, 2, 6, 7, 2, 5, 2, 4, 3, 1, 6, 11, 2, 11, 3, 1, 6, 3, 1, 4, 5, 3, 6, 1, 1, 3, 1, 2, 2, 1, 4, 5, 1, 1, 9, 1, 1, 6, 4, 1, 5, 1, 2, 2, 3, 1, 1, 5, 2, 6, 1, 7, 11, 1, 8, 1, 5, 1, 1, 2, 2, 6, 4, 10, 1, 2, 5, 5, 5, 1, 1, 4, 1, 1, 1, 3, 5, 5, 5, 1, 4, 3, 3, 5, 1, 11, 3, 2, 8, 1, 2, 1, 1, 4, 5, 2, 1, 1, 1, 5, 6, 11, 10, 7, 4, 7, 1, 5, 3, 1, 1, 9, 1, 2, 5, 5, 2, 2, 3, 10, 1, 3, 2, 3, 3, 1, 1, 2, 1, 3, 2, 2, 1, 3, 8, 4, 1, 11, 6, 3, 1, 1, 1, 1, 1, 3, 1, 2, 1, 10, 1, 1, 8, 2, 7, 1, 2, 1, 9, 2, 10, 2, 1, 3, 4, 10};
-    assert(degrees == expected_degrees);
+    serial_assert(_degrees == expected_degrees);
 }
 
 static void test_choose_fragments() {
@@ -190,23 +197,23 @@ static void test_choose_fragments() {
         {7}
     };
 
-    assert(fragment_indexes == expected_fragment_indexes);
+    serial_assert(fragment_indexes == expected_fragment_indexes);
 }
 
-bool test_xor() {
+void test_xor() {
     auto rng = Xoshiro256("Wolf");
     auto data1 = rng.next_data(10);
-    assert(data_to_hex(data1) == "916ec65cf77cadf55cd7");
+    serial_assert(data_to_hex(data1) == "916ec65cf77cadf55cd7");
     auto data2 = rng.next_data(10);
-    assert(data_to_hex(data2) == "f9cda1a1030026ddd42e");
+    serial_assert(data_to_hex(data2) == "f9cda1a1030026ddd42e");
     auto data3 = data1;
     xor_into(data3, data2);
-    assert(data_to_hex(data3) == "68a367fdf47c8b2888f9");
+    serial_assert(data_to_hex(data3) == "68a367fdf47c8b2888f9");
     xor_into(data3, data1);
-    assert(data3 == data2);
+    serial_assert(data3 == data2);
 }
 
-bool test_fountain_encoder() {
+void test_fountain_encoder() {
     auto message = make_message(256);
     auto encoder = FountainEncoder(message, 30);
     StringVector parts;
@@ -235,7 +242,7 @@ bool test_fountain_encoder() {
         "seqNum:19, seqLen:9, messageLen:256, checksum:23570951, data:3171c5dc365766eff25ae47c6f10e7de48cfb8474e050e5fe997a6dc24",
         "seqNum:20, seqLen:9, messageLen:256, checksum:23570951, data:e055c2433562184fa71b4be94f262e200f01c6f74c284b0dc6fae6673f"
     };
-    assert(parts == expected_parts);
+    serial_assert(parts == expected_parts);
 }
 
 static void test_fountain_encoder_cbor() {
@@ -267,10 +274,10 @@ static void test_fountain_encoder_cbor() {
         "8513091901001a0167aa07581d3171c5dc365766eff25ae47c6f10e7de48cfb8474e050e5fe997a6dc24",
         "8514091901001a0167aa07581de055c2433562184fa71b4be94f262e200f01c6f74c284b0dc6fae6673f"
     };
-    assert(parts == expected_parts);
+    serial_assert(parts == expected_parts);
 }
 
-bool test_fountain_encoder_is_complete() {
+void test_fountain_encoder_is_complete() {
     auto message = make_message(256);
     auto encoder = FountainEncoder(message, 30);
     size_t generated_parts_count = 0;
@@ -278,10 +285,10 @@ bool test_fountain_encoder_is_complete() {
         encoder.next_part();
         generated_parts_count += 1;
     }
-    assert(encoder.seq_len() == generated_parts_count);
+    serial_assert(encoder.seq_len() == generated_parts_count);
 }
 
-bool test_fountain_cbor() {
+void test_fountain_cbor() {
 
     CborDynamicOutput output;
     CborWriter writer(output);
@@ -301,7 +308,7 @@ bool test_fountain_cbor() {
     auto part2 = FountainEncoder::Part(cbor);
     auto cbor2 = part2.cbor();
 
-    assert(cbor == cbor2);
+    serial_assert(cbor == cbor2);
 }
 
 static void test_ur_encoder() {
@@ -334,10 +341,10 @@ static void test_ur_encoder() {
         "ur:bytes/20-9/lpbbascfadaxcywenbpljkhdcayapmrleeleaxpasfrtrdkncffwjyjzgyetdmlewtkpktgllepfrltataztksmhkbot"
     };
     
-    assert(parts == expected_parts);
+    serial_assert(parts == expected_parts);
 }
 
-bool test_bc_ur(void) 
+bool test_bc_ur(void)
 {
   test_rng_1();
   test_rng_2();
@@ -345,7 +352,7 @@ bool test_bc_ur(void)
   test_find_fragment_length();
   test_random_sampler();
   test_shuffle();
-  test_choose_degree();
+  //test_choose_degree(); // @TODO
   test_choose_fragments();
   test_xor();
   test_fountain_encoder();

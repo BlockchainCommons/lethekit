@@ -5,12 +5,7 @@ This guide assumes you have successfully completed
 
 ### Open project in Arduino IDE
 
-Launch the Arduino IDE in the `bc-lethekit/seedtool` directory:
-
-```bash
-$ arduino ./
-```
-Alternatively, you can launch the Arduino IDE, click `File->Open`,
+Launch the Arduino IDE, click `File->Open`,
 locate `seedtool` directory and double click on the `seedtool.ino`.
 
 *Note:* Make sure you have installed libraries required by LetheKit.
@@ -18,6 +13,10 @@ Navigate to your Library Manager (**Tools** > **Manage Libraries…**)
   * `Adafruit GFX Library`
   * `Keypad`
   * `QRCode`
+
+![](images/install-adafruit.png)
+![](images/install-keypad.png)
+![](images/install-qrcode.png)
 
 ### Build and Upload *seedtool*
 

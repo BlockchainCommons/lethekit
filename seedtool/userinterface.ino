@@ -121,6 +121,22 @@ void display_text(const char *txt, int x, int y, bool _highlight, int xx_end=-1)
     g_display->setTextColor(GxEPD_BLACK);
 }
 
+/**
+ * @brief displays long text by breaking it with a small margin at the left side of the screen.
+ *        This is because some plastic cases may cover the left margin of the screen a bit.
+ * @pre   text style: FreeMonoBold9pt7b
+ * @len   string lenght, must be less than screen width
+ * @todo  make independent from text style
+ */
+void display_long_text(int yy, String txt, int len=17)  {
+    g_display->setCursor(6, yy);
+    for (int i=0; i<txt.length(); i+=len) {
+        g_display->println(txt.substring(i, i+len));
+        yy+=H_FSB9+2;
+        g_display->setCursor(6, yy );
+    }
+}
+
 int text_right(const char * txt) {
     int16_t tbx, tby; uint16_t tbw, tbh;
     g_display->getTextBounds(txt, 0, 0, &tbx, &tby, &tbw, &tbh);
@@ -962,9 +978,10 @@ void config_sskr() {
                 thresh_done = true;
                 break;
             } else {
-                if (threshstr.toInt() > nsharestr.toInt()) {
+                if (threshstr.toInt() > nsharestr.toInt() || threshstr.toInt() == 1) {
                     // Threshold is greater than nshares, put the cursor
                     // back on the threshold.
+                    // SSKR threshold must not be 1
                     thresh_done = false;
                     break;
                 }
@@ -1009,13 +1026,13 @@ void set_sskr_format() {
         g_display->println(title);
 
         yy += H_FSB9 + 2*YM_FSB9 + 15;
-        display_text("A: Text", xx, yy, pg_set_sskr_format.sskr_format == text, 0);
+        display_text("A: bytewords", xx, yy, pg_set_sskr_format.sskr_format == text, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 5;
-        display_text("B: UR", xx, yy, pg_set_sskr_format.sskr_format == ur, 0);
+        display_text("B: ur", xx, yy, pg_set_sskr_format.sskr_format == ur, 0);
 
         yy += H_FSB9 + 2*YM_FSB9 + 5;
-        display_text("C: QR-UR", xx, yy, pg_set_sskr_format.sskr_format == qr_ur, 0);
+        display_text("C: qr-ur", xx, yy, pg_set_sskr_format.sskr_format == qr_ur, 0);
 
         // bottom-relative position
         xx = xoff + 2;
@@ -1072,7 +1089,7 @@ void display_sskr() {
             int yy = yoff + (H_FSB9 + YM_FSB9);
             g_display->setFont(&FreeSansBold9pt7b);
             g_display->setCursor(xx, yy);
-            display_printf("       SSKR %d/%d",
+            display_printf("         SSKR %d/%d",
                            sharendx+1, g_sskr_generate->shares_len);
             yy += H_FSB9 + YM_FSB9;
 
@@ -1099,8 +1116,8 @@ void display_sskr() {
                 int xx = 0;
                 yy = 65;
                 g_display->setFont(&FreeMonoBold9pt7b);
-                g_display->setCursor(0, yy);
-                display_printf(g_sskr_generate->shares_ur[sharendx].c_str());
+                g_display->setCursor(5, yy);
+                display_long_text(yy, g_sskr_generate->shares_ur[sharendx]);
                 Serial.println(g_sskr_generate->shares_ur[sharendx].c_str());
             }
 
@@ -2189,7 +2206,7 @@ void display_xpub(void) {
     const int nrows = 5;
     int scroll = 0;
     String derivation_path = keystore.get_derivation_path();
-    int scroll_strlen = 18;
+    int scroll_strlen = 17;
     bool ret;
 
     ret = keystore.update_root_key(g_bip39->mnemonic_seed, BIP39_SEED_LEN_512);
@@ -2241,14 +2258,13 @@ void display_xpub(void) {
                     sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
                     String txt = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub);
                     for (int k = 0; k < nrows; ++k) {
-                        g_display->setCursor(0, yy);
+                        g_display->setCursor(5, yy);
                         display_printf("%s", txt.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
                         yy += H_FMB12 + YM_FMB12;
                     }
                 }
                 else {
-                    g_display->setCursor(0, yy);
-                    g_display->println(xpub);
+                    display_long_text(yy, xpub);
                 }
                 break;
             case qr_text:
@@ -2263,14 +2279,14 @@ void display_xpub(void) {
                 }
                 break;
             case ur: {
-                int xx = 0;
+                int xx = 5;
                 yy = 50;
                 g_display->setFont(&FreeMonoBold9pt7b);
                 g_display->setCursor(0, yy);
                 int16_t tbx, tby; uint16_t tbw, tbh;
                 size_t i = 0;
 
-                scroll_strlen = 18;
+                scroll_strlen = 17;
 
                 for (int k = 0; k < nrows; ++k) {
                     g_display->setCursor(xx, yy);
@@ -2386,8 +2402,8 @@ void display_seed(void) {
           switch(pg_set_seed_format.seed_format) {
             case ur:
                 g_display->setFont(&FreeMonoBold9pt7b);
-                g_display->setCursor(0, yy + 40);
-                g_display->println(ur_string);
+                yy+=40;
+                display_long_text(yy, ur_string);
                 break;
             case qr_ur:
                 ur_string.toUpperCase();
@@ -2660,7 +2676,8 @@ void show_address(void) {
           g_display->setCursor(0, yy + 40);
           switch(pg_show_address.addr_format) {
             case text:
-                g_display->println(addr_segwit);
+                g_display->setFont(&FreeMonoBold9pt7b);
+                display_long_text(yy+40, addr_segwit);
                 break;
             case qr_text:
                 displayQR(addr_segwit);
@@ -2672,7 +2689,8 @@ void show_address(void) {
                 break;
             }
             case ur:
-                g_display->println(address_ur.c_str());
+                g_display->setFont(&FreeMonoBold9pt7b);
+                display_long_text(yy+40, address_ur);
                 Serial.println(address_ur.c_str());
                 break;
             default:
@@ -2752,10 +2770,10 @@ void set_address_format(void) {
           g_display->println(title);
           yy += H_FSB9 + 2*YM_FSB9 + 10;
 
-          display_text("A: text", xx, yy, pg_show_address.addr_format == text, 0);
+          display_text("A: bech32", xx, yy, pg_show_address.addr_format == text, 0);
           yy += H_FSB9 + 2*YM_FSB9;
 
-          display_text("B: qr", xx, yy, pg_show_address.addr_format == qr_text, 0);
+          display_text("B: qr-bech32", xx, yy, pg_show_address.addr_format == qr_text, 0);
           yy += H_FSB9 + 2*YM_FSB9; 
 
           display_text("C: ur", xx, yy, pg_show_address.addr_format == ur, 0);
@@ -2827,6 +2845,7 @@ void export_wallet(void) {
 
     while (true) {
 
+      // @todo check return values
       keystore.calc_derivation_path(child_path_str.c_str(), child_path, child_path_len);
       (void)bip32_key_from_parent_path(&keystore.root, child_path, child_path_len, BIP32_FLAG_KEY_PRIVATE, &child_key);
 
@@ -2851,7 +2870,7 @@ void export_wallet(void) {
           g_display->fillScreen(GxEPD_WHITE);
           g_display->setTextColor(GxEPD_BLACK);
 
-          int yy = 25; int xx = 0;
+          int yy = 25; int xx = 5;
           g_display->setFont(&FreeSansBold9pt7b);
           Point p = text_center(title.c_str());
           g_display->setCursor(p.x, yy);
@@ -2859,14 +2878,14 @@ void export_wallet(void) {
           yy += H_FMB12 + YM_FMB12 + 15;
 
           g_display->setFont(&FreeMonoBold9pt7b);
-          g_display->setCursor(0, yy + 40);
+          g_display->setCursor(xx, yy + 40);
 
           switch(pg_export_wallet.wallet_format) {
             case text:
             {
                 Serial.println(wallet_text);
                 Serial.println(scroll);
-                int scroll_strlen = 18;
+                int scroll_strlen = 17;
                 for (int k = 0; k < nrows; ++k) {
                     g_display->setCursor(xx, yy);
                     display_printf("%s", wallet_text.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
@@ -2886,7 +2905,7 @@ void export_wallet(void) {
             case ur:
             {
                 Serial.println(wallet_ur);
-                int scroll_strlen = 18;
+                int scroll_strlen = 17;
                 for (int k = 0; k < nrows; ++k) {
                     g_display->setCursor(xx, yy);
                     display_printf("%s", wallet_ur.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
@@ -2970,10 +2989,10 @@ void set_export_wallet_format(void) {
           g_display->println(title);
           yy += H_FSB9 + 2*YM_FSB9 + 10;
 
-          display_text("A: text", xx, yy, pg_export_wallet.wallet_format == text, 0);
+          display_text("A: base58", xx, yy, pg_export_wallet.wallet_format == text, 0);
           yy += H_FSB9 + 2*YM_FSB9;
 
-          display_text("B: qr", xx, yy, pg_export_wallet.wallet_format == qr_text, 0);
+          display_text("B: qr-base58", xx, yy, pg_export_wallet.wallet_format == qr_text, 0);
           yy += H_FSB9 + 2*YM_FSB9;
 
           display_text("C: ur", xx, yy, pg_export_wallet.wallet_format == ur, 0);
