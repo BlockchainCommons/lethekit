@@ -329,12 +329,11 @@ selftest_t g_selftests[] =
  { "BIP39 mnemonics", test_bip39_mnemonics },
  { "BIP39 generate", test_bip39_generate },
  { "BIP39 restore", test_bip39_restore },
- { "BIP39 restore", test_bip39_restore },
- { "BIP39 bad chksum", test_bip39_bad_checksum },
+ { "BIP39 chksum", test_bip39_bad_checksum },
  { "BIP32", test_bip32 },
  { "UR", test_ur },
  { "SSKR", test_sskr},
- { "test_bc_ur", test_bc_ur},
+ { "BC-UR", test_bc_ur},
  // |--------------|
 };
 
