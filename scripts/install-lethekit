@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Terminal colors
+RED=`tput setaf 1`
+RESET=`tput sgr0`
+
 git submodule update --init --recursive
 
 # usage: install-lethkit <lethkit-root> <arduino-sketchbook>
@@ -24,7 +28,7 @@ while (( "$#" )); do
       break
       ;;
     -*|--*=) # unsupported flags
-      echo "Error: Unsupported flag $1" >&2
+      echo "${RED}==Error: Unsupported flag $1 ==${RESET}" >&2
       exit 1
       ;;
     *) # preserve positional arguments
@@ -36,7 +40,7 @@ done
 
 if [ ${#args[@]} -ne 1 ]
 then
-    usage_error "must be 1 argument"
+    usage_error "${RED}== Error: must be 1 argument==${RESET}"
 fi
 
 echo "Note: Arduino sketchbook location is set in Arduino IDE: click File->Preferences"
@@ -72,7 +76,7 @@ libpath="${aroot}/libraries"
 # We need python to create libwally for arduino
 if ! python3 --version -v COMMAND &> /dev/null
 then
-    echo "Please, install python3."
+    echo "${RED}== Error: Please, install python3.==${RESET}"
     exit
 fi
 
@@ -91,8 +95,7 @@ popd
 # First, check if GxEPD2 is already installed (as a directory), warn
 # and stop in this case.
 gxepd2_path="${aroot}/libraries/GxEPD2"
-[ -d ${gxepd2_path} ] && ! [ -L ${gxepd2_path} ] && echo "GxEPD2 already installed in ${libpath}. Please remove it; we need to replace with SW SPI enabled version." && exit 1
-
+[ -d ${gxepd2_path} ] && ! [ -L ${gxepd2_path} ] && echo "${RED}== ERROR: GxEPD2 already installed in ${libpath}. Please remove it and re-run the last command==${RESET}" && exit 1
 declare -a libs=(
     ArduinoSTL
     bc-ur-arduino
