@@ -1365,7 +1365,51 @@ struct BIP39WordlistState : WordListState {
     }
 };
 
+
+// returns true if user wants bad checksum to get automatically fixed
+// returns false if user wants to correct the mistake by himself
+bool invalid_bip39_checksum(void) {
+
+    int xoff = 6;
+    int yoff = 6;
+
+    g_display->firstPage();
+    do
+    {
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
+
+        int xx = xoff;
+        int yy = yoff + (H_FSB9 + YM_FSB9);
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
+        display_printf("Bip39 bad checksum");
+        yy += H_FSB9 + YM_FSB9+20;
+
+        display_long_text(yy, "Press # to check your words again", 22);
+        display_long_text(yy+70, "Press A to fix the checksum", 19);
+    }
+    while (g_display->nextPage());
+
+    while (true) {
+        char key;
+        do {
+            key = g_keypad.getKey();
+        } while (key == NO_KEY);
+        switch (key) {
+        case '#':
+            return false;
+        case 'A':
+            return true;
+        default:
+            break;
+        }
+    }
+}
+
 void restore_bip39() {
+    bool fix_checksum = false;
     BIP39WordlistState state(g_bip39, BIP39Seq::WORD_COUNT);
     state.set_words((uint16_t *)NULL);
 
@@ -1508,17 +1552,13 @@ void restore_bip39() {
                     g_uistate = SEEDY_MENU;
                     return;
                 } else {
+                    fix_checksum = invalid_bip39_checksum();
+                    if (fix_checksum) {
+                        bip39->fix_bip39_checksum();
+                        for (size_t ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii)
+                            state.wordndx[ii] = bip39->get_word(ii);
+                    }
                     delete bip39;
-                    String lines[7];
-                    size_t nlines = 0;
-                    lines[nlines++] = "BIP39 Word List";
-                    lines[nlines++] = "Checksum Error";
-                    lines[nlines++] = "";
-                    lines[nlines++] = "Check your word";
-                    lines[nlines++] = "list carefully";
-                    lines[nlines++] = "";
-                    lines[nlines++] = "Press # to revisit";
-                    interstitial_error(lines, nlines);
                 }
                 break;
             }
