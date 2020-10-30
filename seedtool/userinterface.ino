@@ -496,6 +496,15 @@ void seedless_menu() {
     }
 }
 
+void pendingCallback(const void*)
+{
+  String txt = "One moment...";
+  Point p = text_center(txt.c_str());
+  g_display->fillScreen(GxEPD_WHITE);
+  g_display->setCursor(p.x, p.y);
+  g_display->println(txt);
+}
+
 void generate_seed() {
     while (true) {
         int xoff = 14;
@@ -591,7 +600,7 @@ void generate_seed() {
             // This will take a few seconds; clear the screen
             // immediately to let the user know something is
             // happening ..
-            full_window_clear();
+            g_display->drawPaged(pendingCallback, 0);
 
             if (g_bip39)
                 delete g_bip39;
@@ -1537,6 +1546,7 @@ void restore_bip39() {
             break;
         case '#':	// done
             {
+                g_display->drawPaged(pendingCallback, 0);
                 uint16_t bip39_words[BIP39Seq::WORD_COUNT];
                 for (size_t ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii)
                     bip39_words[ii] = state.wordndx[ii];
