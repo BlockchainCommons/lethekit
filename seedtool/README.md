@@ -33,6 +33,10 @@ shares.
 
 ![BIP-39 Restore](doc/images/bip39-restore.png)
 
+When restoring BIP39 you can enter invalid BIP39 mnemonic sentence and have it fixed by LetheKit.
+
+![bad checkusm](doc/images/bip39_bad_checksum.png)
+
 ### SSKR Recovery
 
 If you possess enough shares of a SSKR set, you can recover the
