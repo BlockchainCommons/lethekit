@@ -92,4 +92,8 @@ struct pg_set_sskr_format_t {
     format sskr_format;
 };
 
+struct pg_seedless_menu_t {
+    bool allow_invalid_mnemonic;
+};
+
 #endif // USERINTERFACE_H
