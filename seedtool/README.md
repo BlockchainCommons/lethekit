@@ -8,9 +8,8 @@ and
 [SSKR](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md)
 formats. In addition, it supports viewing XPUB keys and addresses in different formats.
 
-## Compile and Upload Instruction
 
-Please see the [Seedtool Installation Instructions](doc/build.md).
+This guide assumes you have successfully completed with [Seedtool Installation Instructions](doc/build.md).
 
 ## "No Seed" Functions
 
@@ -28,6 +27,10 @@ By rolling dice and typing the values, you can gather enough auditable entropy t
 roughly 128 bits of entropy.
 
 ![Generate Seed](doc/images/generate-seed.png)
+
+If you press C, 128 bits of TRNG entropy will be mixed in:
+
+![Generate Seed](doc/images/generate-seed-trng.png)
 
 ### BIP-39 Key Recovery
 
@@ -106,6 +109,13 @@ A wallet can be exported in the 4 different formats (text, QR, UR and QR-UR):
 
 ![wallet export](doc/images/wallet_export.png) ![wallet export text](doc/images/wallet_export_text.png)
 ![wallet export text](doc/images/wallet_export_qr.png) ![wallet export text](doc/images/wallet_export_qrur.png)
+
+### Setting network
+
+You can choose among mainnet, testnet and regtest:
+
+![wallet export text](doc/images/network.png)
+
 
 ## Common Workflows
 
