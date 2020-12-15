@@ -2,7 +2,7 @@
 
 **Open source DIY hardware box for offline cryptographic tools**
 
-### _by Ken Sedgwick and Christopher Allen with Gorazd Kovacic_
+### _by Ken Sedgwick, Gorazd Kovacic, and Christopher Allen _
 
 ![LetheKit](images/lethekit-with-logo.jpg)
 
