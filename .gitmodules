@@ -12,7 +12,7 @@
 	url = https://github.com/BlockchainCommons/bc-bip39.git
 [submodule "deps/GxEPD2"]
 	path = deps/GxEPD2
-	url = https://github.com/ZinggJM/GxEPD2
+	url = https://github.com/BlockchainCommons/GxEPD2.git
 [submodule "deps/libwally-core"]
 	path = deps/libwally-core
 	url = https://github.com/ElementsProject/libwally-core.git
