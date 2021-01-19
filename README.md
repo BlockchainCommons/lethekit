@@ -5,6 +5,7 @@
 ### _by [Ken Sedgwick](https://www.github.com/ksedgwic), [Gorazd Kovacic](https://www.github.com/gorazdko), and [Christopher Allen](https://www.github.com/ChristopherA)_
 
 * <img src="https://github.com/BlockchainCommons/crypto-commons/blob/master/images/logos/crypto-commons-super-simple.png" width=16 valign="bottom">&nbsp;&nbsp; ***part of the [crypto commons](https://github.com/BlockchainCommons/crypto-commons/blob/master/README.md) technology family***
+* <img src="https://github.com/BlockchainCommons/Gordian/blob/master/Images/logos/gordian-icon.png" width=16 valign="bottom"> ***uses [gordian](https://github.com/BlockchainCommons/gordian/blob/master/README.md) technology***
 
 ![LetheKit](images/lethekit-with-logo.jpg)
 
