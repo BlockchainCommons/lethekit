@@ -148,6 +148,9 @@ bool Keystore::save_standard_derivation_path(stdDerivation *path, NetwtorkType n
         }
         else if (*path == SINGLE_NESTED_SEGWIT)
             p = F("m/49h/1h/0h");
+
+        else if (*path == MULTISIG_NATIVE_SEGWIT)
+            p = F("m/48h/0h/0h/2h");
       }
       else {
         if (standard_derivation_path == false)
@@ -199,6 +202,9 @@ bool Keystore::xpub_to_base58(ext_key *key, char **output, bool slip132) {
             else if (std_derivation_path == SINGLE_NESTED_SEGWIT) {
                 *bytes_ptr = __builtin_bswap32(0x049d7cb2);
             }
+            else if (std_derivation_path == MULTISIG_NATIVE_SEGWIT) {
+                *bytes_ptr = __builtin_bswap32(0x02aa7ed3);
+            }
             break;
         case TESTNET:
         case REGTEST:
@@ -207,6 +213,9 @@ bool Keystore::xpub_to_base58(ext_key *key, char **output, bool slip132) {
             }
             else if (std_derivation_path == SINGLE_NESTED_SEGWIT) {
                 *bytes_ptr = __builtin_bswap32(0x044a5262);
+            }
+            else if (std_derivation_path == MULTISIG_NATIVE_SEGWIT) {
+                *bytes_ptr = __builtin_bswap32(0x02575483);
             }
             break;
         default:

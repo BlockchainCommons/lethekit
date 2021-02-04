@@ -2023,14 +2023,14 @@ void derivation_path(void) {
           g_display->setCursor(p.x, yy);
           g_display->println(title);
 
-          yy += 50;
-          display_text("A: native segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NATIVE_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
 
-          yy += 30;
-          display_text("B: nested segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NESTED_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
+          display_text("A: native segwit", x_off, yy += 50, pg_derivation_path.std_derivation == SINGLE_NATIVE_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
 
-          yy += 30;
-          display_text("C: custom", x_off, yy, pg_derivation_path.is_standard_derivation == false, 0);
+          display_text("B: nested segwit", x_off, yy += 30, pg_derivation_path.std_derivation == SINGLE_NESTED_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
+
+          display_text("C: cosigner", x_off, yy += 30, pg_derivation_path.std_derivation == MULTISIG_NATIVE_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
+
+          display_text("D: custom", x_off, yy += 30, pg_derivation_path.is_standard_derivation == false, 0);
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);
@@ -2079,7 +2079,18 @@ void derivation_path(void) {
             }
             g_uistate = DISPLAY_XPUBS;
             return;
-        case 'C':
+        case 'C': {
+            pg_derivation_path.std_derivation = MULTISIG_NATIVE_SEGWIT;
+            pg_derivation_path.is_standard_derivation = true;
+            ret = keystore.save_standard_derivation_path(&pg_derivation_path.std_derivation, network.get_network());
+            if (ret == false) {
+                g_uistate = ERROR_SCREEN;
+                return;
+              }
+            }
+            g_uistate = DISPLAY_XPUBS;
+            return;
+        case 'D':
             // slip132 option is not available for custom derivation paths
             pg_set_xpub_options.slip132 = false;
             pg_derivation_path.is_standard_derivation = false;
