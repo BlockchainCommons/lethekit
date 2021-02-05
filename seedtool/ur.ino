@@ -77,6 +77,42 @@ size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t 
 
 }
 
+size_t cbor_encode_hdkey_xpriv(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint, uint32_t *derivation, uint32_t derivation_len) {
+
+    CborDynamicOutput output;
+    CborWriter writer(output);
+
+    // is_private
+    writer.writeMap(2);
+    uint32_t cbor_true = 21;
+    writer.writeSpecial(cbor_true);
+
+    if (network.get_network() == MAINNET)
+        writer.writeMap(3);
+    else
+        writer.writeMap(4);
+    writer.writeInt(3);
+    writer.writeBytes(key->pub_key, sizeof(key->priv_key));
+    writer.writeInt(4);
+    writer.writeBytes(key->chain_code, sizeof(key->chain_code));
+    // crypto-coininfo
+    if (network.get_network() != MAINNET) {
+        writer.writeInt(5);
+        writer.writeTag(305);
+          writer.writeMap(1);
+          writer.writeInt(2);
+          writer.writeInt(1);
+    }
+    writer.writeInt(6);
+    crypto_keypath(writer, derivation, derivation_len, parent_fingerprint);
+
+    *buff_out = (uint8_t *)malloc(output.getSize());
+    memcpy(*buff_out, output.getData(), output.getSize());
+
+    return output.getSize();
+
+}
+
 size_t cbor_encode_crypto_seed(uint8_t *seed, size_t len, uint8_t **buff_out, uint32_t *unix_timestamp=NULL) {
 
     CborDynamicOutput output;
@@ -182,6 +218,35 @@ bool ur_encode_hd_pubkey_xpub(String &xpub_bytewords, uint32_t *derivation, uint
 
     // @FIXME: free also on premature exit
     free(cbor_xpub);
+
+    return true;
+}
+
+bool ur_encode_hd_pubkey_xpriv(String &xpriv_bytewords, uint32_t *derivation, uint32_t derivation_len) {
+    bool retval;
+    ext_key xpriv;
+    uint8_t *cbor_xpriv = NULL;
+
+    (void)bip32_key_from_parent_path(&keystore.root, derivation, derivation_len, BIP32_FLAG_KEY_PRIVATE, &xpriv);
+
+    uint32_t parent_fingerprint;
+    ((uint8_t *)&parent_fingerprint)[0] = xpriv.parent160[3];
+    ((uint8_t *)&parent_fingerprint)[1] = xpriv.parent160[2];
+    ((uint8_t *)&parent_fingerprint)[2] = xpriv.parent160[1];
+    ((uint8_t *)&parent_fingerprint)[3] = xpriv.parent160[0];
+
+    size_t cbor_xpriv_size = cbor_encode_hdkey_xpriv(&xpriv, &cbor_xpriv, parent_fingerprint, derivation, derivation_len);
+    if (cbor_xpriv_size == 0) {
+        return false;
+    }
+
+    retval = ur_encode("crypto-hdkey", cbor_xpriv, cbor_xpriv_size, xpriv_bytewords);
+    if (retval == false) {
+        return false;
+    }
+
+    // @FIXME: free also on premature exit
+    free(cbor_xpriv);
 
     return true;
 }

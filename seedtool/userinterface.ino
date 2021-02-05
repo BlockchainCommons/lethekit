@@ -2364,6 +2364,8 @@ void set_xpub_options() {
 void display_xpub(void) {
     ext_key key;
     String ur_string;
+    String ur_xpriv_string;
+    String ur_xpub_string;
     String encoding_type;
     const int nrows = 5;
     int scroll = 0;
@@ -2383,6 +2385,7 @@ void display_xpub(void) {
         return;
     }
 
+    char *hdkey = NULL;
     char *xpub = NULL;
     ret = keystore.xpub_to_base58(&key, &xpub, pg_set_xpub_options.slip132);
     if (ret == false) {
@@ -2390,13 +2393,36 @@ void display_xpub(void) {
         return;
     }
 
-    ret = ur_encode_hd_pubkey_xpub(ur_string, keystore.derivation, keystore.derivationLen);
+    char *xpriv = NULL;
+    ret = keystore.xpriv_to_base58(&key, &xpriv /*, pg_set_xpub_options.slip132*/);
+    if (ret == false) {
+        g_uistate = ERROR_SCREEN;
+        return;
+    }
+
+    ret = ur_encode_hd_pubkey_xpub(ur_xpub_string, keystore.derivation, keystore.derivationLen);
+    if (ret == false) {
+        g_uistate = ERROR_SCREEN;
+        return;
+    }
+
+    ret = ur_encode_hd_pubkey_xpriv(ur_xpriv_string, keystore.derivation, keystore.derivationLen);
     if (ret == false) {
         g_uistate = ERROR_SCREEN;
         return;
     }
 
     while (true) {
+
+     if (pg_set_xpub_options.show_private_key) {
+         ur_string = ur_xpriv_string;
+         hdkey = xpriv;
+     }
+     else {
+         ur_string = ur_xpub_string;
+         hdkey = xpub;
+     }
+
       g_display->firstPage();
       do
       {
@@ -2404,7 +2430,8 @@ void display_xpub(void) {
           g_display->fillScreen(GxEPD_WHITE);
           g_display->setTextColor(GxEPD_BLACK);
 
-          const char * title = "Master pubkey";
+          const char * title = pg_set_xpub_options.show_private_key ? "Xpriv": "Xpub";
+
           int yy = 18;
           g_display->setFont(&FreeSansBold9pt7b);
           Point p = text_center(title);
@@ -2418,7 +2445,7 @@ void display_xpub(void) {
                 if (pg_set_xpub_options.show_derivation_path) {
                     char fingerprint[9] = {0};
                     sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
-                    String txt = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub);
+                    String txt = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(hdkey);
                     for (int k = 0; k < nrows; ++k) {
                         g_display->setCursor(5, yy);
                         display_printf("%s", txt.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
@@ -2426,18 +2453,18 @@ void display_xpub(void) {
                     }
                 }
                 else {
-                    display_long_text(yy, xpub);
+                    display_long_text(yy, hdkey);
                 }
                 break;
             case qr_text:
                 if (pg_set_xpub_options.show_derivation_path) {
                     char fingerprint[9] = {0};
                     sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
-                    String fing = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub);
+                    String fing = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(hdkey);
                     displayQR((char *)fing.c_str());
                 }
                 else {
-                    displayQR(xpub);
+                    displayQR(hdkey);
                 }
                 break;
             case ur: {
