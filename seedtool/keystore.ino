@@ -233,3 +233,56 @@ bool Keystore::xpub_to_base58(ext_key *key, char **output, bool slip132) {
     else
         return false;
 }
+
+bool Keystore::xpriv_to_base58(ext_key *key, char **output /*, bool slip132 */) {
+
+    int ret;
+    unsigned char bytes[BIP32_SERIALIZED_LEN];
+    uint32_t *bytes_ptr = (uint32_t *)bytes;
+
+    if ((ret = bip32_key_serialize(key, BIP32_FLAG_KEY_PRIVATE, bytes, sizeof(bytes))))
+        return false;
+
+
+/*  TODO: slip132
+    if (slip132 && standard_derivation_path) {
+      switch(network.get_network()) {
+        case MAINNET:
+            if (std_derivation_path == SINGLE_NATIVE_SEGWIT) {
+                *bytes_ptr = __builtin_bswap32(0x04b24746);
+            }
+            else if (std_derivation_path == SINGLE_NESTED_SEGWIT) {
+                *bytes_ptr = __builtin_bswap32(0x049d7cb2);
+            }
+            else if (std_derivation_path == MULTISIG_NATIVE_SEGWIT) {
+                *bytes_ptr = __builtin_bswap32(0x02aa7ed3);
+            }
+            break;
+        case TESTNET:
+        case REGTEST:
+            if (std_derivation_path == SINGLE_NATIVE_SEGWIT) {
+                *bytes_ptr = __builtin_bswap32(0x045f1cf6);
+            }
+            else if (std_derivation_path == SINGLE_NESTED_SEGWIT) {
+                *bytes_ptr = __builtin_bswap32(0x044a5262);
+            }
+            else if (std_derivation_path == MULTISIG_NATIVE_SEGWIT) {
+                *bytes_ptr = __builtin_bswap32(0x02575483);
+            }
+            break;
+        default:
+            break;
+      }
+    }
+    */
+
+    ret = wally_base58_from_bytes(bytes, BIP32_SERIALIZED_LEN, BASE58_FLAG_CHECKSUM, output);
+
+    // clear
+    memset(bytes, 0, sizeof(bytes));
+
+    if (ret == WALLY_OK)
+        return true;
+    else
+        return false;
+}

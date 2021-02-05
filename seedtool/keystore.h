@@ -38,11 +38,16 @@ class Keystore
     String get_derivation_path(void);
 
     /**
-     * @brief  get xpub key based on the last derivation_path set by user
+     * @brief  get xpriv key based on the last derivation_path set by user
      *         or default one if none set
      * @pre    update_root_key()
      */
     bool get_xpriv(ext_key *key_out);
+
+    /**
+     * @brief  convert hdkey to base58
+     */
+    bool xpriv_to_base58(ext_key *key, char **output /*, bool slip132 @TODO */);
 
     /**
      * @brief  convert hdkey to base58
