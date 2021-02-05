@@ -79,7 +79,7 @@ struct pg_export_wallet_t pg_export_wallet{ur};
 struct pg_derivation_path_t pg_derivation_path{true, SINGLE_NATIVE_SEGWIT};
 struct pg_set_xpub_format_t pg_set_xpub_format{ur};
 struct pg_xpub_menu_t pg_xpub_menu = {false};
-struct pg_set_xpub_options_t pg_set_xpub_options = {false, false};
+struct pg_set_xpub_options_t pg_set_xpub_options = {false, false, 0};
 struct pg_set_seed_format_t pg_set_seed_format = {ur};
 struct pg_set_sskr_format_t pg_set_sskr_format = {ur};
 struct pg_seedless_menu_t pg_seedless_menu = {false};
@@ -2294,18 +2294,27 @@ void set_xpub_options() {
         g_display->setCursor(xx, yy);
         g_display->println("slip132: ");
 
-        display_text(pg_set_xpub_options.slip132 ? "True" : "False", xx + 80, yy, pg_set_xpub_options.current == true);
+        display_text(pg_set_xpub_options.slip132 ? "True" : "False", xx + 80, yy, pg_set_xpub_options.current == 0);
         g_display->setTextColor(GxEPD_BLACK);
 
-        yy += H_FSB9 + YM_FSB9;
+        //yy += H_FSB9 + YM_FSB9;
 
 
-        yy += H_FSB9 + 2*YM_FSB9 + 5;
+        yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         g_display->println("show path: ");
 
-        display_text(pg_set_xpub_options.show_derivation_path ? "True" : "False", xx + 100, yy, pg_set_xpub_options.current == false);
+        display_text(pg_set_xpub_options.show_derivation_path ? "True" : "False", xx + 100, yy, pg_set_xpub_options.current == 1);
         g_display->setTextColor(GxEPD_BLACK);
+
+
+        yy += H_FSB9 + 2*YM_FSB9;
+        g_display->setCursor(xx, yy);
+        g_display->println("show privkey: ");
+
+        display_text(pg_set_xpub_options.show_private_key ? "True" : "False", xx + 130, yy, pg_set_xpub_options.current == 2);
+        g_display->setTextColor(GxEPD_BLACK);
+
 
         yy = 195; // Absolute, stuck to bottom
         g_display->setFont(&FreeMono9pt7b);
@@ -2328,10 +2337,12 @@ void set_xpub_options() {
     clear_full_window = false;
     switch (key) {
     case 'A':
-        if (pg_set_xpub_options.current)
+        if (pg_set_xpub_options.current == 0)
             pg_set_xpub_options.slip132 = !pg_set_xpub_options.slip132;
-        else
+        else if (pg_set_xpub_options.current == 1)
             pg_set_xpub_options.show_derivation_path = !pg_set_xpub_options.show_derivation_path;
+        else if (pg_set_xpub_options.current == 2)
+            pg_set_xpub_options.show_private_key = !pg_set_xpub_options.show_private_key;
         g_uistate = SET_XPUB_OPTIONS;
         break;
     case '*':
@@ -2339,7 +2350,9 @@ void set_xpub_options() {
     case '#':
         return;
     case '1':
-        pg_set_xpub_options.current = !pg_set_xpub_options.current;
+        pg_set_xpub_options.current++;
+        if (pg_set_xpub_options.current > 2)
+            pg_set_xpub_options.current = 0;
         g_uistate = SET_XPUB_OPTIONS;
         break;
     default:

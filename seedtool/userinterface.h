@@ -81,7 +81,8 @@ struct pg_xpub_menu_t {
 struct pg_set_xpub_options_t {
     bool slip132;
     bool show_derivation_path;
-    bool current; // currently selected option out of 2
+    bool show_private_key;
+    uint8_t current; // currently selected option out of 3
 };
 
 struct pg_set_seed_format_t {
