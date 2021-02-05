@@ -782,7 +782,7 @@ void seedy_menu() {
             return;
         case 'C':
             clear_full_window = false;
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case '0':
             clear_full_window = false;
@@ -2052,10 +2052,10 @@ void derivation_path(void) {
 
       switch (key) {
         case '#':
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case '*':
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case 'A': {
             pg_derivation_path.std_derivation = SINGLE_NATIVE_SEGWIT;
@@ -2066,7 +2066,7 @@ void derivation_path(void) {
                 return;
               }
             }
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case 'B': {
             pg_derivation_path.std_derivation = SINGLE_NESTED_SEGWIT;
@@ -2077,7 +2077,7 @@ void derivation_path(void) {
                 return;
               }
             }
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case 'C': {
             pg_derivation_path.std_derivation = MULTISIG_NATIVE_SEGWIT;
@@ -2088,7 +2088,7 @@ void derivation_path(void) {
                 return;
               }
             }
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case 'D':
             // slip132 option is not available for custom derivation paths
@@ -2174,7 +2174,7 @@ void custom_derivation_path(void) {
                     g_uistate = ERROR_SCREEN;
                     return;
                 }
-                g_uistate = DISPLAY_XPUBS;
+                g_uistate = DISPLAY_KEYS;
                 return;
             }
             break;
@@ -2250,7 +2250,7 @@ void set_xpub_format() {
     do {
         key = g_keypad.getKey();
     } while (key == NO_KEY);
-    g_uistate = DISPLAY_XPUBS;
+    g_uistate = DISPLAY_KEYS;
     clear_full_window = false;
     switch (key) {
     case 'A':
@@ -2333,7 +2333,7 @@ void set_xpub_options() {
     do {
         key = g_keypad.getKey();
     } while (key == NO_KEY);
-    g_uistate = DISPLAY_XPUBS;
+    g_uistate = DISPLAY_KEYS;
     clear_full_window = false;
     switch (key) {
     case 'A':
@@ -2361,7 +2361,7 @@ void set_xpub_options() {
     }
 }
 
-void display_xpub(void) {
+void display_keys(void) {
     ext_key key;
     String ur_string;
     String ur_xpriv_string;
@@ -3370,8 +3370,8 @@ void ui_dispatch() {
     case DISPLAY_SSKR:
         display_sskr();
         break;
-    case DISPLAY_XPUBS:
-        display_xpub();
+    case DISPLAY_KEYS:
+        display_keys();
         break;
     case DERIVATION_PATH:
         derivation_path();
