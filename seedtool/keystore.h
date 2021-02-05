@@ -42,7 +42,7 @@ class Keystore
      *         or default one if none set
      * @pre    update_root_key()
      */
-    bool get_xpub(ext_key *key_out);
+    bool get_xpriv(ext_key *key_out);
 
     /**
      * @brief  convert hdkey to base58

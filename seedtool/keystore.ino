@@ -174,7 +174,7 @@ bool Keystore::is_standard_derivation_path(void) {
     return standard_derivation_path;
 }
 
-bool Keystore::get_xpub(ext_key *key_out) {
+bool Keystore::get_xpriv(ext_key *key_out) {
 
     res = bip32_key_from_parent_path(&root, derivation, derivationLen, BIP32_FLAG_KEY_PRIVATE, key_out);
     if (res != WALLY_OK) {

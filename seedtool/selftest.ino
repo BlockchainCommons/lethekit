@@ -302,7 +302,7 @@ bool test_bip32(void) {
         return false;
     }
 
-    keystore.get_xpub(&key);
+    keystore.get_xpriv(&key);
     bip32_key_to_base58(&key, BIP32_FLAG_KEY_PUBLIC, &xpub);
 
     if (strcmp(xpub, expected_xpub.c_str()) != 0) {

@@ -2377,7 +2377,7 @@ void display_xpub(void) {
         return;
     }
 
-    ret = keystore.get_xpub(&key);
+    ret = keystore.get_xpriv(&key);
     if (ret == false) {
         g_uistate = ERROR_SCREEN;
         return;
