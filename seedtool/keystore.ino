@@ -234,7 +234,7 @@ bool Keystore::xpub_to_base58(ext_key *key, char **output, bool slip132) {
         return false;
 }
 
-bool Keystore::xpriv_to_base58(ext_key *key, char **output /*, bool slip132 */) {
+bool Keystore::xpriv_to_base58(ext_key *key, char **output, bool slip132) {
 
     int ret;
     unsigned char bytes[BIP32_SERIALIZED_LEN];
@@ -244,37 +244,35 @@ bool Keystore::xpriv_to_base58(ext_key *key, char **output /*, bool slip132 */) 
         return false;
 
 
-/*  TODO: slip132
     if (slip132 && standard_derivation_path) {
       switch(network.get_network()) {
         case MAINNET:
             if (std_derivation_path == SINGLE_NATIVE_SEGWIT) {
-                *bytes_ptr = __builtin_bswap32(0x04b24746);
+                *bytes_ptr = __builtin_bswap32(0x04b2430c);
             }
             else if (std_derivation_path == SINGLE_NESTED_SEGWIT) {
-                *bytes_ptr = __builtin_bswap32(0x049d7cb2);
+                *bytes_ptr = __builtin_bswap32(0x049d7878);
             }
             else if (std_derivation_path == MULTISIG_NATIVE_SEGWIT) {
-                *bytes_ptr = __builtin_bswap32(0x02aa7ed3);
+                *bytes_ptr = __builtin_bswap32(0x02aa7a99);
             }
             break;
         case TESTNET:
         case REGTEST:
             if (std_derivation_path == SINGLE_NATIVE_SEGWIT) {
-                *bytes_ptr = __builtin_bswap32(0x045f1cf6);
+                *bytes_ptr = __builtin_bswap32(0x045f18bc);
             }
             else if (std_derivation_path == SINGLE_NESTED_SEGWIT) {
-                *bytes_ptr = __builtin_bswap32(0x044a5262);
+                *bytes_ptr = __builtin_bswap32(0x044a4e28);
             }
             else if (std_derivation_path == MULTISIG_NATIVE_SEGWIT) {
-                *bytes_ptr = __builtin_bswap32(0x02575483);
+                *bytes_ptr = __builtin_bswap32(0x02575048);
             }
             break;
         default:
             break;
       }
     }
-    */
 
     ret = wally_base58_from_bytes(bytes, BIP32_SERIALIZED_LEN, BASE58_FLAG_CHECKSUM, output);
 

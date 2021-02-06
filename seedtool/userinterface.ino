@@ -2394,7 +2394,7 @@ void display_keys(void) {
     }
 
     char *xpriv = NULL;
-    ret = keystore.xpriv_to_base58(&key, &xpriv /*, pg_set_xpub_options.slip132*/);
+    ret = keystore.xpriv_to_base58(&key, &xpriv, pg_set_xpub_options.slip132);
     if (ret == false) {
         g_uistate = ERROR_SCREEN;
         return;

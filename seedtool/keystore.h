@@ -47,7 +47,7 @@ class Keystore
     /**
      * @brief  convert hdkey to base58
      */
-    bool xpriv_to_base58(ext_key *key, char **output /*, bool slip132 @TODO */);
+    bool xpriv_to_base58(ext_key *key, char **output, bool slip132);
 
     /**
      * @brief  convert hdkey to base58
