@@ -74,13 +74,13 @@ int const YM_FMB12 = 4;	// y-margin
 bool clear_full_window = true;
 
 // Pages
-struct pg_show_address_t pg_show_address{0, ur};
-struct pg_export_wallet_t pg_export_wallet{ur};
+struct pg_show_address_t pg_show_address{0, qr_ur};
+struct pg_export_wallet_t pg_export_wallet{qr_ur};
 struct pg_derivation_path_t pg_derivation_path{true, SINGLE_NATIVE_SEGWIT};
-struct pg_set_xpub_format_t pg_set_xpub_format{ur};
+struct pg_set_xpub_format_t pg_set_xpub_format{qr_ur};
 struct pg_xpub_menu_t pg_xpub_menu = {false};
 struct pg_set_xpub_options_t pg_set_xpub_options = {false, false, 0};
-struct pg_set_seed_format_t pg_set_seed_format = {ur};
+struct pg_set_seed_format_t pg_set_seed_format = {qr_ur};
 struct pg_set_sskr_format_t pg_set_sskr_format = {ur};
 struct pg_seedless_menu_t pg_seedless_menu = {false};
 
@@ -745,7 +745,7 @@ void seedy_menu() {
         g_display->println("B - Generate SSKR");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
-        g_display->println("C - Display XPUB");
+        g_display->println("C - Display keys");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         g_display->println("D - Display seed");
