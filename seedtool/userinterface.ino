@@ -2509,7 +2509,7 @@ void display_keys(void) {
              left_option = "<-1/7->";
              g_display->println(left_option);
          }
-         else if (pg_set_xpub_format.current == text || pg_set_xpub_format.current == qr_text) {
+         else {//if (pg_set_xpub_format.current == text || pg_set_xpub_format.current == qr_text) {
              left_option = "Opt. B";
              g_display->setCursor(0, yy);
              g_display->println(left_option);
