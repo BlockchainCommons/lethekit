@@ -362,7 +362,7 @@ void self_test() {
         if (ndx < numtests)
             last_test_passed = selftest_testrun(ndx);
     }
-    delay(1000);		// short pause ..
+    delay(500);		// short pause ..
     hw_green_led(LOW);	// Green LED back off until there is a seed.
     g_uistate = INTRO_SCREEN;
 }
