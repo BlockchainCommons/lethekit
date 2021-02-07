@@ -92,7 +92,7 @@ size_t cbor_encode_hdkey_xpriv(struct ext_key *key, uint8_t **buff_out, uint32_t
     else
         writer.writeMap(4);
     writer.writeInt(3);
-    writer.writeBytes(key->pub_key, sizeof(key->priv_key));
+    writer.writeBytes(key->priv_key, sizeof(key->priv_key));
     writer.writeInt(4);
     writer.writeBytes(key->chain_code, sizeof(key->chain_code));
     // crypto-coininfo
