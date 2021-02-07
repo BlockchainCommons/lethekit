@@ -6,7 +6,7 @@ HD wallet master seeds using
 [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
 and
 [SSKR](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md)
-formats. In addition, it supports viewing XPUB keys and addresses in different formats.
+formats. In addition, it supports viewing extended keys and addresses in different formats.
 
 
 This guide assumes you have successfully completed with [Seedtool Installation Instructions](doc/build.md).
@@ -55,7 +55,7 @@ This is a way to generate your own seed without relying on hardware or software.
 ## Functions with a Seed
 
 Once you have a seed through any of the prior flows, you can create
-BIP-39 and SSKR mnemonic passphrases. In addition you can view extended public
+BIP-39 and SSKR mnemonic passphrases. In addition, you can view extended public and private
 keys, wallet addresses etc. 
 
 ![Seed Present Menu](doc/images/seed-present.png)
@@ -78,10 +78,10 @@ You can choose among different formats:
 ![SSKR Share Format](doc/images/sskr-share-format.png)
 ![SSKR Share View UR](doc/images/sskr-share-view-ur.png) ![SSKR Share View QRUR](doc/images/sskr-share-view-qrur.png)
 
-### Displaying XPUBs
+### Displaying Keys
 
-Extended public keys (XPUBs) can be shown in different formats (base58, UR, QR) with different
-options (slip132, with derivation path). Derivation path can be manually set.
+Extended public and private keys (XPUBs and XPRIVs) can be shown in different formats (base58, UR, QR) with different
+options: slip132, with derivation path and privkey. If privkey is selected, an extended private key (XPRIV) is shown. Derivation path can be manually set or chosen among standard ones: *native segwit*, *nested segwit* and *cosigner*. Cosigner is the one that can be used in multisignature setups.
 
 ![XPUB BASE58](doc/images/xpub_base58.png)
 ![XPUB OPTIONS](doc/images/xpub_options.png)
@@ -112,7 +112,7 @@ A wallet can be exported in the 4 different formats (text, QR, UR and QR-UR):
 
 ### Setting network
 
-You can choose among mainnet, testnet and regtest:
+By pressing 1 in `Seed Present` menu, you can choose among `mainnet`, `testnet` and `regtest`:
 
 ![wallet export text](doc/images/network.png)
 
