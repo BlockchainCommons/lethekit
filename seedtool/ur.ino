@@ -23,10 +23,10 @@ bool crypto_coin_info(class CborWriter &writer, NetwtorkType network) {
     writer.writeInt(network == MAINNET ? 0 : 1);
 }
 
-bool crypto_keypath(class CborWriter &writer, uint32_t *derivation, uint32_t derivation_len, uint32_t parent_fingerprint) {
+bool crypto_keypath(class CborWriter &writer, uint32_t *derivation, uint32_t derivation_len, uint32_t fingerprint) {
     // crypto-keypath:
     writer.writeTag(304);
-    writer.writeMap(2);
+    writer.writeMap(3);
       writer.writeInt(1);
       writer.writeArray(derivation_len*2);
       uint32_t indx;
@@ -43,7 +43,10 @@ bool crypto_keypath(class CborWriter &writer, uint32_t *derivation, uint32_t der
         }
       }
       writer.writeInt(2);
-      writer.writeInt(parent_fingerprint);
+      writer.writeInt(fingerprint);
+
+      writer.writeInt(3);
+      writer.writeInt(derivation_len);
 }
 
 size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint, uint32_t *derivation, uint32_t derivation_len) {
@@ -52,9 +55,9 @@ size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t 
     CborWriter writer(output);
 
     if (network.get_network() == MAINNET)
-        writer.writeMap(3);
-    else
         writer.writeMap(4);
+    else
+        writer.writeMap(5);
     writer.writeInt(3);
     writer.writeBytes(key->pub_key, sizeof(key->pub_key));
     writer.writeInt(4);
@@ -68,7 +71,10 @@ size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t 
           writer.writeInt(1);
     }
     writer.writeInt(6);
-    crypto_keypath(writer, derivation, derivation_len, parent_fingerprint);
+    crypto_keypath(writer, derivation, derivation_len, keystore.fingerprint);
+
+    writer.writeInt(8);
+    writer.writeInt(parent_fingerprint);
 
     *buff_out = (uint8_t *)malloc(output.getSize());
     memcpy(*buff_out, output.getData(), output.getSize());
@@ -82,15 +88,16 @@ size_t cbor_encode_hdkey_xpriv(struct ext_key *key, uint8_t **buff_out, uint32_t
     CborDynamicOutput output;
     CborWriter writer(output);
 
+    if (network.get_network() == MAINNET)
+        writer.writeMap(5);
+    else
+        writer.writeMap(6);
+
     // is_private
-    writer.writeMap(2);
+    writer.writeInt(2);
     uint32_t cbor_true = 21;
     writer.writeSpecial(cbor_true);
 
-    if (network.get_network() == MAINNET)
-        writer.writeMap(3);
-    else
-        writer.writeMap(4);
     writer.writeInt(3);
     writer.writeBytes(key->priv_key, sizeof(key->priv_key));
     writer.writeInt(4);
@@ -104,7 +111,10 @@ size_t cbor_encode_hdkey_xpriv(struct ext_key *key, uint8_t **buff_out, uint32_t
           writer.writeInt(1);
     }
     writer.writeInt(6);
-    crypto_keypath(writer, derivation, derivation_len, parent_fingerprint);
+    crypto_keypath(writer, derivation, derivation_len, keystore.fingerprint);
+
+    writer.writeInt(8);
+    writer.writeInt(parent_fingerprint);
 
     *buff_out = (uint8_t *)malloc(output.getSize());
     memcpy(*buff_out, output.getData(), output.getSize());
@@ -239,6 +249,9 @@ bool ur_encode_hd_pubkey_xpriv(String &xpriv_bytewords, uint32_t *derivation, ui
     if (cbor_xpriv_size == 0) {
         return false;
     }
+
+    //Serial.println("cbor xpriv:");
+    //print_hex(cbor_xpriv, cbor_xpriv_size);
 
     retval = ur_encode("crypto-hdkey", cbor_xpriv, cbor_xpriv_size, xpriv_bytewords);
     if (retval == false) {
