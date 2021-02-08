@@ -377,57 +377,5 @@ bool test_ur(void) {
           return false;
         }
     }
-    {
-        // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-007-hdkey.md#exampletest-vector-2
-        String path = F("m/44h/1h/1h/0/1");
-        String derived_key = F("tpubDHW3GtnVrTatx38EcygoSf9UhUd9Dx1rht7FAL8unrMo8r2NWhJuYNqDFS7cZFVbDaxJkV94MLZAr86XFPsAPYcoHWJ7sWYsrmHDw5sKQ2K");
-        String cbor_expected = F("a4035821026fe2355745bb2db3630bbc80ef5d58951c963c841f54170ba6e5c12be7fc12a6045820ced155c72456255881793514edc5"
-                               "bd9447e7f74abb88c6d6b6480fd016ee8c8505d90131a1020106d90130a2018a182cf501f501f500f401f4021ae9181cf3");
-        String ur_expect = F("ur:crypto-hdkey/oxaxhdclaojlvoechgferkdpqdiabdrflawshlhdmdcemtfnlrctghchbdolvwsednvdztbgolaahdcxtot"
-                             "tgostdkhfdahdlykkecbbweskrymwflvdylgerkloswtbrpfdbsticmwylklpahtaadehoyaoadamtaaddyoeadlecsdwykadyk"
-                             "adykaewkadwkaocywlcscewfiavorkat");
-        uint32_t parent_fingerprint = 3910671603;
-        ext_key xpub;
-        uint8_t *cbor_xpub;
-        String xpub_ur;
-
-        // STUB derivation path
-        keystore.check_derivation_path(path.c_str(), true);
-
-        ret = bip32_key_from_base58(derived_key.c_str(), &xpub);
-        if (ret != WALLY_OK) {
-            Serial.println(F("bip32_key_from_base58 failed"));
-            return false;
-        }
-
-        size_t cbor_xpub_size = cbor_encode_hdkey_xpub(&xpub, &cbor_xpub, parent_fingerprint, keystore.derivation, keystore.derivationLen);
-        if (cbor_xpub_size == 0) {
-            Serial.println(F("cbor_encode_hdkey_xpub failed"));
-            return false;
-        }
-
-        bool retval = compare_bytes_with_hex(cbor_xpub, cbor_xpub_size, cbor_expected.c_str());
-        if (retval == false) {
-            Serial.println(F("key in cbor format does not match expected value"));
-            return false;
-        }
-
-        retval = ur_encode("crypto-hdkey", cbor_xpub, cbor_xpub_size, xpub_ur);
-        if (retval == false) {
-            Serial.println(F("ur encode: crypto-hdkey failed"));
-            return false;
-        }
-
-        if (ur_expect != xpub_ur) {
-            Serial.println(F("ur encode: crypto-hdkey wrong"));
-            //Serial.println(xpub_ur);
-            return false;
-        }
-        free(cbor_xpub);
-
-        // CLEAN STUB
-        stdDerivation stdDer = SINGLE_NATIVE_SEGWIT;
-        keystore.save_standard_derivation_path(&stdDer, network.get_network());
-    }
     return true;
 }
