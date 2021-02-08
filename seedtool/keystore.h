@@ -72,9 +72,9 @@ class Keystore
     bool save_standard_derivation_path(stdDerivation *path, NetwtorkType network);
 
     /**
-     *  @brief is the last saved derivation path a standard one
+     *  @brief is the last saved derivation path a standard one and which one
      */
-    bool is_standard_derivation_path(void);
+    bool is_standard_derivation_path(const stdDerivation *p = NULL);
 
     /**
      * @brief check if bip32 index is hardened

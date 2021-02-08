@@ -170,7 +170,9 @@ bool Keystore::save_standard_derivation_path(stdDerivation *path, NetwtorkType n
       return ret;
 }
 
-bool Keystore::is_standard_derivation_path(void) {
+bool Keystore::is_standard_derivation_path(const stdDerivation *p) {
+    if (p != NULL)
+        p = &std_derivation_path;
     return standard_derivation_path;
 }
 

@@ -49,6 +49,76 @@ bool crypto_keypath(class CborWriter &writer, uint32_t *derivation, uint32_t der
       writer.writeInt(derivation_len);
 }
 
+size_t cbor_encode_output_descriptor(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint, uint32_t *derivation, uint32_t derivation_len) {
+
+    // ATM lethekit only supports single native segwit output descriptor (wpkh)
+    stdDerivation path;
+    if (keystore.is_standard_derivation_path(&path) != true && path != SINGLE_NATIVE_SEGWIT) {
+        Serial.println("error: only single native segwit supported atm!");
+        return 0;
+    }
+
+    CborDynamicOutput output;
+    CborWriter writer(output);
+
+    writer.writeTag(404); // witness-public-key-hash
+    writer.writeTag(303); // crypto-hdkey
+
+    writer.writeMap(5);
+
+    writer.writeInt(3);
+    writer.writeBytes(key->pub_key, sizeof(key->pub_key));
+    writer.writeInt(4);
+    writer.writeBytes(key->chain_code, sizeof(key->chain_code));
+
+    // origin: crypto-keypath
+    writer.writeInt(6);
+    writer.writeTag(304);
+    writer.writeMap(2);
+      writer.writeInt(1);
+      writer.writeArray(derivation_len*2);
+      uint32_t indx;
+      for (size_t i=0; i< derivation_len; i++) {
+        indx = derivation[i] & ~BIP32_INITIAL_HARDENED_CHILD;
+        writer.writeInt(indx);
+        if (keystore.is_bip32_indx_hardened(derivation[i])) {
+          uint32_t cbor_true = 21;
+          writer.writeSpecial(cbor_true);
+        }
+        else {
+          uint32_t cbor_false = 20;
+          writer.writeSpecial(cbor_false);
+        }
+      }
+      writer.writeInt(2);
+      writer.writeInt(keystore.fingerprint);
+
+    // children: crypto-keypath
+    writer.writeInt(7);
+    writer.writeTag(304);
+    writer.writeMap(1);
+      writer.writeInt(1);
+      writer.writeArray(2*2);
+
+
+      uint32_t cbor_false = 20;
+      uint32_t cbor_true = 21;
+      writer.writeInt(0); // for now show only "receive" descriptor supported, without "change" descriptor
+      writer.writeSpecial(cbor_false);
+
+      writer.writeArray(0);  // denotes a star /*  (for all children)
+      writer.writeSpecial(cbor_false);
+
+
+    writer.writeInt(8);
+    writer.writeInt(parent_fingerprint);
+
+    *buff_out = (uint8_t *)malloc(output.getSize());
+    memcpy(*buff_out, output.getData(), output.getSize());
+
+    return output.getSize();
+}
+
 size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint, uint32_t *derivation, uint32_t derivation_len) {
 
     CborDynamicOutput output;
@@ -80,7 +150,6 @@ size_t cbor_encode_hdkey_xpub(struct ext_key *key, uint8_t **buff_out, uint32_t 
     memcpy(*buff_out, output.getData(), output.getSize());
 
     return output.getSize();
-
 }
 
 size_t cbor_encode_hdkey_xpriv(struct ext_key *key, uint8_t **buff_out, uint32_t parent_fingerprint, uint32_t *derivation, uint32_t derivation_len) {
@@ -321,7 +390,10 @@ bool ur_encode_output_descriptor(String &ur, uint32_t *derivation, uint32_t deri
     writer.writeTag(404); // @FIXME currently fixed ton only wpkh (404)
 
     (void)bip32_key_from_parent_path(&keystore.root, derivation, derivation_len, 0, &child_key);
-    cbor_size = cbor_encode_hdkey_xpub(&child_key, &buff_out, parent_fingerprint, derivation, derivation_len);
+    cbor_size = cbor_encode_output_descriptor(&child_key, &buff_out, parent_fingerprint, derivation, derivation_len);
+
+    Serial.println("cbor output descriptor:");
+    print_hex(buff_out, cbor_size);
 
     uint8_t *cbor_all = (uint8_t *)malloc(cbor_size + output.getSize());
     memcpy(cbor_all, output.getData(), output.getSize());
