@@ -19,7 +19,7 @@ enum UIState {
     DISPLAY_BIP39,
     CONFIG_SSKR,
     DISPLAY_SSKR,
-    DISPLAY_XPUBS,
+    DISPLAY_KEYS,
     DERIVATION_PATH,
     SET_NETWORK,
     SET_XPUB_FORMAT,
@@ -81,7 +81,8 @@ struct pg_xpub_menu_t {
 struct pg_set_xpub_options_t {
     bool slip132;
     bool show_derivation_path;
-    bool current; // currently selected option out of 2
+    bool show_private_key;
+    uint8_t current; // currently selected option out of 3
 };
 
 struct pg_set_seed_format_t {
@@ -90,6 +91,10 @@ struct pg_set_seed_format_t {
 
 struct pg_set_sskr_format_t {
     format sskr_format;
+};
+
+struct pg_seedless_menu_t {
+    bool allow_invalid_mnemonic;
 };
 
 #endif // USERINTERFACE_H

@@ -61,6 +61,10 @@ public:
     // Returns NULL if restore fails (bad BIP39 checksum).
     Seed * restore_seed() const;
 
+    // fix_bip39_checksum is only intended for when user wants
+    // to generate seed from bip39 words
+    void fix_bip39_checksum(void) { bip39_append_checksum(ctx); }
+
     // we need to have full menmonic words saved as string
     // which is needed to calculate mnemonic seed
     String get_mnemonic_as_string();

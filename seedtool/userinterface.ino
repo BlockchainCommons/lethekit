@@ -74,14 +74,15 @@ int const YM_FMB12 = 4;	// y-margin
 bool clear_full_window = true;
 
 // Pages
-struct pg_show_address_t pg_show_address{0, ur};
-struct pg_export_wallet_t pg_export_wallet{ur};
+struct pg_show_address_t pg_show_address{0, qr_ur};
+struct pg_export_wallet_t pg_export_wallet{qr_ur};
 struct pg_derivation_path_t pg_derivation_path{true, SINGLE_NATIVE_SEGWIT};
-struct pg_set_xpub_format_t pg_set_xpub_format{ur};
+struct pg_set_xpub_format_t pg_set_xpub_format{qr_ur};
 struct pg_xpub_menu_t pg_xpub_menu = {false};
-struct pg_set_xpub_options_t pg_set_xpub_options = {false, false};
-struct pg_set_seed_format_t pg_set_seed_format = {ur};
+struct pg_set_xpub_options_t pg_set_xpub_options = {false, false, 0};
+struct pg_set_seed_format_t pg_set_seed_format = {qr_ur};
 struct pg_set_sskr_format_t pg_set_sskr_format = {ur};
+struct pg_seedless_menu_t pg_seedless_menu = {false};
 
 Point text_center(const char * txt) {
     int16_t tbx, tby; uint16_t tbw, tbh;
@@ -361,7 +362,7 @@ void self_test() {
         if (ndx < numtests)
             last_test_passed = selftest_testrun(ndx);
     }
-    delay(1000);		// short pause ..
+    delay(500);		// short pause ..
     hw_green_led(LOW);	// Green LED back off until there is a seed.
     g_uistate = INTRO_SCREEN;
 }
@@ -442,12 +443,12 @@ void seedless_menu() {
         g_display->setTextColor(GxEPD_BLACK);
 
         int xx = xoff;
-        int yy = yoff + (H_FSB12 + YM_FSB12);
+        int yy = (H_FSB12 + YM_FSB12);
         g_display->setFont(&FreeSansBold12pt7b);
         g_display->setCursor(xx, yy);
         g_display->println("No Seed");
 
-        yy = yoff + 3*(H_FSB9 + YM_FSB9);
+        yy = 3*(H_FSB9 + YM_FSB9);
         g_display->setFont(&FreeSansBold9pt7b);
         g_display->setCursor(xx, yy);
         g_display->println("A - Generate Seed");
@@ -457,6 +458,9 @@ void seedless_menu() {
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         g_display->println("C - Restore SSKR");
+        yy += H_FSB9 + 2*YM_FSB9;
+        g_display->setCursor(xx, yy);
+        g_display->println("D - Complete BIP39");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         // TODO: only for demonstration purposes, to be deleted
@@ -484,16 +488,32 @@ void seedless_menu() {
             g_uistate = RESTORE_BIP39;
             return;
         case 'C':
+            pg_seedless_menu.allow_invalid_mnemonic = false;
             g_sskr_restore = new SSKRShareSeq();
             g_uistate = RESTORE_SSKR;
             return;
         case '0':
             g_uistate = UR_DEMO;
             return;
+        case 'D':
+            // allow inputting invalid mnemonic
+            pg_seedless_menu.allow_invalid_mnemonic = true;
+            g_bip39 = new BIP39Seq();
+            g_uistate = RESTORE_BIP39;
+            return;
         default:
             break;
         }
     }
+}
+
+void pendingCallback(const void*)
+{
+  String txt = "One moment...";
+  Point p = text_center(txt.c_str());
+  g_display->fillScreen(GxEPD_WHITE);
+  g_display->setCursor(p.x, p.y);
+  g_display->println(txt);
 }
 
 void generate_seed() {
@@ -591,7 +611,7 @@ void generate_seed() {
             // This will take a few seconds; clear the screen
             // immediately to let the user know something is
             // happening ..
-            full_window_clear();
+            g_display->drawPaged(pendingCallback, 0);
 
             if (g_bip39)
                 delete g_bip39;
@@ -725,7 +745,7 @@ void seedy_menu() {
         g_display->println("B - Generate SSKR");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
-        g_display->println("C - Display XPUB");
+        g_display->println("C - Display keys");
         yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         g_display->println("D - Display seed");
@@ -762,7 +782,7 @@ void seedy_menu() {
             return;
         case 'C':
             clear_full_window = false;
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case '0':
             clear_full_window = false;
@@ -1365,6 +1385,113 @@ struct BIP39WordlistState : WordListState {
     }
 };
 
+
+// returns true if user wants bad checksum to get automatically fixed
+bool complete_bip39_checksum(void) {
+
+    int xoff = 6;
+    int yoff = 6;
+
+    g_display->firstPage();
+    do
+    {
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
+
+        int xx = xoff;
+        int yy = yoff + (H_FSB9 + YM_FSB9);
+        g_display->setFont(&FreeSansBold9pt7b);
+        g_display->setCursor(xx, yy);
+        display_printf("    Complete BIP39 \n          sentence?");
+        yy += H_FSB9 + YM_FSB9+20;
+
+        g_display->setFont(&FreeMono9pt7b);
+        g_display->setCursor(xx, yy);
+        display_long_text(yy, "Confirm only if  your words were  generated by a   random procedure,i.e. tossing coi-ns.");
+
+        yy = 195; // Absolute, stuck to bottom
+        g_display->setFont(&FreeMono9pt7b);
+        String right_option = "Ok #";
+        int x_r = text_right(right_option.c_str());
+        g_display->setCursor(x_r, yy);
+        g_display->println(right_option);
+
+        String left_option = "Cancel *";
+        g_display->setCursor(0, yy);
+        g_display->println(left_option);
+    }
+    while (g_display->nextPage());
+
+    while (true) {
+        char key;
+        do {
+            key = g_keypad.getKey();
+        } while (key == NO_KEY);
+        switch (key) {
+        case '*':
+            return false;
+        case '#':
+            return true;
+        default:
+            break;
+        }
+    }
+}
+
+bool warning_bip39_checksum(void) {
+
+    int xoff = 6;
+    int yoff = 6;
+
+    g_display->firstPage();
+    do
+    {
+        g_display->setPartialWindow(0, 0, 200, 200);
+        // g_display->fillScreen(GxEPD_WHITE);
+        g_display->setTextColor(GxEPD_BLACK);
+
+        int xx = xoff;
+        int yy = yoff + (H_FSB9 + YM_FSB9);
+        g_display->setFont(&FreeSansBold9pt7b);
+        Point p = text_center("Warning");
+        g_display->setCursor(p.x, yy);
+        display_printf("Warning");
+        yy += H_FSB9 + YM_FSB9+20;
+
+        g_display->setFont(&FreeMono9pt7b);
+        g_display->setCursor(xx, yy);
+        display_long_text(yy, "Have you updated the last word on your sheet to ma-tch the one gene-rated by Lethe-\n Kit?");
+
+        yy = 195; // Absolute, stuck to bottom
+        g_display->setFont(&FreeMono9pt7b);
+        String right_option = "Yes #";
+        int x_r = text_right(right_option.c_str());
+        g_display->setCursor(x_r, yy);
+        g_display->println(right_option);
+
+        String left_option = "No *";
+        g_display->setCursor(0, yy);
+        g_display->println(left_option);
+    }
+    while (g_display->nextPage());
+
+    while (true) {
+        char key;
+        do {
+            key = g_keypad.getKey();
+        } while (key == NO_KEY);
+        switch (key) {
+        case '*':
+            return false;
+        case '#':
+            return true;
+        default:
+            break;
+        }
+    }
+}
+
 void restore_bip39() {
     BIP39WordlistState state(g_bip39, BIP39Seq::WORD_COUNT);
     state.set_words((uint16_t *)NULL);
@@ -1493,12 +1620,15 @@ void restore_bip39() {
             break;
         case '#':	// done
             {
+                g_display->drawPaged(pendingCallback, 0);
                 uint16_t bip39_words[BIP39Seq::WORD_COUNT];
                 for (size_t ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii)
                     bip39_words[ii] = state.wordndx[ii];
                 BIP39Seq * bip39 = BIP39Seq::from_words(bip39_words);
                 Seed * seed = bip39->restore_seed();
                 if (seed) {
+                    if (pg_seedless_menu.allow_invalid_mnemonic && warning_bip39_checksum() == false)
+                        break;
                     serial_assert(!g_master_seed);
                     g_master_seed = seed;
                     g_master_seed->log();
@@ -1507,7 +1637,15 @@ void restore_bip39() {
                     digitalWrite(GREEN_LED, HIGH);		// turn on green LED
                     g_uistate = SEEDY_MENU;
                     return;
-                } else {
+                } else if (pg_seedless_menu.allow_invalid_mnemonic) {
+                    if (complete_bip39_checksum() == true) {
+                      bip39->fix_bip39_checksum();
+                      for (size_t ii = 0; ii < BIP39Seq::WORD_COUNT; ++ii)
+                          state.wordndx[ii] = bip39->get_word(ii);
+                    }
+                    delete bip39;
+                }
+                else {
                     delete bip39;
                     String lines[7];
                     size_t nlines = 0;
@@ -1518,7 +1656,7 @@ void restore_bip39() {
                     lines[nlines++] = "list carefully";
                     lines[nlines++] = "";
                     lines[nlines++] = "Press # to revisit";
-                    interstitial_error(lines, nlines);
+                    interstitial_error(lines, nlines);       
                 }
                 break;
             }
@@ -1885,14 +2023,14 @@ void derivation_path(void) {
           g_display->setCursor(p.x, yy);
           g_display->println(title);
 
-          yy += 50;
-          display_text("A: native segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NATIVE_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
 
-          yy += 30;
-          display_text("B: nested segwit", x_off, yy, pg_derivation_path.std_derivation == SINGLE_NESTED_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
+          display_text("A: native segwit", x_off, yy += 50, pg_derivation_path.std_derivation == SINGLE_NATIVE_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
 
-          yy += 30;
-          display_text("C: custom", x_off, yy, pg_derivation_path.is_standard_derivation == false, 0);
+          display_text("B: nested segwit", x_off, yy += 30, pg_derivation_path.std_derivation == SINGLE_NESTED_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
+
+          display_text("C: cosigner", x_off, yy += 30, pg_derivation_path.std_derivation == MULTISIG_NATIVE_SEGWIT && pg_derivation_path.is_standard_derivation, 0);
+
+          display_text("D: custom", x_off, yy += 30, pg_derivation_path.is_standard_derivation == false, 0);
 
           yy = 195; // Absolute, stuck to bottom
           g_display->setFont(&FreeMono9pt7b);
@@ -1914,10 +2052,10 @@ void derivation_path(void) {
 
       switch (key) {
         case '#':
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case '*':
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case 'A': {
             pg_derivation_path.std_derivation = SINGLE_NATIVE_SEGWIT;
@@ -1928,7 +2066,7 @@ void derivation_path(void) {
                 return;
               }
             }
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
         case 'B': {
             pg_derivation_path.std_derivation = SINGLE_NESTED_SEGWIT;
@@ -1939,9 +2077,20 @@ void derivation_path(void) {
                 return;
               }
             }
-            g_uistate = DISPLAY_XPUBS;
+            g_uistate = DISPLAY_KEYS;
             return;
-        case 'C':
+        case 'C': {
+            pg_derivation_path.std_derivation = MULTISIG_NATIVE_SEGWIT;
+            pg_derivation_path.is_standard_derivation = true;
+            ret = keystore.save_standard_derivation_path(&pg_derivation_path.std_derivation, network.get_network());
+            if (ret == false) {
+                g_uistate = ERROR_SCREEN;
+                return;
+              }
+            }
+            g_uistate = DISPLAY_KEYS;
+            return;
+        case 'D':
             // slip132 option is not available for custom derivation paths
             pg_set_xpub_options.slip132 = false;
             pg_derivation_path.is_standard_derivation = false;
@@ -2025,7 +2174,7 @@ void custom_derivation_path(void) {
                     g_uistate = ERROR_SCREEN;
                     return;
                 }
-                g_uistate = DISPLAY_XPUBS;
+                g_uistate = DISPLAY_KEYS;
                 return;
             }
             break;
@@ -2101,7 +2250,7 @@ void set_xpub_format() {
     do {
         key = g_keypad.getKey();
     } while (key == NO_KEY);
-    g_uistate = DISPLAY_XPUBS;
+    g_uistate = DISPLAY_KEYS;
     clear_full_window = false;
     switch (key) {
     case 'A':
@@ -2145,18 +2294,27 @@ void set_xpub_options() {
         g_display->setCursor(xx, yy);
         g_display->println("slip132: ");
 
-        display_text(pg_set_xpub_options.slip132 ? "True" : "False", xx + 80, yy, pg_set_xpub_options.current == true);
+        display_text(pg_set_xpub_options.slip132 ? "True" : "False", xx + 80, yy, pg_set_xpub_options.current == 0);
         g_display->setTextColor(GxEPD_BLACK);
 
-        yy += H_FSB9 + YM_FSB9;
+        //yy += H_FSB9 + YM_FSB9;
 
 
-        yy += H_FSB9 + 2*YM_FSB9 + 5;
+        yy += H_FSB9 + 2*YM_FSB9;
         g_display->setCursor(xx, yy);
         g_display->println("show path: ");
 
-        display_text(pg_set_xpub_options.show_derivation_path ? "True" : "False", xx + 100, yy, pg_set_xpub_options.current == false);
+        display_text(pg_set_xpub_options.show_derivation_path ? "True" : "False", xx + 100, yy, pg_set_xpub_options.current == 1);
         g_display->setTextColor(GxEPD_BLACK);
+
+
+        yy += H_FSB9 + 2*YM_FSB9;
+        g_display->setCursor(xx, yy);
+        g_display->println("show privkey: ");
+
+        display_text(pg_set_xpub_options.show_private_key ? "True" : "False", xx + 130, yy, pg_set_xpub_options.current == 2);
+        g_display->setTextColor(GxEPD_BLACK);
+
 
         yy = 195; // Absolute, stuck to bottom
         g_display->setFont(&FreeMono9pt7b);
@@ -2175,14 +2333,16 @@ void set_xpub_options() {
     do {
         key = g_keypad.getKey();
     } while (key == NO_KEY);
-    g_uistate = DISPLAY_XPUBS;
+    g_uistate = DISPLAY_KEYS;
     clear_full_window = false;
     switch (key) {
     case 'A':
-        if (pg_set_xpub_options.current)
+        if (pg_set_xpub_options.current == 0)
             pg_set_xpub_options.slip132 = !pg_set_xpub_options.slip132;
-        else
+        else if (pg_set_xpub_options.current == 1)
             pg_set_xpub_options.show_derivation_path = !pg_set_xpub_options.show_derivation_path;
+        else if (pg_set_xpub_options.current == 2)
+            pg_set_xpub_options.show_private_key = !pg_set_xpub_options.show_private_key;
         g_uistate = SET_XPUB_OPTIONS;
         break;
     case '*':
@@ -2190,7 +2350,9 @@ void set_xpub_options() {
     case '#':
         return;
     case '1':
-        pg_set_xpub_options.current = !pg_set_xpub_options.current;
+        pg_set_xpub_options.current++;
+        if (pg_set_xpub_options.current > 2)
+            pg_set_xpub_options.current = 0;
         g_uistate = SET_XPUB_OPTIONS;
         break;
     default:
@@ -2199,9 +2361,11 @@ void set_xpub_options() {
     }
 }
 
-void display_xpub(void) {
+void display_keys(void) {
     ext_key key;
     String ur_string;
+    String ur_xpriv_string;
+    String ur_xpub_string;
     String encoding_type;
     const int nrows = 5;
     int scroll = 0;
@@ -2215,12 +2379,13 @@ void display_xpub(void) {
         return;
     }
 
-    ret = keystore.get_xpub(&key);
+    ret = keystore.get_xpriv(&key);
     if (ret == false) {
         g_uistate = ERROR_SCREEN;
         return;
     }
 
+    char *hdkey = NULL;
     char *xpub = NULL;
     ret = keystore.xpub_to_base58(&key, &xpub, pg_set_xpub_options.slip132);
     if (ret == false) {
@@ -2228,13 +2393,36 @@ void display_xpub(void) {
         return;
     }
 
-    ret = ur_encode_hd_pubkey_xpub(ur_string, keystore.derivation, keystore.derivationLen);
+    char *xpriv = NULL;
+    ret = keystore.xpriv_to_base58(&key, &xpriv, pg_set_xpub_options.slip132);
+    if (ret == false) {
+        g_uistate = ERROR_SCREEN;
+        return;
+    }
+
+    ret = ur_encode_hd_pubkey_xpub(ur_xpub_string, keystore.derivation, keystore.derivationLen);
+    if (ret == false) {
+        g_uistate = ERROR_SCREEN;
+        return;
+    }
+
+    ret = ur_encode_hd_pubkey_xpriv(ur_xpriv_string, keystore.derivation, keystore.derivationLen);
     if (ret == false) {
         g_uistate = ERROR_SCREEN;
         return;
     }
 
     while (true) {
+
+     if (pg_set_xpub_options.show_private_key) {
+         ur_string = ur_xpriv_string;
+         hdkey = xpriv;
+     }
+     else {
+         ur_string = ur_xpub_string;
+         hdkey = xpub;
+     }
+
       g_display->firstPage();
       do
       {
@@ -2242,7 +2430,8 @@ void display_xpub(void) {
           g_display->fillScreen(GxEPD_WHITE);
           g_display->setTextColor(GxEPD_BLACK);
 
-          const char * title = "Master pubkey";
+          const char * title = pg_set_xpub_options.show_private_key ? "Xpriv": "Xpub";
+
           int yy = 18;
           g_display->setFont(&FreeSansBold9pt7b);
           Point p = text_center(title);
@@ -2256,7 +2445,7 @@ void display_xpub(void) {
                 if (pg_set_xpub_options.show_derivation_path) {
                     char fingerprint[9] = {0};
                     sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
-                    String txt = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub);
+                    String txt = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(hdkey);
                     for (int k = 0; k < nrows; ++k) {
                         g_display->setCursor(5, yy);
                         display_printf("%s", txt.substring((k + scroll)*scroll_strlen, (1+k + scroll)*scroll_strlen).c_str());
@@ -2264,18 +2453,18 @@ void display_xpub(void) {
                     }
                 }
                 else {
-                    display_long_text(yy, xpub);
+                    display_long_text(yy, hdkey);
                 }
                 break;
             case qr_text:
                 if (pg_set_xpub_options.show_derivation_path) {
                     char fingerprint[9] = {0};
                     sprintf(fingerprint, "%08x", (unsigned int)keystore.fingerprint);
-                    String fing = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(xpub);
+                    String fing = "[" + String(fingerprint) + keystore.get_derivation_path().substring(1) + "]" + String(hdkey);
                     displayQR((char *)fing.c_str());
                 }
                 else {
-                    displayQR(xpub);
+                    displayQR(hdkey);
                 }
                 break;
             case ur: {
@@ -2320,7 +2509,7 @@ void display_xpub(void) {
              left_option = "<-1/7->";
              g_display->println(left_option);
          }
-         else if (pg_set_xpub_format.current == text || pg_set_xpub_format.current == qr_text) {
+         else {//if (pg_set_xpub_format.current == text || pg_set_xpub_format.current == qr_text) {
              left_option = "Opt. B";
              g_display->setCursor(0, yy);
              g_display->println(left_option);
@@ -3181,8 +3370,8 @@ void ui_dispatch() {
     case DISPLAY_SSKR:
         display_sskr();
         break;
-    case DISPLAY_XPUBS:
-        display_xpub();
+    case DISPLAY_KEYS:
+        display_keys();
         break;
     case DERIVATION_PATH:
         derivation_path();

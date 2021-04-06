@@ -28,14 +28,15 @@ application will be built and uploaded to your device.
 
 ![](images/arduino-upload.png)
 
-You should see LetheKit refreshing its screen and starting selftest.
+You should see LetheKit refreshing its screen and starting selftest. Selftest can be skipped by holding any key.
+on the keypad.
 
 *Note:* once you enter the bootloader mode it may take some moments for your system
 to recognize your device and port again. Uploading immediately may result in error.
 
-### Use *seedtool*
+### Next steps
 
-See the [Seedtool Application Instructions](../README.md) for information on using the *seedtool*.
+Proceed to [Seedtool Application Instructions](../README.md) for information on using the *seedtool*.
 
 ### Entering Bootloader
 

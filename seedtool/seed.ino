@@ -159,8 +159,6 @@ uint8_t const * SSKRShareSeq::get_share(size_t ndx) const {
 }
 
 void SSKRShareSeq::set_share(size_t ndx, uint8_t const * share, size_t len) {
-    Serial.println("** **");
-    Serial.println(ndx); Serial.println(nshares);
     serial_assert(ndx < nshares);
     if (shares[ndx])
         free(shares[ndx]);
@@ -177,10 +175,6 @@ String SSKRShareSeq::get_share_strings(size_t ndx) const {
 Seed * SSKRShareSeq::restore_seed() const {
     uint8_t seed_data[Seed::SIZE];
 
-    Serial.println("restore seed");
-    Serial.println(bytes_in_each_share);
-    Serial.println(nshares);
-
     last_rv = sskr_combine(const_cast<const uint8_t **>(shares),
                              bytes_in_each_share,
                              nshares,
@@ -193,13 +187,13 @@ Seed * SSKRShareSeq::restore_seed() const {
 class CborListen : public CborListener {
   public:
     void OnInteger(int32_t value){ };
-    void OnBytes(unsigned char *data, unsigned int size) {Serial.println("bytes"); memcpy(bytes, data, size); len = size;};
+    void OnBytes(unsigned char *data, unsigned int size) { memcpy(bytes, data, size); len = size; };
     void OnString(String &str) {};
     void OnArray(unsigned int size) {};
     void OnMap(unsigned int size) {};
     void OnTag(uint32_t tag) { tag_ = tag; };
-    void OnSpecial(uint32_t code) {Serial.println("tag");};
-    void OnError(const char *error) {Serial.println("error");};
+    void OnSpecial(uint32_t code) {};
+    void OnError(const char *error) {};
 
     // we are gonna collect the tag and bytes
     uint32_t tag_;

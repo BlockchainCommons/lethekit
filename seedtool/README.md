@@ -6,24 +6,31 @@ HD wallet master seeds using
 [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
 and
 [SSKR](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md)
-formats. In addition, it supports viewing XPUB keys and addresses in different formats.
+formats. In addition, it supports viewing extended keys and addresses in different formats.
 
-## Compile and Upload Instruction
 
-Please see the [Seedtool Installation Instructions](doc/build.md).
+This guide assumes you have successfully completed with [Seedtool Installation Instructions](doc/build.md).
 
 ## "No Seed" Functions
 
-There are three ways to insert a key into the *seedtool*:
+There are 4 ways to insert a seed into the *seedtool*:  
+A - Generate seed with Dice  
+B - Restore seed from BIP39  
+C - Restore seed from SSKR  
+D - Complete a randomly constructed BIP39 sentence
 
 ![No Seed Menu](doc/images/no-seed.png)
 
-### Key Generation with Dice
+### Seed Generation with Dice
 
 By rolling dice and typing the values, you can gather enough auditable entropy to generate a secure master seed. Rolling 50 dice gathers
 roughly 128 bits of entropy.
 
 ![Generate Seed](doc/images/generate-seed.png)
+
+If you press C, 128 bits of TRNG entropy will be mixed in:
+
+![Generate Seed](doc/images/generate-seed-trng.png)
 
 ### BIP-39 Key Recovery
 
@@ -41,10 +48,14 @@ mnemonic passphrase which will allow you to use it with most wallets.
 
 ![SSKR Recovery Menu](doc/images/sskr-restore-menu.png) ![SSKR Share Entry](doc/images/sskr-share-restore.png)
 
+### Completing a randomly constructed BIP39 sentence
+
+This is a way to generate your own seed without relying on hardware or software. See [instructions](doc/bip39_sentence_completion.md)
+
 ## Functions with a Seed
 
 Once you have a seed through any of the prior flows, you can create
-BIP-39 and SSKR mnemonic passphrases. In addition you can view extended public
+BIP-39 and SSKR mnemonic passphrases. In addition, you can view extended public and private
 keys, wallet addresses etc. 
 
 ![Seed Present Menu](doc/images/seed-present.png)
@@ -67,10 +78,10 @@ You can choose among different formats:
 ![SSKR Share Format](doc/images/sskr-share-format.png)
 ![SSKR Share View UR](doc/images/sskr-share-view-ur.png) ![SSKR Share View QRUR](doc/images/sskr-share-view-qrur.png)
 
-### Displaying XPUBs
+### Displaying Keys
 
-Extended public keys (XPUBs) can be shown in different formats (base58, UR, QR) with different
-options (slip132, with derivation path). Derivation path can be manually set.
+Extended public and private keys (XPUBs and XPRIVs) can be shown in different formats (base58, UR, QR) with different
+options: slip132, with derivation path and privkey. If privkey is selected, an extended private key (XPRIV) is shown. Derivation path can be manually set or chosen among standard ones: *native segwit*, *nested segwit* and *cosigner*. Cosigner is the one that can be used in multisignature setups.
 
 ![XPUB BASE58](doc/images/xpub_base58.png)
 ![XPUB OPTIONS](doc/images/xpub_options.png)
@@ -98,6 +109,13 @@ A wallet can be exported in the 4 different formats (text, QR, UR and QR-UR):
 
 ![wallet export](doc/images/wallet_export.png) ![wallet export text](doc/images/wallet_export_text.png)
 ![wallet export text](doc/images/wallet_export_qr.png) ![wallet export text](doc/images/wallet_export_qrur.png)
+
+### Setting network
+
+By pressing 1 in `Seed Present` menu, you can choose among `mainnet`, `testnet` and `regtest`:
+
+![wallet export text](doc/images/network.png)
+
 
 ## Common Workflows
 

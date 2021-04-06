@@ -10,7 +10,7 @@ enum NetwtorkType {
 class Network
 {
     public:
-    Network(NetwtorkType network=REGTEST);
+    Network(NetwtorkType network=MAINNET);
     String as_string();
     void set_network(NetwtorkType type);
     NetwtorkType get_network();

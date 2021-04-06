@@ -11,7 +11,8 @@
 
 enum stdDerivation {
   SINGLE_NATIVE_SEGWIT,
-  SINGLE_NESTED_SEGWIT
+  SINGLE_NESTED_SEGWIT,
+  MULTISIG_NATIVE_SEGWIT
 };
 
 
@@ -37,11 +38,16 @@ class Keystore
     String get_derivation_path(void);
 
     /**
-     * @brief  get xpub key based on the last derivation_path set by user
+     * @brief  get xpriv key based on the last derivation_path set by user
      *         or default one if none set
      * @pre    update_root_key()
      */
-    bool get_xpub(ext_key *key_out);
+    bool get_xpriv(ext_key *key_out);
+
+    /**
+     * @brief  convert hdkey to base58
+     */
+    bool xpriv_to_base58(ext_key *key, char **output, bool slip132);
 
     /**
      * @brief  convert hdkey to base58
@@ -66,9 +72,9 @@ class Keystore
     bool save_standard_derivation_path(stdDerivation *path, NetwtorkType network);
 
     /**
-     *  @brief is the last saved derivation path a standard one
+     *  @brief is the last saved derivation path a standard one and which one
      */
-    bool is_standard_derivation_path(void);
+    bool is_standard_derivation_path(const stdDerivation *p = NULL);
 
     /**
      * @brief check if bip32 index is hardened

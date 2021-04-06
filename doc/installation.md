@@ -47,7 +47,7 @@ The installation script creates symbolic links in
 `Arduino/Libraries` which point back to the appropriate
 dependencies in `$LK_ROOT/deps`.
 
-### Notes
+#### Notes
 
 It's safe to re-run the installation at any time.
 
@@ -58,6 +58,10 @@ script again:
 $ cd bc-lethekit
 $ export LK_ROOT=`pwd` && $LK_ROOT/scripts/install-lethekit $LK_ROOT
 ```
+
+### Next steps
+
+Proceed to [Seedtool Installation Instructions](../seedtool/doc/build.md) to compile and install the `seedtool` firmware on your LetheKit.
 
 <!-- TODO
 If you want to uninstall LetheKit use the installation script with
