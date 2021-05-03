@@ -11,7 +11,7 @@ git submodule update --init --recursive
 function usage {
     echo "usage: $0 <lethkit-root>"
     echo "  example:"
-    echo "   $0 ~/src/bc-lethekit"
+    echo "   $0 ~/src/lethekit"
 }
 
 # https://medium.com/@Drew_Stokes/bash-argument-parsing-54f3b81a6a8f

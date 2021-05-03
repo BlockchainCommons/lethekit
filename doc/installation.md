@@ -38,8 +38,8 @@ This is an excerpt from [SAMD51 Thing Plus Hookup Guide](https://learn.sparkfun.
 Clone the git repository anywhere you like and install LetheKit:
 
 ```bash
-$ git clone --recursive https://github.com/BlockchainCommons/bc-lethekit
-$ cd bc-lethekit
+$ git clone --recursive https://github.com/BlockchainCommons/lethekit
+$ cd lethekit
 $ export LK_ROOT=`pwd` && $LK_ROOT/scripts/install-lethekit $LK_ROOT
 ```
 
@@ -55,7 +55,7 @@ If you move your LetheKit source tree or pull new changes in from Github, just r
 script again:
 
 ```bash
-$ cd bc-lethekit
+$ cd lethekit
 $ export LK_ROOT=`pwd` && $LK_ROOT/scripts/install-lethekit $LK_ROOT
 ```
 

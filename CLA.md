@@ -8,7 +8,7 @@ E-Mail: `$email`
 
 Legal Jurisdiction: Wyoming, United States of America
 
-Project: https://github.com/BlockchainCommons/bc-lethekit
+Project: https://github.com/BlockchainCommons/lethekit
 
 Date: `$date`
 
