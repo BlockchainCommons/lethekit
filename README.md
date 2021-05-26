@@ -26,6 +26,17 @@ The following files contain everything you need to set up your *LetheKit* hardwa
 
 Your LetheKit can be charged or recharged with a micro-USB connection.
 
+## Gordian Principles
+
+**Gordian LetheKit** is a hardware exemplar meant to display the [Gordian Principles](https://github.com/BlockchainCommons/Gordian#gordian-principles), which are philosophical and technical underpinnings to Blockchain Commons' Gordian technology. This includes:
+
+* **Independence.** LetheKit ensures that you're in total control of your seeds.
+* **Privacy.** LetheKit is totally offline.
+* **Resilience.** LetheKit depends on you for its resilience, since you must back up your words or codes.
+* **Openness.** LetheKit communicates through airgaps via URs and QRs, for maximum interoperability.
+
+Blockchain Commons apps do not phone home and do not run ads. Some are available through various app stores; all are available in our code repositories for your usage.
+
 ## Status - Late Alpha
 
 *LetheKit* is currently under active development and in the late alpha testing phase. It should not be used for production tasks until it has had further testing and auditing.
