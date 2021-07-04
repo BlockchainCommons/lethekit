@@ -13,3 +13,11 @@ this directory.  One print of each of the following is required:
 The case is designed with [Blender](https://www.blender.org):
 
 * [case.blend](case.blend)
+
+## Printing
+### Printing Services
+The following printing services have been used:
+
+| Service                  | Material           | Notes                                                         |
+|--------------------------|--------------------|---------------------------------------------------------------|
+| [Hubs](https://hubs.com) | PA12 (SLS) 100&mu; | "thin walls" and "intersecting faces" warnings can be ignored |
