@@ -101,7 +101,7 @@ To financially support further development of *LetheKit* and other projects, ple
 
 ### Project Sponsors
 
-Thanks to our project sponsors for their support of *Torgap*:
+Thanks to our project sponsors for their support of *LetheKit*:
   
 <img src="https://raw.githubusercontent.com/BlockchainCommons/www.blockchaincommons.com/master/images/sponsors/logo-keystone.jpg" width=500>
 
