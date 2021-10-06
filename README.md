@@ -99,6 +99,12 @@ These are other projects that work with or leverage *LetheKit*.
 
 To financially support further development of *LetheKit* and other projects, please consider becoming a Patron of Blockchain Commons through ongoing monthly patronage as a [GitHub Sponsor](https://github.com/sponsors/BlockchainCommons). You can also support Blockchain Commons with bitcoins at our [BTCPay Server](https://btcpay.blockchaincommons.com/).
 
+### Project Sponsors
+
+Thanks to our project sponsors for their support of *Torgap*:
+  
+[Keystone](https://keyst.one/) is the manufacturer of the Keystone Hardware Wallet and the Keystone Tablets. Their focus is on uncompromising security and ease of use, taking human error into consideration, skyrocketing attack costs, reducing burdens of proof, and avoiding single points of failure.
+  
 ## Contributing
 
 We encourage public contributions to this project through issues and pull requests! Please review [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our development process. All contributions to this repository require a GPG signed [Contributor License Agreement](./CLA.md).
