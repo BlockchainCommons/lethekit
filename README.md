@@ -103,6 +103,8 @@ To financially support further development of *LetheKit* and other projects, ple
 
 Thanks to our project sponsors for their support of *Torgap*:
   
+<img src="https://www.blockchaincommons.com/images/sponsors/logo-keystone.png" width=500>
+
 [Keystone](https://keyst.one/) is the manufacturer of the Keystone Hardware Wallet and the Keystone Tablets. Their focus is on uncompromising security and ease of use, taking human error into consideration, skyrocketing attack costs, reducing burdens of proof, and avoiding single points of failure.
   
 ## Contributing
