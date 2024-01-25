@@ -37,19 +37,9 @@ Your LetheKit can be charged or recharged with a micro-USB connection.
 
 Blockchain Commons apps do not phone home and do not run ads. Some are available through various app stores; all are available in our code repositories for your usage.
 
-## Status - Late Alpha
+## Status - Unsupported
 
-*LetheKit* is currently under active development and in the late alpha testing phase. It should not be used for production tasks until it has had further testing and auditing.
-
-### ⚠️ Warning: Lack of Round-trip Compatibility between BIP-39 and SLIP-39
-
-At first glance, BIP-39 and SLIP-39 both appear to be means of converting a binary seed to a set of backup words and back. You might assume you could simply convert a BIP-39 backup to a binary seed, from that binary seed to SLIP-39, and then use the SLIP-39 backup to recover the same wallet as the original BIP-39 backup, but this is **NOT** the case. This is because the SLIP-39 algorithm that SatoshiLabs uses in their Trezor wallet does not derive the master secret in the same way as their BIP-39 algorithm does.
-
-Currently Blockchain Commons and LetheKit implement an alternative to SLIP-39, called [Sharded Secret Key Reconstruction](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md) (**SSKR**), that allows round-trips with BIP-39. We want to ensure that the same seed will result in the same derived keys using either BIP-39 or our alternative approach.
-
-As SLIP-39 is not round-trip compatible with BIP-39, and SLIP-39 is under the control of SatoshiLabs and does not appear to be a fully community-controlled standard, Blockchain Commons is no longer endorsing SLIP-39.
-
-* This issue is being tracked [here](https://github.com/BlockchainCommons/lethekit/issues/38).
+*LetheKit* is no longer being actively supported by Blockchain Commons. It may not be up to date with recent security notices, and it may not work as originally intended or even at all. This repo remains solely for historical purposes. Use at your own risk.
 
 ## Origin, Authors, Copyright & Licenses
 
