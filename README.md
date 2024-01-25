@@ -39,7 +39,9 @@ Blockchain Commons apps do not phone home and do not run ads. Some are available
 
 ## Status - Unsupported
 
-*LetheKit* is no longer being actively supported by Blockchain Commons. It may not be up to date with recent security notices, and it may not work as originally intended or even at all. This repo remains solely for historical purposes. Use at your own risk.
+*LetheKit* is no longer being actively supported by Blockchain Commons. It may not be up to date with recent security notices, and it may not work as originally intended or even at all. This repo remains solely for historical purposes. Use at your own risk. 
+
+If you'd like to become a new lead for the project, please file an issue.
 
 ## Origin, Authors, Copyright & Licenses
 
