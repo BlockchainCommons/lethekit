@@ -22,7 +22,7 @@ The following files contain everything you need to set up your *LetheKit* hardwa
 * The [Seedtool Installation Instructions](seedtool/doc/build.md) show to install Seedtool on your *LetheKit* using the Arduino IDE.
 * The [Seedtool Application Instuctions](seedtool/README.md) describe how to generate and recover
 [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD wallet master seeds in [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and [SSKR](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-011-sskr.md) formats.
-* [Blog Post Overview](https://www.blockchaincommons.com/projects/Releasing-LetheKit/)
+* [Blog Post Overview](https://www.blockchaincommons.com/apps/Releasing-LetheKit/)
 
 Your LetheKit can be charged or recharged with a micro-USB connection.
 
